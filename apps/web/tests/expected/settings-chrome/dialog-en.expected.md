@@ -18,8 +18,14 @@
   - text: Font size Only affects conversation content 14
   - button "Increase font size"
   - button "Decrease font size"
-  - text: px Work details Controls how turns and steps expand by default
+  - text: "px Output denoise Beta Experimental: folds explanatory model output by default, keeping conclusions and results"
+  - switch "Toggle output denoise"
+  - text: Work details Controls how turns and steps expand by default
   - button "Compact"
+  - text: Interface mode Affects presentation only — never changes features or permissions; approvals and confirmations stay visible in every mode
+  - group "Interface mode":
+    - button "Business" [pressed]
+    - button "Expert"
   - text: Performance & usage Choose how much performance and usage information to show
   - button "Detailed"
   - text: Developer tools Show tools and information for debugging and troubleshooting

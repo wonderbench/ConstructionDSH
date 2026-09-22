@@ -27,12 +27,21 @@ describe('ui-theme host', () => {
     const ctx = new Context()
     const configuration = await liveConfig(ctx, { Config, apply })
     const { fiber } = configuration
-    expect(plainConfig(configuration.fiber.config)).toEqual({ preference: DEFAULT_PREFERENCE, fontSize: 14 })
+    expect(plainConfig(configuration.fiber.config)).toEqual({
+      preference: DEFAULT_PREFERENCE, fontSize: 14, outputDenoise: false, uiMode: 'business',
+    })
     await configuration.update({ preference: 'dark', fontSize: 16 })
-    expect(plainConfig(configuration.fiber.config)).toEqual({ preference: 'dark', fontSize: 16 })
+    expect(plainConfig(configuration.fiber.config)).toEqual({
+      preference: 'dark', fontSize: 16, outputDenoise: false, uiMode: 'business',
+    })
+    await configuration.update({ uiMode: 'expert', outputDenoise: true })
+    expect(plainConfig(configuration.fiber.config)).toEqual({
+      preference: 'dark', fontSize: 16, outputDenoise: true, uiMode: 'expert',
+    })
     await expect(configuration.update({ preference: 'sepia' })).rejects.toThrow()
     await expect(configuration.update({ fontSize: 11 })).rejects.toThrow()
     await expect(configuration.update({ fontSize: 18 })).rejects.toThrow()
+    await expect(configuration.update({ uiMode: 'novice' })).rejects.toThrow()
     await fiber.dispose()
   })
 

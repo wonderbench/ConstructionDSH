@@ -21,7 +21,6 @@
 - button "Edit goal"
 - button "Clear goal"
 - button "2 queued messages"
-- img
 - text: workspace
 - textbox "Cmd/Ctrl+Enter steers all queued messages"
 - button "Add files or run commands"

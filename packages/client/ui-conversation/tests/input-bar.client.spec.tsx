@@ -20,10 +20,12 @@ import {
 } from '@deepseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { SessionListState, SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { ContextPressureProjection } from '@deepseek-ai/dsh-token-meter/client'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import type { SubmitOutcome } from '../src/client/contract/input.ts'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import { $replaceDetectSpanWithText, $selectDetectSpan } from '../src/client/input/editor/span-map.ts'
@@ -87,6 +89,12 @@ interface BenchOptions {
   nextStep?: InboxState['next-step']
   /** The hub's steer-all face (empty-draft accelerated Enter). */
   steerQueue?: () => void
+  /** Owning workspace row served to the global useWorkspaces seat. */
+  workspace?: { title: string; sessionIds: readonly SessionId[] }
+  /** Workspace-list phase (default 'ready'). */
+  workspacePhase?: 'pending' | 'ready'
+  /** cwd recorded for the bench session in the session list. */
+  sessionCwd?: string
   variant?: 'hero' | 'composer'
   placeholder?: string
   t?: InputBarProps['t']
@@ -98,6 +106,8 @@ interface BenchOptions {
   contextPressure?: ContextPressureProjection
   footer?: React.ReactNode
   attachments?: readonly ComposerAttachment[]
+  /** Rendered through the selected-file rail slot inside the context layer. */
+  attachmentsEntry?: React.ReactNode
   /** Upload states served for file-kind drafts (absent = every file is ready). */
   fileUploads?: DraftFileUploads
   addFiles?: (files: readonly File[], directories?: ReadonlySet<File>) => string | null
@@ -160,6 +170,7 @@ function bench(over?: BenchOptions) {
   const renderSlot = ((key: string, owner: object) => {
     slotCalls.push({ key, owner })
     if (key === 'conversation.input.overlay') return over?.overlay ?? null
+    if (key === 'conversation.input.attachments') return over?.attachmentsEntry ?? null
     if (key === 'conversation.input.left') return over?.leftItems ?? null
     if (key === 'conversation.input.right') return over?.rightItems ?? null
     if (key === 'conversation.composer.dock') return over?.footer ?? null
@@ -179,11 +190,32 @@ function bench(over?: BenchOptions) {
     useSessionRetainInfo: () => undefined,
     useResource,
     useSessions: bindSnapshotSelector(createSnapshotStore<SessionListState>({
-      ids: [], byId: {}, phase: 'ready',
+      ids: [SID],
+      byId: {
+        [SID]: {
+          id: SID,
+          displayTitle: 'bench',
+          cwd: over?.sessionCwd ?? '/tmp/bench-ws',
+          running: false,
+          retainedBy: {},
+          blank: false,
+          updatedAt: 0,
+        },
+      },
+      phase: 'ready',
       projectionsBySession: {},
     })),
-    useWorkspaces: bindSnapshotSelector(createSnapshotStore({
-      items: [], archivedSessionIds: [], pinnedSessionIds: [], state: 'idle', phase: 'ready', error: null,
+    useWorkspaces: bindSnapshotSelector(createSnapshotStore<WorkspaceSnapshot>({
+      items: over?.workspace === undefined ? [] : [{
+        workspaceId: 'w1' as WorkspaceId,
+        path: '/tmp/bench-ws',
+        title: over.workspace.title,
+        sessionIds: over.workspace.sessionIds,
+        createdAt: '',
+        updatedAt: '',
+      }],
+      archivedSessionIds: [], pinnedSessionIds: [], state: 'idle',
+      phase: over?.workspacePhase ?? 'ready', error: null,
     })),
     useProjection: ((key: string, selector?: (v: unknown) => unknown) =>
       (selector ?? (v => v))(key === 'plan'
@@ -1751,4 +1783,70 @@ it('places context usage below the composer and hides it until the activity clos
   fireEvent.click(view.getByRole('button', { name: '上下文已用 25%' }))
   expect(view.getByRole('dialog', { name: '上下文已用' })).toBeTruthy()
   expect(view.getByRole('button', { name: '发送消息' })).toBeTruthy()
+})
+
+describe('three-layer shell: context / input / controls', () => {
+  const FOLLOWING = Node.DOCUMENT_POSITION_FOLLOWING
+
+  it('names the owning workspace in the docked card, resolved from the workspace title', () => {
+    const { view } = bench({ workspace: { title: '路润工程', sessionIds: [SID] } })
+    const line = view.container.querySelector('[data-composer-context-workspace]')
+    expect(line?.textContent).toBe('路润工程')
+  })
+
+  it('bridges the identity from the session cwd basename only while the workspace list loads', () => {
+    const loading = bench({ workspacePhase: 'pending', sessionCwd: '/data/图纸工程' })
+    expect(loading.view.container.querySelector('[data-composer-context-workspace]')?.textContent)
+      .toBe('图纸工程')
+    cleanup()
+    // List settled without an owning workspace: a deleted workspace's name
+    // must not resurface through cwd.
+    const orphaned = bench({ workspacePhase: 'ready', sessionCwd: '/data/图纸工程' })
+    expect(orphaned.view.container.querySelector('[data-composer-context-workspace]')).toBeNull()
+  })
+
+  it('renders no identity line in the hero variant, without a session, or when the title is empty', () => {
+    const hero = bench({ variant: 'hero', workspace: { title: '路润工程', sessionIds: [SID] } })
+    expect(hero.view.container.querySelector('[data-composer-context-workspace]')).toBeNull()
+    cleanup()
+    const docked = bench({ workspace: { title: '路润工程', sessionIds: [SID] } })
+    docked.view.rerender(<InputBar {...docked.props} sessionId={undefined} />)
+    expect(docked.view.container.querySelector('[data-composer-context-workspace]')).toBeNull()
+  })
+
+  it('orders the layers: context group above the editor, controls below, rail inside the context group', () => {
+    const { view } = bench({
+      workspace: { title: '路润工程', sessionIds: [SID] },
+      attachmentsEntry: <i data-testid="rail" />,
+      leftItems: <i data-testid="left-control" />,
+    })
+    const context = view.container.querySelector('[data-composer-context]')!
+    const editor = view.container.querySelector('[data-composer-input]')!
+    // The launcher button sits in the tools group, one level inside the row.
+    const row = view.container
+      .querySelector<HTMLButtonElement>('button[aria-label="添加文件或调用指令"]')!
+      .parentElement!.parentElement!
+    expect(context.compareDocumentPosition(editor) & FOLLOWING).not.toBe(0)
+    expect(editor.compareDocumentPosition(row) & FOLLOWING).not.toBe(0)
+    // The selected-file rail and the workspace identity both live in the
+    // top context layer; the control row is a separate layer below.
+    expect(context.contains(view.getByTestId('rail'))).toBe(true)
+    expect(context.contains(view.container.querySelector('[data-composer-context-workspace]'))).toBe(true)
+    expect(row.contains(view.getByTestId('left-control'))).toBe(true)
+  })
+
+  it('keeps an empty context group childless so it consumes no card gap', () => {
+    const { view } = bench()
+    const context = view.container.querySelector('[data-composer-context]')!
+    expect(context.children.length).toBe(0)
+    // The editor scrollport follows the collapsed group directly, then the
+    // control row closes the card: the three-layer order holds even with an
+    // empty context layer.
+    const card = view.container.querySelector('[data-composer-card]')!
+    const editor = view.container.querySelector('[data-composer-input]')!
+    const seats = [...card.children]
+    const at = seats.indexOf(context)
+    expect(at).toBeGreaterThanOrEqual(0)
+    expect(seats[at + 1]?.querySelector('[data-composer-input]')).toBe(editor)
+  })
 })

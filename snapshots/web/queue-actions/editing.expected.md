@@ -23,6 +23,7 @@
     - button "Save queued message"
     - tooltip "Save queued message"
     - button "Cancel editing"
+- text: workspace
 - textbox "Cmd/Ctrl+Enter steers all queued messages"
 - button "Add files or run commands"
 - 'button "Access mode, current: Workspace Write"': Workspace Write

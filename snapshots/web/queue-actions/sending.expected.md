@@ -18,6 +18,7 @@
     - button "Edit queued message" [disabled]
     - button "Remove queued message" [disabled]
     - button "Steer queued message" [disabled]
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands"
 - 'button "Access mode, current: Workspace Write"': Workspace Write

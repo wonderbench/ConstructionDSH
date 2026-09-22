@@ -37,6 +37,9 @@ it('shows the failed asset, actual download source and recovery advice, then ret
   const origin = `http://127.0.0.1:${address.port}`, overlay = join(root, 'voice.patch.yml')
   await writeFile(overlay, `- id: speech-to-text-sensevoice\n  config:\n    dataRoot: ${JSON.stringify(join(root, 'models'))}\n    modelOrigin: ${origin}\n`)
   const scaffold = await launchWebScaffold({ profile: { packages: [{ dir: bundle, enabled: true }] }, extraOverlayPath: overlay })
+  // Business mode hides the sidebar's Plugins entry; this scenario drives
+  // that page, so pin the presentation mode before the first render.
+  await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
   resources.scaffold = scaffold
   const browser = await chromium.launch()
   resources.browser = browser

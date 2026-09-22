@@ -17,6 +17,9 @@ async function fixture(enabled: boolean) {
   })
   const scaffold = await launchWebScaffold({ profile: { packages: [{ dir: bundle, enabled }] } })
   resources.scaffold = scaffold
+  // Business mode hides the sidebar's Plugins entry; the guidance scenario
+  // below drives that page, so pin the presentation mode before the first render.
+  await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
   const browser = await chromium.launch()
   resources.browser = browser
   const page = await newEnglishPage(browser), tripwire = watchConsole(page)

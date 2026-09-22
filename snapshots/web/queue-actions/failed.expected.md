@@ -1,5 +1,4 @@
 - alert: Queue submission failed (session/agent-busy)
-- img
 - text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions":
   - paragraph: Queue submission to retry

@@ -15,6 +15,9 @@ it('guides a newly enabled voice plugin to installation and lets the user postpo
   })
   const scaffold = await launchWebScaffold({ profile: { packages: [{ dir: bundle, enabled: false }] } })
   resources.scaffold = scaffold
+  // Business mode hides the sidebar's Plugins entry; this scenario drives
+  // that page, so pin the presentation mode before the first render.
+  await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
   const browser = await chromium.launch()
   resources.browser = browser
   const page = await newEnglishPage(browser), tripwire = watchConsole(page)

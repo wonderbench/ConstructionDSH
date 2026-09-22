@@ -18,16 +18,16 @@
 - button "Took {{duration}}" [expanded]
 - button "Ran commands and updated the plan" [expanded]
 - button "Think"
-- button "Bash List package directories deterministically"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "View goal 做两个turn，每个turn输出随机一个包的文件结构。注意你做完一个turn之后，直接输出内容，停止，我们的系统会帮你再开一个turn，你看着做一个类似的"
 - button "Think"
-- button "Bash List packages directory contents"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "Think"
-- button "Failed Bash Randomly pick one package directory"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "Think"
-- button "Bash Randomly select one package with Python"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "Think"
-- button "Bash List all files in session-reference package"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "Think"
 - paragraph:
   - strong: Turn 1 / 2
@@ -51,10 +51,10 @@
 - button "Took {{duration}}" [expanded]
 - button "Ran commands" [expanded]
 - button "Think"
-- button "Bash Randomly select another package with Python"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "Think"
-- button "Bash Re-roll excluding the package from turn 1"
-- button "Bash List all files in token-meter package"
+- 'button "Failed Bash Error: unknown tool \"bash\""'
+- 'button "Failed Bash Error: unknown tool \"bash\""'
 - button "Think"
 - paragraph:
   - strong: Turn 2 / 2
@@ -130,6 +130,7 @@
 - button "Branch into a new conversation"
 - text: {{clock}}
 - button "Back to bottom"
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands"
 - 'button "Access mode, current: Workspace Write"': Workspace Write

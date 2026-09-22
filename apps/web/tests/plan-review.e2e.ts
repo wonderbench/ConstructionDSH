@@ -54,6 +54,10 @@ describe('web e2e: plan review takeover round trip', () => {
   beforeAll(async () => {
     scaffold = await launchWebScaffold(MODE === 'record' ? {} : { replayFixture: FIXTURE, paceMs: 15, compareReplaySession: true })
     scaffold.ctx.on('session/event', (_session, event: SessionEvent) => { sessionEvents.push(event) })
+    // Business mode hides the sidebar's Plugins entry; the panel-return
+    // scenario below drives that page, so pin the presentation mode before
+    // the first render.
+    await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
     browser = await chromium.launch()
     // English page: the decision copy is the surface under test, and the
     // golden pins one language.

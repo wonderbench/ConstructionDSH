@@ -18,6 +18,7 @@
     - button "Edit queued message" [disabled]
     - button "Remove queued message"
     - button "Steer queued message"
+- text: workspace
 - textbox "Cmd/Ctrl+Enter steers all queued messages"
 - button "Add files or run commands"
 - 'button "Access mode, current: Workspace Write"': Workspace Write

@@ -716,6 +716,9 @@ describe('web e2e: settings modal and General preferences', () => {
     // distinguish detection from the default — the zh scenarios above supply
     // the discriminating half (a Chinese browser must NOT land on the default).
     const fresh = await launchWebScaffold({ developerTools: false })
+    // The sidebar's Plugins entry is expert-mode-only; the plugin-manager
+    // surface asserted below lives behind it.
+    await fresh.ctx.settings.update('ui-theme', { uiMode: 'expert' })
     const enPage = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: 'en-US' })
     const enTripwire = watchConsole(enPage)
     onTestFailed(() => saveFailureShot(enPage, 'web-e2e-settings-browser-language'))

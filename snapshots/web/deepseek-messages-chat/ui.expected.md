@@ -16,9 +16,7 @@
 - button "有问题的回答"
 - button "在新对话中分支"
 - button "用量 8.2K tok"
-- text: {{clock}}
-- img
-- text: workspace
+- text: {{clock}} workspace
 - textbox "发消息或创建任务, / 调用指令, @ 文件或对话"
 - button "添加文件或调用指令"
 - button "访问模式，当前：工作区内修改": 工作区内修改

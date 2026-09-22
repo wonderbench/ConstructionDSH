@@ -554,15 +554,22 @@ export interface Config {
   preference: Volatile<ThemePreference>
   /** Browser font size in pixels. */
   fontSize: Volatile<number>
+  /** Output-denoise Beta flag. */
+  outputDenoise: Volatile<boolean>
+  /** Presentation mode: business vs expert. */
+  uiMode: Volatile<UiMode>
 }
 
 /** Theme preference persisted by the product Appearance row. */
 export type ThemePreference = typeof THEME_PREFERENCES[number]
+
+/** Presentation mode persisted by the interface-mode row. */
+export type UiMode = typeof UI_MODES[number]
 ```
 
 Depends on: `Volatile` (`@deepseek-ai/cordis`)
 
-Source: [`packages/client/ui-theme/src/index.ts:22`](../packages/client/ui-theme/src/index.ts)
+Source: [`packages/client/ui-theme/src/index.ts:24`](../packages/client/ui-theme/src/index.ts)
 
 <a id="deepseek-aidsh-compaction-basic"></a>
 
