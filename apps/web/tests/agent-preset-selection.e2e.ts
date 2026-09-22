@@ -280,10 +280,12 @@ describe('web e2e: agent-preset selection', () => {
     const snapshot = await captureStableAria(page, '[role="menu"]', scaffold.workspaceCwd)
 
     await compareOrRefreshGolden(MENU_EXPECTED, snapshot, MODE)
-    // Every shipped preset, each with the sentence saying what it composes —
-    // the id alone never said what a preset does.
+    // Every selectable preset, each with the sentence saying what it composes —
+    // the id alone never said what a preset does. The Creator preset carries
+    // `picker: false` and stays off this menu; settings still reach it.
     expect(snapshot).toContain('Minimal mode')
-    expect(snapshot).toContain('Creator mode')
+    expect(snapshot).toContain('Drawing split mode')
+    expect(snapshot).toContain('Engineering mode')
     await page.keyboard.press('Escape')
   })
 
