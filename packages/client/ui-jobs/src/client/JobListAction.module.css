@@ -12,8 +12,8 @@
   border-radius: 6px;
   background: transparent;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   cursor: pointer;
 }
 
@@ -36,6 +36,81 @@
 
 .count {
   margin: 0 5px;
+}
+
+.goal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.pending,
+.plan {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.pendingLabel,
+.planLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
+  color: var(--dsw-alias-label-primary);
+}
+
+.planChip {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-module-platform);
+}
+
+.subagents {
+  margin: 0;
+  padding: 0 4px 4px;
+  list-style: none;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.subagentLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.goalPhase {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-module-platform);
+}
+
+.goalObjective {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
+  color: var(--dsw-alias-label-primary);
 }
 
 .menu {
@@ -63,6 +138,12 @@
   box-shadow: var(--dsw-elevation-prominent);
 }
 
+.menuList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .row {
   display: flex;
   align-items: center;
@@ -73,8 +154,8 @@
   padding: 6px 8px;
   border-radius: 8px;
   color: var(--dsw-alias-label-primary);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .rowSettled {
@@ -91,8 +172,8 @@
   border-radius: 5px;
   background: var(--dsw-alias-fill-l2);
   color: var(--dsw-alias-label-secondary);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .label {
@@ -108,8 +189,8 @@
 .duration {
   flex: none;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 /* A failed job's detail is the producer's raw error text, so it has no bound;

@@ -15,6 +15,8 @@ kind: "package-reference"
 
 - [Conversation 组装](#conversation-assembly)
 - [Shell 与标准 props](#shell-and-standard-props)
+- [Hero 模式选择](#hero-mode-selection)
+- [输入区外壳分层](#input-area-shell-layers)
 - [临时 composer entry](#temporary-composer-entries)
 - [模型体验](#model-experience)
 - [已知限制与暂缓事项](#known-limitations-and-deferred-work)
@@ -69,6 +71,16 @@ Send 和 Stop 按钮禁用时不显示提示气泡，轮次结束后由 Stop 切
 文件标签和可编辑的 skill 引用共用覆盖整个引用的悬停背景，并跟随输入框的行高与文字基线。首次点击立即由已注册的引用来源负责打开预览，包括双击序列的第一次点击。后续点击保留原生文本选择行为；已有非折叠选区时，指针点击不打开预览。预览不改变草稿、剪贴板文本或提交内容。
 
 当会话被其他写句柄占用时，发送失败的 toast 提示用户退出其他正在运行的 DSH 后重试。
+
+<a id="hero-mode-selection"></a>
+## Hero 模式选择
+
+blank Session Hero 上的模式选择就是工作区选择器旁的 Agent 预设 chip（`conversation.hero.agentPreset` 座位，由 `ui-agent-preset` 负责）；Hero 自身不再提供任何场景入口面。选择预设只是为下一个 blank 会话暂存其运行的组装——例如内置的 `drawing-split` 预设承载图纸 PDF 拆解工作流——审阅、编辑与发送仍留在唯一的常驻提交链路上。
+
+<a id="input-area-shell-layers"></a>
+## 输入区外壳分层
+
+常驻 composer 卡片是三层外壳：只做视觉分组与排序，每个控件保持既有 owner、座位与行为不变。上层是当前任务上下文：会话的工作区身份、owner 提供的 `accessory` 装饰，以及已选文件的附件栏。工作区身份是只读的「文件夹图标＋标题」一行，经常驻全局 seats 解析——优先取所属工作区的标题，仅当工作区列表仍在加载时用会话 cwd 的目录名 bridging，列表落定后已删除工作区的名字绝不会经 cwd 复现；hero 变体保留卡片上方可交互的工作区 chip 行，不在卡内重复呈现，无 Session 界面不显示任何身份。中层是需求输入：唯一的 Lexical 草稿编辑面，保持不动。下层是执行控制：左侧为添加资料与常用能力，右侧为模型、执行策略与发送/停止，控制行的内部顺序与提交状态机均不变。空上下文层完全折叠、不占任何卡片行距，编辑面保持原有座位。任务类型上下文（计划模式、进行中目标、已认领指令、整队插话手势）仍由编辑面自身的占位与 hint 表达，瞬时的 notice 条与错误 toast 位于三层之外。层的装饰采用 P6 界面字号角色（身份行使用 `--dsw-ui-font-secondary` 及其行高）。
 
 <a id="temporary-composer-entries"></a>
 ## 临时 composer entry

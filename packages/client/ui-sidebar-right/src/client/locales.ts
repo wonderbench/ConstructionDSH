@@ -29,6 +29,8 @@ export const zh = {
   'dock.drop.bottom': '下分栏',
   'tab.guide.title': '开始',
   'tab.unavailable': '这类内容还没有可用的查看方式。',
+  'restore.fileNotFound': '标签页「{title}」未能恢复：文件已不存在。',
+  'restore.dismiss': '知道了',
 } satisfies Record<string, string>
 
 /** Right-Sidebar dictionary key union. */
@@ -57,4 +59,6 @@ export const en = {
   'dock.drop.bottom': 'Add bottom split',
   'tab.guide.title': 'Start',
   'tab.unavailable': 'Nothing here can view this kind of content yet.',
+  'restore.fileNotFound': 'The tab “{title}” could not be restored: the file no longer exists.',
+  'restore.dismiss': 'Dismiss',
 } satisfies Record<SidebarRightKey, string>

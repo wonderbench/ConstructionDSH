@@ -14,7 +14,9 @@ import { CommandDefinitionId } from '@deepseek-ai/dsh-commands/brand'
 import { createScope, scopeOf } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { RemoteError, TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import { IconGoalOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import {
+  IconChecklistOutline14, IconClockOutline16, IconGaugeOutline16, IconGoalOutline16, IconShieldOutline16,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ClientSessionContext, ConsumeTokenRequest, InputTriggerPick, InputTriggerSource, SubmitAttachment } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
 import type { CommandContribution, CommandDecoration, PopupSelectSpec, SelectOption } from '../src/client/contract.ts'
 import type { CommandDescriptor } from '../src/client/directory.ts'
@@ -414,6 +416,65 @@ describe('candidates', () => {
       expect(rows.every(row => row.section === undefined)).toBe(true)
     })
 
+    it('declared-section rows land in Functions between Add and Commands; legacy rows keep their placement', async () => {
+      const commands: CommandDescriptor[] = [
+        ...SHIPPED,
+        { name: 'construction-cost', description: 'Cost determination and comparison', section: 'functions' },
+        { name: 'construction-safety', description: 'Safety review', section: 'functions' },
+      ]
+      const { command, source } = await bench({ commands: () => Promise.resolve({ commands }) })
+      command.register(modelContribution())
+      command.register(fileContribution())
+      const rows = await source.candidates(proj('s1'), req(''))
+      expect(rows.map(row => row.name)).toEqual([
+        'file', 'goal', 'plan', 'feedback',
+        'construction-cost', 'construction-safety',
+        'compact', 'permission', 'model', 'export', 'deploy',
+      ])
+      expect(rows.map(row => row.section)).toEqual([
+        ...Array<string>(4).fill('command:section.add'),
+        ...Array<string>(2).fill('command:section.functions'),
+        ...Array<string>(5).fill('command:section.commands'),
+      ])
+      expect(rows[4]).toEqual({
+        name: 'construction-cost',
+        description: 'Cost determination and comparison',
+        section: 'command:section.functions',
+      })
+      // A legacy-listed row declared elsewhere moves out of its legacy list.
+      const moved: CommandDescriptor[] = commands
+        .filter(command => command.name !== 'construction-safety')
+        .map(command => command.name === 'compact'
+          ? { ...command, section: 'functions' as const }
+          : command)
+      const second = await bench({ commands: () => Promise.resolve({ commands: moved }) })
+      second.command.register(modelContribution())
+      second.command.register(fileContribution())
+      const rerows = await second.source.candidates(proj('s1'), req(''))
+      expect(rerows.map(row => row.name)).toEqual([
+        'file', 'goal', 'plan', 'feedback',
+        'compact', 'construction-cost',
+        'permission', 'model', 'export', 'deploy',
+      ])
+      expect(rerows.find(row => row.name === 'compact')?.section).toBe('command:section.functions')
+    })
+
+    it('locale parity: the Functions heading renders from both dictionaries', async () => {
+      const commands: CommandDescriptor[] = [
+        { name: 'construction-cost', description: 'Cost', section: 'functions' },
+      ]
+      for (const dictionary of [en, zh] as const) {
+        const { source } = await bench({
+          commands: () => Promise.resolve({ commands }),
+          translate: (_namespace, key) => dictionary[key as CommandKey],
+        })
+        const rows = await source.candidates(proj('s1'), req(''))
+        expect(rows).toHaveLength(1)
+        expect(rows[0]?.section).toBe(dictionary['section.functions'])
+        expect(dictionary['section.functions'].length).toBeGreaterThan(0)
+      }
+    })
+
     it('an action contribution: the menu pick consumes the span and runs it; bare enter runs it even with attachments; an argued line misses', async () => {
       const run = vi.fn()
       const { command, source, mint, warm } = await bench({ commands: () => Promise.resolve({ commands: SHIPPED }) })
@@ -465,6 +526,56 @@ describe('candidates', () => {
       executeCalls.length = 0
       expect(await source.matchEnter!(proj('s1'), '/压缩', new AbortController().signal, { attachments: 0 })).toBe('handled')
       await vi.waitFor(() => { expect(executeCalls).toEqual([{ sessionId: sid('s1'), line: '/compact', images: [] }]) })
+    })
+
+    it('the four construction skill rows render label-only localized faces in Functions and claim like goal/plan', async () => {
+      const CONSTRUCTION: CommandDescriptor[] = [
+        { definitionId: CommandDefinitionId('@deepseek-ai/dsh-construction-runtime/construction-safety'), name: 'construction-safety', description: 'Safety review', input: { hint: '<task>' }, section: 'functions' },
+        { definitionId: CommandDefinitionId('@deepseek-ai/dsh-construction-runtime/construction-quality'), name: 'construction-quality', description: 'Quality inspection', input: { hint: '<task>' }, section: 'functions' },
+        { definitionId: CommandDefinitionId('@deepseek-ai/dsh-construction-runtime/construction-cost'), name: 'construction-cost', description: 'Cost determination and comparison', input: { hint: '<task>' }, section: 'functions' },
+        { definitionId: CommandDefinitionId('@deepseek-ai/dsh-construction-runtime/construction-schedule'), name: 'construction-schedule', description: 'CPM scheduling', input: { hint: '<task>' }, section: 'functions' },
+      ]
+      const { source, warm, executeCalls } = await bench({ commands: () => Promise.resolve({ commands: [...SHIPPED, ...CONSTRUCTION] }) })
+      await warm(proj('s1'))
+      const rows = await source.candidates(proj('s1'), req(''))
+      const functions = rows.filter(row => row.section === 'command:section.functions')
+      expect(functions.map(row => row.name)).toEqual([
+        'construction-safety', 'construction-quality', 'construction-cost', 'construction-schedule',
+      ])
+      // Label + icon + host hint, no right-side description text; the English
+      // catalog copy the descriptors carry never reaches the row.
+      expect(functions[0]).toEqual({
+        name: 'construction-safety',
+        label: 'command:label.construction-safety',
+        icon: IconShieldOutline16,
+        hint: '<task>',
+        section: 'command:section.functions',
+      })
+      expect(functions[1]).toMatchObject({ label: 'command:label.construction-quality', icon: IconChecklistOutline14 })
+      expect(functions[2]).toMatchObject({ label: 'command:label.construction-cost', icon: IconGaugeOutline16 })
+      expect(functions[3]).toMatchObject({ label: 'command:label.construction-schedule', icon: IconClockOutline16 })
+      for (const row of functions) expect(row).not.toHaveProperty('description')
+
+      // A menu pick claims the draft with the localized token; the submit
+      // transaction sends the catalog name with the typed arguments.
+      const outcome = menuPick(source, 'construction-cost', proj('s1'))
+      if (outcome === undefined || outcome === 'handled' || !('claim' in outcome)) throw new Error('expected the claim')
+      expect(outcome.claim.token).toBe('/command:token.construction-cost ')
+      expect(outcome.claim.hint).toBe('<task>')
+      await outcome.claim.submit('audit the rates', new Context(), [])
+      expect(executeCalls).toEqual([{ sessionId: sid('s1'), line: '/construction-cost audit the rates', images: [] }])
+
+      // The localized Chinese spellings resolve on Space and Enter in the
+      // same catalog as every other built-in, keeping the typed spelling.
+      const space = source.matchSpace!(proj('s1'), '/造价')
+      if (space === undefined || space === 'handled' || !('claim' in space)) throw new Error('expected the cost claim')
+      expect(space.claim).toMatchObject({ name: 'construction-cost', token: '/造价 ' })
+      const enter = await source.matchEnter!(proj('s1'), '/进度 re-baseline', new AbortController().signal, { attachments: 0 })
+      if (enter === undefined || enter === 'handled' || !('claim' in enter)) throw new Error('expected the schedule claim')
+      expect(enter.claim.token).toBe('/进度 ')
+      executeCalls.length = 0
+      await enter.claim.submit('re-baseline', new Context(), [])
+      expect(executeCalls).toEqual([{ sessionId: sid('s1'), line: '/construction-schedule re-baseline', images: [] }])
     })
   })
 })

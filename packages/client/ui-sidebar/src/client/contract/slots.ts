@@ -11,6 +11,7 @@ import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime } from '@d
 import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
 import type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { UiMode } from '@deepseek-ai/dsh-client-ui-theme/client'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
@@ -124,8 +125,14 @@ export type SidebarRootInjected = {
   toggleSidebar: () => void
   /** Select the global panel addressed by a sidebar row. */
   selectPanel: (id: MainPanelId) => void
-  /** Private reactive sources bound to framework selector hooks. */
-  hooks: { panels: ObservableSnapshot<readonly SidebarPanelMetadata[]> }
+  /**
+   * Private reactive sources bound to framework selector hooks. `panels` is
+   * the global panel metadata list; `uiMode` is the current presentation
+   * mode (business default) — the shell hides technical panel rows while the
+   * mode is `business` (presentation-only; never hides approvals, settings,
+   * or the mode switch itself).
+   */
+  hooks: { panels: ObservableSnapshot<readonly SidebarPanelMetadata[]>; uiMode: ObservableSnapshot<UiMode> }
 }
 
 /**

@@ -257,41 +257,6 @@
   justify-content: center;
 }
 
-.brandName {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  height: 24px;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 24px;
-  letter-spacing: 0.04em;
-}
-
-.fallbackBrandName {
-  font-size: 17px;
-  letter-spacing: 0px;
-  white-space: nowrap;
-}
-
-.localBuildBrand {
-  flex: none;
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 1px;
-  height: 24px;
-  white-space: nowrap;
-}
-
-.localBuildTitle {
-  font-size: 12px;
-  line-height: 13px;
-  letter-spacing: 0;
-}
-
 .iconButton {
   position: relative;
   flex: none;
@@ -339,6 +304,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Custom brand logos served from the web dist root (apps/web/public). The
+   wide mark keeps the brand button's full row width while standing taller
+   than the 24px text mark it replaces; the rail mark fits the 28px toggle. */
+.brandLogoWide {
+  display: block;
+  height: 40px;
+  width: auto;
+}
+
+.brandLogoRail {
+  display: block;
+  height: 22px;
+  width: auto;
 }
 
 /* Rail icons ride the primary ink (figma rail spec); expanded keeps the

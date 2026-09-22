@@ -174,6 +174,26 @@ describe('CommandRuntime', () => {
     } as unknown as CommandDefinition)).toThrow('command "input-type" input hint must be a string')
   })
 
+  it('flows a declared menu section from registration to descriptor', async () => {
+    const ctx = await mount()
+    const { agent } = await mintAgentScope(ctx, 'a')
+    ctx.commands.register({ ...command('safety'), section: 'functions' })
+    ctx.commands.register({ ...command('plain') })
+
+    const listed = ctx.commands.list(agent)
+    expect(listed.find(item => item.name === 'safety')).toEqual({
+      name: 'safety',
+      description: 'command safety',
+      section: 'functions',
+    })
+    expect(listed.find(item => item.name === 'plain')).not.toHaveProperty('section')
+    expect(ctx.commands.find(agent, 'safety')).toMatchObject({ section: 'functions' })
+    expect(() => ctx.commands.register({
+      ...command('bad-section'),
+      section: 'elsewhere',
+    } as unknown as CommandDefinition)).toThrow('command "bad-section" section must be one of "add", "functions", "commands"')
+  })
+
   it('passes exact invocation context and detaches valid handler results', async () => {
     const ctx = await mount()
     const { agent } = await mintAgentScope(ctx, 'a')

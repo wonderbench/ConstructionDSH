@@ -15,11 +15,17 @@
  * scrollbar at all: the shell tracks the pointer and rebinds ui-theme's
  * scrollbar indirection away while it is elsewhere, so a list the user is not
  * pointing at carries no bar.
+ *
+ * Presentation mode: in the default `business` mode the panel rows whose ids
+ * mark technical surfaces (TECHNICAL_PANEL_IDS) are not rendered; `expert`
+ * mode shows every registered panel. The mode arrives through the theme
+ * snapshot hook and is presentation-only — approvals, settings, and the mode
+ * switch itself are never filtered.
  */
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  FishLogo, IconNewChatOutline16, IconPanelLeftOutline16, isDarwinDesktop, Tooltip,
+  IconNewChatOutline16, IconPanelLeftOutline16, isDarwinDesktop, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {
@@ -31,22 +37,26 @@ import css from './SidebarRoot.module.css'
 const COLLAPSE_SETTLE_MS = 150
 
 /**
+ * Global panel ids leading to technical surfaces. In the default `business`
+ * mode the shell hides these rows; `expert` shows every registered panel.
+ * The marker is the stable panel id (the same id that addresses the `main`
+ * keyed slot) so any package's entry opts in by id, without the shell
+ * importing the registrant. Approvals, the settings seat, and the mode
+ * switch itself are never filtered — the mode is presentation-only.
+ * `terminal` has no main-panel entry in the shipped composition yet; the
+ * marker applies the moment one registers.
+ */
+const TECHNICAL_PANEL_IDS: ReadonlySet<SidebarPanelMetadata['id']> = new Set(
+  ['plugins', 'terminal'] as SidebarPanelMetadata['id'][],
+)
+
+/**
  * How long the column's scrollbars stay drawn after the pointer leaves it.
  * The bar is a pointer affordance here, and hiding it on the leave event
  * itself makes it blink out while the pointer is only crossing the column's
  * edge — on the way to the conversation, or around a portalled menu.
  */
 const SCROLLBAR_LINGER_MS = 2000
-
-/** Format complete-build metadata for the local brand badge. */
-function localBuildVersion(): string | undefined {
-  const version = process.env.DSH_CLIENT_VERSION
-  if (version === undefined) return undefined
-  const commit = process.env.DSH_CLIENT_COMMIT_HASH
-  return version
-    + (commit === undefined ? '' : `-${commit}`)
-    + (process.env.DSH_CLIENT_GIT_DIRTY === 'true' ? '-dirty' : '')
-}
 
 type PanelRowProps =
   Pick<SidebarPanelMetadata, 'id' | 'label'>
@@ -92,11 +102,17 @@ export function SidebarRoot({
   toggleSidebar,
   selectPanel,
   usePanels,
+  useUiMode,
   usePanelInfo,
   t,
   renderSlot,
 }: SidebarRootComponentProps) {
   const panels = usePanels(snapshot => snapshot)
+  const uiMode = useUiMode(snapshot => snapshot)
+  // Business mode hides technical panel entries (presentation-only); expert
+  // mode shows every registered panel. The settings seat below stays visible
+  // in both modes so the user can always switch back.
+  const visiblePanels = uiMode === 'expert' ? panels : panels.filter(({ id }) => !TECHNICAL_PANEL_IDS.has(id))
   // Wide content stays mounted while the collapse animates (fading via
   // .collapsed .wide), unmounts at settle, and remounts right away on expand.
   const [settled, setSettled] = useState(collapsed)
@@ -162,8 +178,6 @@ export function SidebarRoot({
     }
   }, [pointerInside])
 
-  const buildVersion = localBuildVersion()
-
   const darwinDesktop = isDarwinDesktop()
   // Rail resting state is the whale mark; hovering swaps in the panel icon
   // (the expand affordance, figma sidebar-hover flow). Expanded it is a plain
@@ -178,7 +192,9 @@ export function SidebarRoot({
       >
         {!wide && !windowsTitlebar && (
           <span className={css.railMark} aria-hidden="true">
-            {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
+            {renderSlot('sidebar.brand.mark', { size: 24 }, {
+              fallback: <img className={css.brandLogoRail} src="/brand-logo1.png" alt="" />,
+            })}
           </span>
         )}
         {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
@@ -217,19 +233,12 @@ export function SidebarRoot({
           >
             <span className={css.brandIdentity} aria-hidden="true">
               <span className={css.brandMark}>
-                {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
-              </span>
-              <span className={css.brandName}>
-                {renderSlot('sidebar.brand.name', {}, {
-                  fallback: buildVersion === undefined
-                    ? <span className={css.fallbackBrandName}>{t('brand.localBuild')}</span>
-                    : (
-                      <span className={css.localBuildBrand}>
-                        <span className={css.localBuildTitle}>{t('brand.localBuild')}</span>
-                        <span className={css.buildVersion}>{buildVersion}</span>
-                      </span>
-                    ),
+                {renderSlot('sidebar.brand.mark', { size: 24 }, {
+                  fallback: <img className={css.brandLogoWide} src="/brand-logo2.png" alt="" />,
                 })}
+              </span>
+              <span>
+                {renderSlot('sidebar.brand.name', {}, { fallback: null })}
               </span>
             </span>
           </button>
@@ -250,9 +259,9 @@ export function SidebarRoot({
         </button>
       </Tooltip>
 
-      {panels.length > 0 && (
+      {visiblePanels.length > 0 && (
         <nav className={css.panelList} aria-label={t('panels.label')}>
-          {panels.map(({ id, label }) => (
+          {visiblePanels.map(({ id, label }) => (
             <PanelRow
               key={id}
               id={id}

@@ -38,8 +38,8 @@
   border-radius: 8px;
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .card {
@@ -108,6 +108,34 @@
 
 .cardWorkspaceTrigger:hover::after {
   background: var(--dsw-alias-state-business-primary);
+}
+
+/* Layer 1 (P3 shell): the current-task context group above the editor —
+   workspace identity line, owner accessory chrome, and the selected-file
+   rail. Grouping only: children keep their own chrome contracts. */
+.context {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* An empty context group (no identity line, accessory, or rail chips) must
+   not consume the card's 12px row gap: the editor keeps its legacy seat. */
+.context:empty {
+  display: none;
+}
+
+/* Project/workspace identity line: read-only context, aligned to the draft's
+   left pad (14px) and top pad (card 8px + 4px = the draft text's 12px). The
+   P6 secondary interface role carries the caption. */
+.workspace {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .accessory {
@@ -338,8 +366,8 @@
   background-position: right 4px center;
   background-size: 12px 12px;
   color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -395,6 +423,6 @@
   border-radius: 4px;
   background: transparent;
   color: inherit;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   cursor: pointer;
 }

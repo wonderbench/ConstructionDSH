@@ -12,8 +12,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import type { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client'
 import { apply, inject } from '../src/client/index.ts'
-import type { GuideInjected, SidebarRightInjected } from '../src/client/index.ts'
+import type { GuideInjected, RestoreNoticeInjected, SidebarRightInjected } from '../src/client/index.ts'
 import { apply as hostApply } from '../src/index.ts'
 import { SidebarRightController } from '../src/client/service.ts'
 import { SidebarRightTabRegistry } from '../src/client/tab-registry.ts'
@@ -21,6 +22,7 @@ import type { createSidebarRightStore } from '../src/client/stores.ts'
 import { RightbarSeat } from '../src/client/shell/SidebarRight.tsx'
 import { RightbarRoot } from '../src/client/shell/RightbarRoot.tsx'
 import { ExpandButton } from '../src/client/shell/ExpandButton.tsx'
+import { RestoreNotice } from '../src/client/shell/RestoreNotice.tsx'
 import { GuideBody } from '../src/client/tabs/guide/GuideBody.tsx'
 import { GuideTitle } from '../src/client/tabs/guide/GuideTitle.tsx'
 import { GUIDE_ID } from '../src/client/tabs/guide/definition.ts'
@@ -59,7 +61,10 @@ async function boot() {
     }),
   }
   const layout = { openRightbar: vi.fn(), closeRightbar: vi.fn() }
-  const resources = { pin: vi.fn<(address: string, signal: AbortSignal) => void>() }
+  const resources = {
+    pin: vi.fn<(address: string, signal: AbortSignal) => void>(),
+    source: vi.fn<(address: string) => unknown>(),
+  }
   ctx.provide('slots', slots as never)
   ctx.provide('locale', locale as never)
   ctx.provide('layout', layout as never)
@@ -93,13 +98,15 @@ describe('ui-sidebar-right apply', () => {
     expect(guide?.id).toBe(GUIDE_ID)
     expect(guide?.priority).toBe('builtin')
     expect(guide?.title('sidebar://guide')).toBe('tab.guide.title')
-    // Five registrations: the root and panel seats, the header's corner seat,
-    // and the guide body and chip title under the guide implementation's id.
+    // Six registrations: the root and panel seats, the header's corner seat,
+    // the restore-notice overlay, and the guide body and chip title under the
+    // guide implementation's id.
     // The guide draws no product copy of its own, so neither guide seat binds the dictionary.
     expect(registered.map(entry => [entry.name, entry.key, entry.locale, entry.component])).toEqual([
       ['rightbar', undefined, undefined, RightbarRoot],
       ['rightbar.session', undefined, 'sidebarRight', RightbarSeat],
       ['conversation.session.header.corner', undefined, 'sidebarRight', ExpandButton],
+      ['shell.overlay', undefined, 'sidebarRight', RestoreNotice],
       ['sidebar.right.pane.tab', GUIDE_ID, undefined, GuideBody],
       ['sidebar.right.pane.tab.title', GUIDE_ID, undefined, GuideTitle],
     ])
@@ -189,6 +196,113 @@ describe('ui-sidebar-right apply', () => {
     expect(guideEntries.getSnapshot().map(entry => entry.kind)).toEqual(['files'])
   })
 
+  it('closes a restored tab whose file is gone and explains it in the overlay, dismissible', async () => {
+    const values = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value) },
+      removeItem: (key: string) => { values.delete(key) },
+    })
+    try {
+      const { resources, seat, injectedOf } = await boot()
+      const address = 'dsh-resource://file/session/s-test/a.txt'
+      const handle = seat('rightbar.session').store as ReturnType<typeof createSidebarRightStore>
+      // Seed the persisted layout: one open file tab in the mounted session.
+      const seed = handle.create(SESSION)
+      seed.actions.openContent(SESSION, { kind: 'text', contentId: address, title: 'a.txt' }, () => {})
+      expect(values.get(`dsh.sidebar-right.v1.${SESSION}`)).toBeDefined()
+      const seeded = Object.values(seed.getSnapshot().bySession[SESSION]?.layout.tabs ?? {})
+      expect(seeded).toHaveLength(1)
+      // The file settles as definitively gone before the reloaded store appears.
+      const snapshot: ResourceSnapshot<unknown> = {
+        status: 'failed', value: undefined,
+        failure: Object.assign(new Error('gone'), { name: 'RemoteError', isDSHRemoteError: true as const, code: 'workspace-file/not-found' as const, details: {} }) as ResourceSnapshot<unknown>['failure'],
+      }
+      const listeners = new Set<() => void>()
+      resources.source.mockImplementation(() => ({
+        getSnapshot: () => snapshot,
+        subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
+      }))
+      // The watch fires synchronously on the settled failure: the tab closes
+      // (a sole docked tab takes the column down with it) and the overlay learns why.
+      const reloaded = handle.create(SESSION)
+      expect(reloaded.getSnapshot().bySession[SESSION]?.layout.tabs).toEqual({})
+      expect(reloaded.getSnapshot().bySession[SESSION]?.layout.expanded).toBe(false)
+      expect(listeners.size).toBe(0)
+      const overlay = injectedOf(seat('shell.overlay')) as RestoreNoticeInjected
+      expect(overlay.hooks.restoreNotices.getSnapshot()).toEqual([{ id: seeded[0]!.id, title: 'a.txt', reason: 'fileNotFound' }])
+      overlay.dismissRestoreNotice(seeded[0]!.id)
+      expect(overlay.hooks.restoreNotices.getSnapshot()).toEqual([])
+      reloaded.clearPersisted()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('keeps restored tabs whose resource confirms and stays silent about tabs the reader closed first', async () => {
+    const values = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value) },
+      removeItem: (key: string) => { values.delete(key) },
+    })
+    try {
+      const { resources, seat, injectedOf, fiber } = await boot()
+      const confirmedAddress = 'dsh-resource://file/session/s-test/kept.txt'
+      const pendingAddress = 'dsh-resource://file/session/s-test/closed.txt'
+      const waitingAddress = 'dsh-resource://file/session/s-test/waiting.txt'
+      const handle = seat('rightbar.session').store as ReturnType<typeof createSidebarRightStore>
+      const seed = handle.create(SESSION)
+      seed.actions.openContent(SESSION, { kind: 'text', contentId: confirmedAddress, title: 'kept.txt' }, () => {})
+      seed.actions.openContent(SESSION, { kind: 'text', contentId: pendingAddress, title: 'closed.txt' }, () => {})
+      seed.actions.openContent(SESSION, { kind: 'text', contentId: waitingAddress, title: 'waiting.txt' }, () => {})
+      const snapshots = new Map<string, ResourceSnapshot<unknown>>([
+        [confirmedAddress, { status: 'live', value: { version: '1' }, failure: undefined }],
+        [pendingAddress, { status: 'loading', value: undefined, failure: undefined }],
+        [waitingAddress, { status: 'loading', value: undefined, failure: undefined }],
+      ])
+      const listeners = new Map<string, Set<() => void>>()
+      resources.source.mockImplementation((address: string) => ({
+        getSnapshot: () => snapshots.get(address)!,
+        subscribe: (listener: () => void) => {
+          const set = listeners.get(address) ?? new Set<() => void>()
+          set.add(listener)
+          listeners.set(address, set)
+          return () => { set.delete(listener) }
+        },
+      }))
+      const reloaded = handle.create(SESSION)
+      const tabs = Object.values(reloaded.getSnapshot().bySession[SESSION]?.layout.tabs ?? {})
+      const pending = tabs.find(tab => tab.contentId === pendingAddress)!
+      // The confirmed tab settles immediately and ends its watch; the pending one waits.
+      expect(tabs.map(tab => tab.contentId)).toContain(confirmedAddress)
+      expect(listeners.get(confirmedAddress)?.size ?? 0).toBe(0)
+      expect(listeners.get(pendingAddress)?.size).toBe(1)
+      // The reader closes the pending tab before its resource settles: the late
+      // failure names no notice and re-closes nothing, and the watch itself
+      // ends on the settled verdict.
+      reloaded.actions.closeTab(SESSION, pending.id)
+      expect(listeners.get(pendingAddress)?.size).toBe(1)
+      const settled: ResourceSnapshot<unknown> = {
+        status: 'failed', value: undefined,
+        failure: Object.assign(new Error('gone'), { name: 'RemoteError', isDSHRemoteError: true as const, code: 'workspace-file/not-found' as const, details: {} }) as ResourceSnapshot<unknown>['failure'],
+      }
+      snapshots.set(pendingAddress, settled)
+      for (const listener of [...listeners.get(pendingAddress) ?? []]) listener()
+      const overlay = injectedOf(seat('shell.overlay')) as RestoreNoticeInjected
+      expect(overlay.hooks.restoreNotices.getSnapshot()).toEqual([])
+      expect(reloaded.getSnapshot().bySession[SESSION]?.layout.tabs[pending.id]).toBeUndefined()
+      expect(listeners.get(pendingAddress)?.size).toBe(0)
+      // The never-settled watch rides until the plugin's teardown releases it.
+      expect(listeners.get(waitingAddress)?.size).toBe(1)
+      reloaded.clearPersisted()
+      await fiber.dispose()
+      expect(listeners.get(waitingAddress)?.size).toBe(0)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('takes every registration and both faces back when disposed, aborting the open records, so a reload registers again', async () => {
     const { ctx, registered, dictionaries, fiber, seat, injectedOf } = await boot()
     const injected = injectedOf(seat('rightbar.session')) as SidebarRightInjected
@@ -212,6 +326,6 @@ describe('ui-sidebar-right apply', () => {
     expect(dictionaries.size).toBe(0)
     await ctx.plugin({ inject: [...inject], apply }).await()
     expect(ctx.sidebarRightTabs.get('guide')?.id).toBe(GUIDE_ID)
-    expect(registered).toHaveLength(5)
+    expect(registered).toHaveLength(6)
   })
 })

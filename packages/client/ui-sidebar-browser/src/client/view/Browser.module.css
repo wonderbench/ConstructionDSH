@@ -97,7 +97,7 @@
   padding-left: 8px;
   color: var(--dsw-alias-label-tertiary);
   font: var(--dsw-font-xxxs-11);
-  line-height: 16px;
+  line-height: var(--dsw-ui-line-caption);
   pointer-events: none;
   background: var(--dsw-alias-bg-layer-2);
 }

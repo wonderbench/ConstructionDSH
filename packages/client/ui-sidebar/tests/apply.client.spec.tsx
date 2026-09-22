@@ -7,6 +7,7 @@ import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { apply, inject } from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { SidebarRootInjected } from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
 import { HeaderLeadingControls } from '../src/client/HeaderLeadingControls.tsx'
 import { apply as hostApply } from '../src/index.ts'
 
@@ -33,8 +34,11 @@ async function bench(declare = true) {
   await ctx.plugin(SlotRegistry).await()
   const layout = { toggleSidebar: vi.fn(), selectPanel: vi.fn() }
   const uiWorkspace = { startSession: vi.fn() }
+  let uiMode: 'business' | 'expert' = 'business'
+  const theme = { getTheme: () => ({ uiMode }) } as never
   ctx.provide('layout', layout)
   ctx.provide('uiWorkspace', uiWorkspace as never)
+  ctx.provide('theme', theme)
   ctx.provide('locale', new LocaleRuntime(ctx))
   const slots = ctx.get('slots') as SlotRegistry
   if (declare) {
@@ -47,7 +51,10 @@ async function bench(declare = true) {
       SidebarFrame,
     )
   }
-  return { ctx, slots, layout, uiWorkspace }
+  return {
+    ctx, slots, layout, uiWorkspace,
+    setUiMode: (mode: 'business' | 'expert') => { uiMode = mode },
+  }
 }
 
 describe('ui-sidebar apply', () => {
@@ -56,7 +63,7 @@ describe('ui-sidebar apply', () => {
   })
 
   it('declares only the services it uses', () => {
-    expect(inject).toEqual(['slots', 'layout', 'uiWorkspace', 'locale'])
+    expect(inject).toEqual(['slots', 'layout', 'uiWorkspace', 'locale', 'theme'])
   })
 
   it('registers the shell and declares its child seats', async () => {
@@ -80,6 +87,7 @@ describe('ui-sidebar apply', () => {
     const injected = (b.slots.entries('sidebar')[0]!.inject as () => SidebarRootInjected)()
     expect(Object.keys(injected)).toEqual(['startSession', 'toggleSidebar', 'selectPanel', 'hooks'])
     expect(injected.hooks.panels.getSnapshot()).toEqual([])
+    expect(injected.hooks.uiMode.getSnapshot()).toBe('business')
     expect(b.slots.entries('main')).toEqual([])
     // Both arms delegate to the Workspace UI's shared New Session action.
     injected.startSession('workspace' as never)
@@ -137,6 +145,23 @@ describe('ui-sidebar apply', () => {
       await panel.dispose()
       await sidebar.dispose()
     }
+  })
+
+  it('adopts the theme snapshot ui mode into its hook source on every change', async () => {
+    const b = await bench()
+    const sidebar = b.ctx.plugin({ inject: [...inject], apply })
+    await sidebar.await()
+    const injected = (b.slots.entries('sidebar')[0]!.inject as () => SidebarRootInjected)()
+    expect(injected.hooks.uiMode.getSnapshot()).toBe('business')
+    // The listener only reads snapshot.uiMode; the remaining fields are filler.
+    const snapshot = { uiMode: 'expert' } as unknown as ThemeSnapshot
+    b.setUiMode('expert')
+    b.ctx.emit('theme/change', snapshot)
+    expect(injected.hooks.uiMode.getSnapshot()).toBe('expert')
+    // A same-value publish does not disturb the source.
+    b.ctx.emit('theme/change', snapshot)
+    expect(injected.hooks.uiMode.getSnapshot()).toBe('expert')
+    await sidebar.dispose()
   })
 
   it('removes the entry and child declaration on teardown', async () => {

@@ -138,6 +138,9 @@ function drag(handle: Element, fromX: number, toX: number): void {
 
 beforeEach(() => {
   originalTitle = document.title
+  // The panel width persists browser-locally; each mounted frame starts from
+  // an empty store, not a previous test's saved preference.
+  localStorage.clear()
   frameWidth = 1920
   selectedSession = 's-test' as SessionId
   selectedSessionTitle = undefined

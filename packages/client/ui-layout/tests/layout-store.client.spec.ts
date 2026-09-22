@@ -2,9 +2,10 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createLayoutStore } from '../src/client/stores.ts'
+import { layoutPersistence } from '../src/client/persistence.ts'
 import type { MainPanelId } from '../src/client/service.ts'
 
-beforeEach(() => { vi.stubGlobal('innerWidth', 1920) })
+beforeEach(() => { vi.stubGlobal('innerWidth', 1920); localStorage.clear() })
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('createLayoutStore', () => {
@@ -25,15 +26,19 @@ describe('createLayoutStore', () => {
     })
   })
 
-  it('creates independent instances without browser persistence', () => {
+  it('creates independent in-memory instances while sharing the persisted preference', () => {
     const write = vi.spyOn(Storage.prototype, 'setItem')
     const a = createLayoutStore().create()
     const b = createLayoutStore().create()
     a.actions.setSidebar(400)
     a.actions.openRightbar(true, false)
+    // The width preference crosses instances through storage; the left
+    // sidebar's drag width stays instance-local.
     expect(b.store.getSnapshot().layoutInfo.sidebar).toBe(280)
     expect(b.store.getSnapshot().layoutInfo.rightbar).toBeNull()
-    expect(write).not.toHaveBeenCalled()
+    a.actions.setRightbar(640)
+    expect(write).toHaveBeenCalledWith(layoutPersistence, JSON.stringify({ rightbar: 640 }))
+    expect(createLayoutStore().create().store.getSnapshot().layoutInfo.rightbar).toBe(640)
   })
 
   it('clamps the sidebar to 264–420px', () => {

@@ -15,6 +15,8 @@ English | [中文](README.zh.md)
 
 - [Conversation assembly](#conversation-assembly)
 - [Shell and standard props](#shell-and-standard-props)
+- [Hero mode selection](#hero-mode-selection)
+- [Input-area shell layers](#input-area-shell-layers)
 - [Temporary composer entries](#temporary-composer-entries)
 - [Model Experience](#model-experience)
 - [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
@@ -69,6 +71,16 @@ Disabled Send and Stop buttons suppress their tooltips, including a Stop button 
 File chips and editable skill references share a whole-reference hover background and follow the composer's line height and text baseline. The first click delegates preview opening to the registered reference source immediately, including the first click of a double-click sequence. Subsequent clicks retain native text selection; an existing noncollapsed selection suppresses pointer preview activation. Previewing does not change the draft, its clipboard projection, or submission.
 
 When another writer owns the Session, the send-error toast asks the user to quit other running DSH instances and retry.
+
+<a id="hero-mode-selection"></a>
+## Hero mode selection
+
+Mode selection on the blank-session Hero is the agent-preset chip rendered beside the workspace picker (the `conversation.hero.agentPreset` seat, owned by `ui-agent-preset`); the Hero itself builds no scenario-entry surface. Picking a preset stages the composition the next blank session runs — for example the shipped `drawing-split` preset carries the drawing-PDF split workflow — while reviewing, editing, and sending stay on the single resident submit chain.
+
+<a id="input-area-shell-layers"></a>
+## Input-area shell layers
+
+The resident composer card is a three-layer shell: visual grouping and ordering only, with every control keeping its existing owner, seat, and behavior. The top layer is the current task context: the session's workspace identity, the owner `accessory` chrome, and the selected-file attachment rail. The workspace identity is a read-only folder-and-title line resolved from the standing global seats — the owning workspace's title wins, and the session's cwd basename bridges only while the workspace list is still loading, so a deleted workspace's name never resurfaces through cwd once the list has settled; the hero variant keeps its interactive workspace chip row above the card instead of duplicating it inside, and the no-Session surface names nothing. The middle layer is the request input: the one Lexical draft surface, untouched. The bottom layer is execution controls: add-material and common capabilities on the left, model, execution policy, and Send/Stop on the right, with the control row's internal order and the submit state machine unchanged. An empty context layer collapses to no box at all, so it consumes none of the card's row gap and the editor keeps its legacy seat. Task-type context (plan mode, an active goal, the claimed command, the whole-queue steering gesture) stays communicated by the editor's own placeholder and hint, and the transient notice strip and error toast stay outside the layers. The layer chrome adopts the P6 interface typography roles (`--dsw-ui-font-secondary` and its line height for the identity line).
 
 <a id="temporary-composer-entries"></a>
 ## Temporary composer entries

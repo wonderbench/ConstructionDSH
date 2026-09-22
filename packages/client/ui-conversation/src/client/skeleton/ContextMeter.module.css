@@ -54,8 +54,8 @@
   background: var(--dsw-specific-menu);
   --dsw-elevation-stroke-color: var(--dsw-alias-border-l1);
   box-shadow: var(--dsw-elevation-prominent);
-  font-size: 12px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-secondary);
   cursor: default;
 }

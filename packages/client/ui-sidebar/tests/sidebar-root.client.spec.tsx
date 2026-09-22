@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ReactNode } from 'react'
+import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {
-  SidebarFooterActionOwnerProps, SidebarRootComponentProps, SidebarSectionOwnerProps,
+  SidebarFooterActionOwnerProps, SidebarPanelMetadata, SidebarRootComponentProps, SidebarSectionOwnerProps,
   SidebarSettingsOwnerProps,
 } from '../src/client/contract/slots.ts'
 import { HeaderLeadingControls, type HeaderLeadingControlsProps } from '../src/client/HeaderLeadingControls.tsx'
@@ -17,6 +18,11 @@ import { en as commonEn } from '@deepseek-ai/dsh-client-locale/src/locales/en.ts
 const useResource = (() => ({ status: 'none' as const, value: undefined, failure: undefined, reload: () => {} })) as GlobalStandardProps['useResource']
 const usePanelInfo: GlobalStandardProps['usePanelInfo'] = selector => selector({ activePanelId: null })
 
+// The shell reads the presentation mode through the theme-snapshot-bound hook;
+// tests flip this fixture between business and expert.
+let uiModeFixture: 'business' | 'expert' = 'business'
+const useUiMode: SidebarRootComponentProps['useUiMode'] = selector => selector(uiModeFixture)
+
 // English-dictionary translate stub: the shell renders the same copy the
 // assertions below query by accessible name.
 const t: SidebarRootComponentProps['t'] = key =>
@@ -24,6 +30,7 @@ const t: SidebarRootComponentProps['t'] = key =>
 
 afterEach(() => {
   cleanup()
+  uiModeFixture = 'business'
   delete document.documentElement.dataset.platform
   vi.unstubAllEnvs()
   vi.useRealTimers()
@@ -49,7 +56,7 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
     <SidebarRoot
       collapsed={current.collapsed} width={current.width}
       useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
-      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])}
+      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])} useUiMode={useUiMode}
       useResource={useResource} useWorkspaces={neverHook}
       startSession={startSession} toggleSidebar={toggleSidebar} t={t}
       renderSlot={((
@@ -109,56 +116,37 @@ describe('SidebarRoot shell', () => {
     expect(b.toggleSidebar).toHaveBeenCalledOnce()
   })
 
-  it('renders generic brand fallbacks when no package fills the slots', () => {
-    vi.stubEnv('DSH_CLIENT_COMMIT_HASH', '0123456')
-    vi.stubEnv('DSH_CLIENT_GIT_DIRTY', 'true')
-    vi.stubEnv('DSH_CLIENT_VERSION', '1.2.3-rc.4')
+  it('renders the custom brand logo fallbacks when no package fills the slots', () => {
     const { container } = render(<SidebarRoot
       collapsed={false} width={300}
       useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
-      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])}
+      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])} useUiMode={useUiMode}
       useResource={useResource} useWorkspaces={neverHook}
       startSession={vi.fn()} toggleSidebar={vi.fn()} t={t}
       renderSlot={((_key: string, _owner: unknown, options?: { fallback?: ReactNode }) =>
         options?.fallback ?? null) as SidebarRootComponentProps['renderSlot']}
     />)
 
-    expect(screen.getByText('DSH Local Build')).toBeTruthy()
-    expect(screen.getByText('1.2.3-rc.4-0123456-dirty')).toBeTruthy()
-    expect(container.querySelector('svg')).not.toBeNull()
+    const expandedLogo = container.querySelector('img[src="/brand-logo2.png"]')
+    expect(expandedLogo).not.toBeNull()
+    expect(expandedLogo?.getAttribute('src')).toBe('/brand-logo2.png')
+    expect(container.textContent).not.toContain('DSH Local Build')
   })
 
-  it.each([
-    [{ DSH_CLIENT_VERSION: '1.2.3' }, '1.2.3'],
-    [{ DSH_CLIENT_COMMIT_HASH: 'abcdef0', DSH_CLIENT_VERSION: '1.2.3' }, '1.2.3-abcdef0'],
-  ])('omits unavailable build-version suffixes from %j', (environment, expected) => {
-    for (const [name, value] of Object.entries(environment)) vi.stubEnv(name, value)
-    render(<SidebarRoot
-      collapsed={false} width={300}
+  it('renders the collapsed rail logo fallback', () => {
+    const { container } = render(<SidebarRoot
+      collapsed width={300}
       useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
-      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])}
+      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])} useUiMode={useUiMode}
       useResource={useResource} useWorkspaces={neverHook}
       startSession={vi.fn()} toggleSidebar={vi.fn()} t={t}
       renderSlot={((_key: string, _owner: unknown, options?: { fallback?: ReactNode }) =>
         options?.fallback ?? null) as SidebarRootComponentProps['renderSlot']}
     />)
 
-    expect(screen.getByText('DSH Local Build')).toBeTruthy()
-    expect(screen.getByText(expected)).toBeTruthy()
-  })
-
-  it('retains the local-build fallback without complete build metadata', () => {
-    render(<SidebarRoot
-      collapsed={false} width={300}
-      useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
-      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])}
-      useResource={useResource} useWorkspaces={neverHook}
-      startSession={vi.fn()} toggleSidebar={vi.fn()} t={t}
-      renderSlot={((_key: string, _owner: unknown, options?: { fallback?: ReactNode }) =>
-        options?.fallback ?? null) as SidebarRootComponentProps['renderSlot']}
-    />)
-
-    expect(screen.getByText('DSH Local Build')).toBeTruthy()
+    const railLogo = container.querySelector('img[src="/brand-logo1.png"]')
+    expect(railLogo).not.toBeNull()
+    expect(railLogo?.getAttribute('src')).toBe('/brand-logo1.png')
   })
 
   it('hands the region its wide flag and clamps expandSidebar to the collapsed state', () => {
@@ -198,7 +186,7 @@ describe('SidebarRoot shell', () => {
     render(<SidebarRoot
       collapsed width={56}
       useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
-      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])}
+      usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])} useUiMode={useUiMode}
       useResource={useResource} useWorkspaces={neverHook}
       startSession={vi.fn()} toggleSidebar={vi.fn()} t={t}
       renderSlot={((key: string) => key === 'sidebar.toggle.badge'
@@ -218,6 +206,77 @@ describe('SidebarRoot shell', () => {
     expect(screen.getByRole('tooltip').textContent).toBe('Open sidebar')
     fireEvent.mouseLeave(toggle)
     expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+})
+
+describe('SidebarRoot presentation mode', () => {
+  const PANELS: SidebarPanelMetadata[] = [
+    { id: 'plugins' as MainPanelId, order: 0, label: 'Plugins' },
+    { id: 'terminal' as MainPanelId, order: 1, label: 'Terminal' },
+    { id: 'chat' as MainPanelId, order: 2, label: 'Chat' },
+  ]
+
+  function renderShell(panels: SidebarPanelMetadata[] = PANELS) {
+    const selectPanel = vi.fn()
+    let settingsRendered = false
+    // A fresh element per render: React bails out when the rerendered element
+    // is referentially identical, which would hide the fixture flip.
+    const element = () => (
+      <SidebarRoot
+        collapsed={false} width={300}
+        useSessions={neverHook} useSessionStatus={useSessionStatus} useSessionRetainInfo={neverHook}
+        usePanelInfo={usePanelInfo} selectPanel={selectPanel}
+        usePanels={selector => selector(panels)} useUiMode={useUiMode}
+        useResource={useResource} useWorkspaces={neverHook}
+        startSession={vi.fn()} toggleSidebar={vi.fn()} t={t}
+        renderSlot={(((key: string, _owner: unknown, options?: { only?: string }) => {
+          if (key === 'sidebar.settings') {
+            settingsRendered = true
+            return <div data-testid="settings-seat" />
+          }
+          if (key === 'sidebar.panellist') return <span data-testid={`icon-${options?.only}`} />
+          return null
+        }) as SidebarRootComponentProps['renderSlot'])}
+      />
+    )
+    const view = render(element())
+    return {
+      view, selectPanel,
+      settingsRendered: () => settingsRendered,
+      // The hook fixture flip is only observable through a re-render, exactly
+      // as the bound theme-snapshot hook re-renders the shell on change.
+      rerender: () => { view.rerender(element()) },
+    }
+  }
+
+  it('hides technical panel rows in the default business mode, keeping the settings seat', () => {
+    const b = renderShell()
+    expect(screen.queryByRole('button', { name: 'Plugins' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Terminal' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Chat' })).toBeTruthy()
+    // The mode switch stays reachable: the settings seat is never filtered.
+    expect(b.settingsRendered()).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Chat' }))
+    expect(b.selectPanel).toHaveBeenCalledWith('chat')
+  })
+
+  it('drops the whole panel nav when every entry is technical in business mode', () => {
+    const b = renderShell([{ id: 'plugins' as MainPanelId, order: 0, label: 'Plugins' }])
+    expect(screen.queryByRole('navigation')).toBeNull()
+    // Expert mode brings the row back.
+    uiModeFixture = 'expert'
+    b.rerender()
+    expect(screen.getByRole('button', { name: 'Plugins' })).toBeTruthy()
+  })
+
+  it('shows every registered panel row in expert mode', () => {
+    uiModeFixture = 'expert'
+    const b = renderShell()
+    expect(screen.getByRole('button', { name: 'Plugins' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Terminal' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Chat' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Terminal' }))
+    expect(b.selectPanel).toHaveBeenCalledWith('terminal')
   })
 })
 

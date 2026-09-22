@@ -64,12 +64,11 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.collapsed .newSession')?.get('width')).toBe('36px')
   })
 
-  it('keeps the slotted brand row at the full artwork height', () => {
+  it('keeps the slotted brand row geometry and sizes the custom logos', () => {
     expect(declarations('.brandIdentity')?.get('height')).toBe('24px')
-    expect(declarations('.brandName')?.get('height')).toBe('24px')
-    expect(declarations('.brandName')?.get('line-height')).toBe('24px')
-    expect(declarations('.brandName')?.get('font-size')).toBe('18px')
-    expect(declarations('.fallbackBrandName')?.get('font-size')).toBe('17px')
-    expect(declarations('.fallbackBrandName')?.get('white-space')).toBe('nowrap')
+    expect(declarations('.brandLogoWide')?.get('height')).toBe('40px')
+    expect(declarations('.brandLogoWide')?.get('width')).toBe('auto')
+    expect(declarations('.brandLogoRail')?.get('height')).toBe('22px')
+    expect(declarations('.brandLogoRail')?.get('width')).toBe('auto')
   })
 })

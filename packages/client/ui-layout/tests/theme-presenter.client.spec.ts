@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { ThemePreference, ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
-import { DARK_ATTRIBUTE, THEME_SOURCE_ATTRIBUTE, ThemePresenter } from '@deepseek-ai/dsh-client-ui-layout/src/client/theme-presenter.ts'
+import type { ThemePreference, ThemeSnapshot, UiMode } from '@deepseek-ai/dsh-client-ui-theme/client'
+import {
+  DARK_ATTRIBUTE, OUTPUT_DENOISE_ATTRIBUTE, THEME_SOURCE_ATTRIBUTE, UI_MODE_ATTRIBUTE, ThemePresenter,
+} from '@deepseek-ai/dsh-client-ui-layout/src/client/theme-presenter.ts'
 
 const LIGHT_THEME_COLOR = 'rgb(255, 255, 255)'
 const DARK_THEME_COLOR = 'rgb(21, 21, 23)'
@@ -12,10 +14,12 @@ function snapshot(
   tokens: Record<string, string> = {},
   fontSize = 14,
   preference: ThemePreference = colorScheme,
+  outputDenoise = false,
+  uiMode: UiMode = 'business',
 ): ThemeSnapshot {
   // The presenter must key off colorScheme, not the id — keep them distinct.
   const active = { id: `${colorScheme}-test`, colorScheme, tokens }
-  return { preference, fontSize, active, themes: [active], revision: 1 }
+  return { preference, fontSize, outputDenoise, uiMode, active, themes: [active], revision: 1 }
 }
 
 function clearThemePresentation(): void {
@@ -31,6 +35,8 @@ beforeEach(() => {
   document.documentElement.style.removeProperty('color-scheme')
   document.documentElement.removeAttribute(THEME_SOURCE_ATTRIBUTE)
   document.body.removeAttribute(DARK_ATTRIBUTE)
+  document.body.removeAttribute(OUTPUT_DENOISE_ATTRIBUTE)
+  document.body.removeAttribute(UI_MODE_ATTRIBUTE)
   document.body.removeAttribute('style')
   const style = document.createElement('style')
   style.dataset.themePresenterTest = ''
@@ -94,6 +100,29 @@ describe('ThemePresenter', () => {
     expect(document.documentElement.getAttribute(THEME_SOURCE_ATTRIBUTE)).toBe('dark')
     presenter.dispose()
     expect(document.documentElement.hasAttribute(THEME_SOURCE_ATTRIBUTE)).toBe(false)
+  })
+
+  it('publishes the output-denoise attribute only while the flag is on', () => {
+    const presenter = new ThemePresenter()
+    presenter.apply(snapshot('light'))
+    expect(document.body.hasAttribute(OUTPUT_DENOISE_ATTRIBUTE)).toBe(false)
+    presenter.apply(snapshot('light', {}, 14, 'light', true))
+    expect(document.body.hasAttribute(OUTPUT_DENOISE_ATTRIBUTE)).toBe(true)
+    presenter.apply(snapshot('light'))
+    expect(document.body.hasAttribute(OUTPUT_DENOISE_ATTRIBUTE)).toBe(false)
+    presenter.dispose()
+  })
+
+  it('publishes the ui mode as the attribute value and follows changes', () => {
+    const presenter = new ThemePresenter()
+    presenter.apply(snapshot('light'))
+    expect(document.body.getAttribute(UI_MODE_ATTRIBUTE)).toBe('business')
+    presenter.apply(snapshot('light', {}, 14, 'light', false, 'expert'))
+    expect(document.body.getAttribute(UI_MODE_ATTRIBUTE)).toBe('expert')
+    presenter.apply(snapshot('light'))
+    expect(document.body.getAttribute(UI_MODE_ATTRIBUTE)).toBe('business')
+    presenter.dispose()
+    expect(document.body.hasAttribute(UI_MODE_ATTRIBUTE)).toBe(false)
   })
 
   it('dispose removes color-scheme, the attribute, the font-size axis, and every applied variable, sparing foreign inline styles', () => {

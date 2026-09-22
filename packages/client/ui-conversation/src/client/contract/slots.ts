@@ -412,8 +412,6 @@ export interface ComposerChainProps {
 export interface HeroBrandMarkOwnerProps {
   /** Requested square edge in pixels. */
   size: number
-  /** Host class preserving the surrounding mark geometry. */
-  className?: string | undefined
 }
 
 /** Full props of the resident optional-Session Conversation shell. */

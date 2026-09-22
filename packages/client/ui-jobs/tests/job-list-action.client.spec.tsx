@@ -2,9 +2,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
+import type {
+  SessionListState,
+  SubagentCatalogSnapshot,
+} from '@deepseek-ai/dsh-api-session-controller/client'
+import type { SessionStatusSnapshot } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { SessionJob as JobView } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import { GoalId } from '@deepseek-ai/dsh-goal'
+import type { GoalProjection } from '@deepseek-ai/dsh-goal/client'
+import type { PlanProjection } from '@deepseek-ai/dsh-plan-mode/client'
+import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import { JobListAction, type JobListActionProps } from '../src/client/JobListAction.tsx'
 import { zh } from '../src/client/locales.ts'
 
@@ -35,18 +43,111 @@ function job(over: Partial<JobView> = {}): JobView {
   }
 }
 
-function props(jobs: readonly JobView[] | undefined): JobListActionProps {
+function goalProjection(over: Partial<GoalProjection['goal']> = {}): GoalProjection {
+  return {
+    goal: {
+      id: GoalId('goal-1'),
+      revision: 1,
+      objective: '拆解这批图纸',
+      phase: 'active',
+      maxGoalRounds: 3,
+      ...over,
+    },
+    roundsStarted: 0,
+    createdAt: START,
+    updatedAt: START,
+  }
+}
+
+function goalFace(projection: GoalProjection | null): HostObservable<GoalProjection | null> {
+  return {
+    getSnapshot: () => projection,
+    subscribe: () => () => {},
+  }
+}
+
+/** One catalog row, as folded by the Session Controller's subagent listing. */
+type CatalogEntry = SubagentCatalogSnapshot['entries'][number]
+
+/**
+ * Child-row overrides a test may set. The built literal is re-narrowed to the
+ * catalog union: a `mode: 'continuable'` override also requires a label, which
+ * the per-call object literal already supplies.
+ */
+function childEntry(over: Partial<{
+  readonly id: SessionId
+  readonly activity: 'running' | 'inactive'
+  readonly hasChildren: boolean
+  readonly mode: 'one-shot' | 'continuable'
+  readonly label: string
+}> = {}): CatalogEntry {
+  return {
+    kind: 'child',
+    id: 'child-1' as SessionId,
+    activity: 'running',
+    hasChildren: false,
+    mode: 'one-shot',
+    ...over,
+  } as CatalogEntry
+}
+
+function diagnosticEntry(
+  reason: Extract<CatalogEntry, { kind: 'diagnostic' }>['reason'],
+  id = 'child-x',
+): CatalogEntry {
+  return { kind: 'diagnostic', id: id as SessionId, reason }
+}
+
+function catalog(entries: readonly CatalogEntry[]): SubagentCatalogSnapshot {
+  return { entries, state: 'ready', error: null }
+}
+
+/** Optional aggregation sources beyond jobs and the goal. */
+interface StatusOptions {
+  /** Value returned by the `plan` projection seat; absent when undefined. */
+  plan?: PlanProjection
+  /** Whether the session has a pending interaction awaiting its user. */
+  pending?: boolean
+  /** Direct-child catalog mirror for this session. */
+  catalog?: SubagentCatalogSnapshot
+}
+
+function props(
+  jobs: readonly JobView[] | undefined,
+  goal?: GoalProjection | null,
+  options: StatusOptions = {},
+): JobListActionProps {
   const state = {
     ids: [SESSION],
     byId: {},
     phase: 'ready',
-    subagentsByParent: {},
+    subagentsByParent: options.catalog === undefined ? {} : { [SESSION]: options.catalog },
     jobsBySession: jobs === undefined ? {} : { [SESSION]: jobs },
   } satisfies SessionListState
+  const status: SessionStatusSnapshot = options.pending === true
+    ? new Map([[SESSION, {
+      running: true,
+      pendingInteraction: { key: 'approval:1', kind: 'approval', sessionId: SESSION },
+      completionUnread: false,
+    }]])
+    : new Map()
   function useSessions<T>(select: (snapshot: SessionListState) => T): T {
     return select(state)
   }
-  return { sessionId: SESSION, useSessions, t } as unknown as JobListActionProps
+  function useSessionStatus<T>(select: (snapshot: SessionStatusSnapshot) => T): T {
+    return select(status)
+  }
+  function useProjection(key: 'plan' | 'goal'): PlanProjection | undefined {
+    return key === 'plan' ? options.plan : undefined
+  }
+  return {
+    sessionId: SESSION,
+    useSessions,
+    useSessionStatus,
+    useProjection,
+    t,
+    goalFace: goal === undefined ? undefined : goalFace(goal),
+  } as unknown as JobListActionProps
 }
 
 /**
@@ -83,6 +184,69 @@ describe('JobListAction visibility', () => {
 
     rerender(<JobListAction {...props([])} />)
     expect(container.innerHTML).toBe('')
+  })
+})
+
+describe('JobListAction goal summary', () => {
+  it('shows the objective and phase above the rows while the list is open', () => {
+    render(<JobListAction {...props([job()], goalProjection())} />)
+    fireEvent.click(screen.getByRole('button'))
+    const section = screen.getByRole('note', { name: '当前目标' })
+    expect(section.textContent).toContain('拆解这批图纸')
+    expect(section.textContent).toContain('进行中')
+    expect(screen.getByRole('list', { name: zh['list.aria'] })).toBeDefined()
+  })
+
+  it('renders no goal section without a projection, with none set, or when complete', () => {
+    const noFace = render(<JobListAction {...props([job()])} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note')).toBeNull()
+    cleanup()
+
+    const none = render(<JobListAction {...props([job()], null)} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note')).toBeNull()
+    cleanup()
+
+    const complete = render(<JobListAction {...props([job()], goalProjection({ phase: 'complete' }))} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note')).toBeNull()
+    noFace.unmount()
+    none.unmount()
+    complete.unmount()
+  })
+
+  it('follows a goal change while the popover stays open', () => {
+    let projection: GoalProjection | null = goalProjection()
+    const listeners = new Set<() => void>()
+    const face: HostObservable<GoalProjection | null> = {
+      getSnapshot: () => projection,
+      subscribe: (fn) => {
+        listeners.add(fn)
+        return () => { listeners.delete(fn) }
+      },
+    }
+    const state = {
+      ids: [SESSION], byId: {}, phase: 'ready', subagentsByParent: {},
+      jobsBySession: { [SESSION]: [job()] },
+    } satisfies SessionListState
+    function useSessions<T>(select: (snapshot: SessionListState) => T): T {
+      return select(state)
+    }
+    function useSessionStatus<T>(select: (snapshot: SessionStatusSnapshot) => T): T {
+      return select(new Map())
+    }
+    function useProjection(_key: 'plan' | 'goal'): PlanProjection | undefined {
+      return undefined
+    }
+    render(<JobListAction {...{
+      sessionId: SESSION, useSessions, useSessionStatus, useProjection, t, goalFace: face,
+    } as unknown as JobListActionProps} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.getByRole('note', { name: '当前目标' }).textContent).toContain('进行中')
+    projection = goalProjection({ phase: 'blocked' })
+    act(() => { for (const listener of listeners) listener() })
+    expect(screen.getByRole('note', { name: '当前目标' }).textContent).toContain('已阻塞')
   })
 })
 
@@ -235,5 +399,116 @@ describe('JobListAction wire tolerance', () => {
     ])} />)
     fireEvent.click(screen.getByRole('button'))
     expect(rowCells().map(cells => cells[1])).toEqual(['later', 'earlier'])
+  })
+})
+
+describe('JobListAction pending confirmation', () => {
+  it('shows the notice first when an interaction awaits the user', () => {
+    render(<JobListAction {...props([job()], undefined, { pending: true })} />)
+    fireEvent.click(screen.getByRole('button'))
+    const section = screen.getByRole('note', { name: zh['pending.section'] })
+    expect(section.textContent).toContain('需要你确认')
+  })
+
+  it('renders no notice when nothing is pending', () => {
+    render(<JobListAction {...props([job()])} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note', { name: zh['pending.section'] })).toBeNull()
+  })
+
+  it('orders the pending notice ahead of the goal section', () => {
+    render(<JobListAction {...props([job()], goalProjection(), { pending: true })} />)
+    fireEvent.click(screen.getByRole('button'))
+    const names = screen.getAllByRole('note').map(note => note.getAttribute('aria-label'))
+    expect(names).toEqual([zh['pending.section'], zh['goal.section']])
+  })
+})
+
+describe('JobListAction plan state', () => {
+  it('shows plan mode while the effective target is plan mode', () => {
+    render(<JobListAction {...props([job()], undefined, { plan: { active: true, pending: false } })} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.getByRole('note', { name: zh['plan.section'] }).textContent).toContain('计划模式')
+  })
+
+  it('shows plan mode while a selection is turning it on', () => {
+    render(<JobListAction {...props([job()], undefined, { plan: { active: false, pending: true } })} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.getByRole('note', { name: zh['plan.section'] }).textContent).toContain('计划模式')
+  })
+
+  it('renders no plan row without the capability, while off, or while turning off', () => {
+    const off = render(<JobListAction {...props([job()])} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note', { name: zh['plan.section'] })).toBeNull()
+    cleanup()
+
+    const inactive = render(<JobListAction {...props([job()], undefined, { plan: { active: false, pending: false } })} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note', { name: zh['plan.section'] })).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, { plan: { active: true, pending: true } })} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('note', { name: zh['plan.section'] })).toBeNull()
+    off.unmount()
+    inactive.unmount()
+  })
+})
+
+describe('JobListAction subagent catalog', () => {
+  it('renders no subagent section without a loaded catalog or with an empty one', () => {
+    const none = render(<JobListAction {...props([job()])} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('list', { name: zh['subagent.section'] })).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, { catalog: catalog([]) })} />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.queryByRole('list', { name: zh['subagent.section'] })).toBeNull()
+    none.unmount()
+  })
+
+  it('renders child rows with mode chip, label, and activity word', () => {
+    render(<JobListAction {...props([job()], undefined, {
+      catalog: catalog([
+        childEntry({ id: 'child-1' as SessionId, label: '图纸拆解', activity: 'running' }),
+        childEntry({
+          id: 'child-2' as SessionId, mode: 'continuable', label: '资料整理', activity: 'inactive',
+        }),
+      ]),
+    })} />)
+    fireEvent.click(screen.getByRole('button'))
+    const rows = within(screen.getByRole('list', { name: zh['subagent.section'] }))
+      .getAllByRole('listitem')
+      .map(row => [...row.children].map(cell => cell.textContent ?? '').filter(text => text !== ''))
+    expect(rows).toEqual([
+      ['一次性', '图纸拆解', '运行中'],
+      ['可继续', '资料整理', '未运行'],
+    ])
+  })
+
+  it('falls back to the durable id when a one-shot child has no label', () => {
+    render(<JobListAction {...props([job()], undefined, {
+      catalog: catalog([childEntry({ id: 'child-9' as SessionId })]),
+    })} />)
+    fireEvent.click(screen.getByRole('button'))
+    const row = within(screen.getByRole('list', { name: zh['subagent.section'] })).getByRole('listitem')
+    expect(row.textContent).toContain('child-9')
+  })
+
+  it('renders every diagnostic reason without a mode chip or activity word', () => {
+    render(<JobListAction {...props([job()], undefined, {
+      catalog: catalog([
+        diagnosticEntry('corrupt', 'child-a'),
+        diagnosticEntry('unavailable', 'child-b'),
+        diagnosticEntry('unsupported', 'child-c'),
+      ]),
+    })} />)
+    fireEvent.click(screen.getByRole('button'))
+    const rows = within(screen.getByRole('list', { name: zh['subagent.section'] }))
+      .getAllByRole('listitem')
+      .map(row => [...row.children].map(cell => cell.textContent ?? '').filter(text => text !== ''))
+    expect(rows).toEqual([['记录损坏'], ['暂不可读'], ['无法支持']])
   })
 })

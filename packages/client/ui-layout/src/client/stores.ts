@@ -4,6 +4,7 @@
  */
 import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-store'
 import type { MainPanelId } from './service.ts'
+import { readLayoutPrefs, writeLayoutPrefs } from './persistence.ts'
 import {
   clampWidth, RIGHTBAR_DEFAULT_RATIO, RIGHTBAR_MAX_RATIO, RIGHTBAR_MIN,
   SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN,
@@ -70,7 +71,9 @@ type LayoutActions = {
  * Create the layout panel store handle. For the sidebar the preference IS the
  * width, so closing it forgets its drag width — reopening restores the contract
  * default. The right panel initializes at 45% of the frame on first opening
- * and keeps that px preference across resizes and close. Drag writes clamp to
+ * and keeps that px preference across resizes and close; a reloaded window
+ * adopts the persisted width through the same drag-clamped write entry, so a
+ * narrower frame re-clamps it on adoption. Drag writes clamp to
  * the current frame's range. Narrow sidebar toggles change only the expansion
  * override; opening the right panel clears that override.
  * @returns the store handle (spec + type + identity + factory in one).
@@ -142,5 +145,22 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
       },
     },
   })
-  return handle
+  return { ...handle, create(scopeKey) {
+    const instance = handle.create(scopeKey)
+    // Only the window-level root instance carries the preference across a
+    // reload; scoped instances stay in memory.
+    if (scopeKey !== undefined) return instance
+    const saved = readLayoutPrefs()
+    if (saved !== undefined) instance.actions.setRightbar(saved.rightbar)
+    let last = instance.getSnapshot().layoutInfo.rightbar
+    instance.subscribe(() => {
+      const width = instance.getSnapshot().layoutInfo.rightbar
+      if (width === last) return
+      last = width
+      // A null preference (the panel was never opened) writes nothing; the
+      // previously saved width stands until a real drag replaces it.
+      if (width !== null) writeLayoutPrefs(width)
+    })
+    return instance
+  } }
 }

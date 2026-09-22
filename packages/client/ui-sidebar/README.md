@@ -35,6 +35,8 @@ The expanded brand row renders `sidebar.brand.mark` and `sidebar.brand.name` as 
 
 Plugins add an icon component to the root-scoped `sidebar.panellist` list with an `id`, optional `order`, and a string or locale-aware `label`. The same id addresses the component registered in the layout's root-scoped `main` keyed slot; selecting a missing main entry throws without changing the current selection. The label supplies plain visible text, the accessible name, and the collapsed tooltip. Each row reads its own selected state through `usePanelInfo`; moving DOM focus to search or a directory picker does not change the displayed panel or its selected row. With no registrations, neither the list nor spacing for it is rendered. The shipped composition registers no example panel.
 
+Presentation mode: in the default `business` mode the shell does not render panel rows whose ids lead to technical surfaces — today the `plugins` marker, with `terminal` reserved for when such a panel registers. `expert` mode shows every registered row. The marker is the stable panel id (the same id that addresses the `main` keyed slot), so a package opts its entry in by id and the shell never imports the registrant. The mode is presentation-only and never filters approvals, the settings seat, or the mode switch itself; it arrives through the theme snapshot hook (`useUiMode`).
+
 ### Collapse behavior
 
 The top expand button hosts the optional, non-interactive `sidebar.toggle.badge` slot while collapsed. Its occupant supplies status and tooltip content without adding another action or changing the button's navigation behavior.

@@ -4,7 +4,8 @@
  * controls), `body[data-ds-dark-theme]` for the token palette, the active
  * theme's alias-token overrides as inline CSS variables on body, the content
  * font-size axis (`--dsh-content-font-size`), `html[data-ds-theme-source]`
- * for native-chrome mirroring, and one presenter-owned
+ * for native-chrome mirroring, the presentation mode
+ * (`body[data-dsw-ui-mode]`), and one presenter-owned
  * `meta[name="theme-color"]` for surrounding browser UI. Pure DOM writes, no
  * React involvement; the presenter only ever retracts what it wrote itself,
  * so foreign attributes, metadata, and inline styles survive.
@@ -25,6 +26,20 @@ export const THEME_SOURCE_ATTRIBUTE = 'data-ds-theme-source'
 
 /** Body variable carrying the user's content font size in px. */
 export const CONTENT_FONT_SIZE_VARIABLE = '--dsh-content-font-size'
+
+/**
+ * Body attribute publishing the output-denoise Beta flag. Mirrors
+ * `ThemeSnapshot.outputDenoise`; the value mirrors the same literal the theme
+ * boot script writes, so the pre-plugin paint and the presenter agree.
+ */
+export const OUTPUT_DENOISE_ATTRIBUTE = 'data-dsw-output-denoise'
+
+/**
+ * Body attribute publishing the presentation mode (`business` or `expert`).
+ * Always written with the snapshot's mode — unlike the presence-based denoise
+ * flag — and removed on dispose; an absent attribute reads as `business`.
+ */
+export const UI_MODE_ATTRIBUTE = 'data-dsw-ui-mode'
 
 /** Applies theme snapshots to the document; one instance per plugin fiber. */
 export class ThemePresenter {
@@ -57,6 +72,9 @@ export class ThemePresenter {
     if (scheme === 'dark') body.setAttribute(DARK_ATTRIBUTE, '')
     else body.removeAttribute(DARK_ATTRIBUTE)
     body.style.setProperty(CONTENT_FONT_SIZE_VARIABLE, `${snapshot.fontSize}px`)
+    if (snapshot.outputDenoise) body.setAttribute(OUTPUT_DENOISE_ATTRIBUTE, '')
+    else body.removeAttribute(OUTPUT_DENOISE_ATTRIBUTE)
+    body.setAttribute(UI_MODE_ATTRIBUTE, snapshot.uiMode)
     for (const name of this.appliedTokens) body.style.removeProperty(name)
     this.appliedTokens = []
     for (const [name, value] of Object.entries(snapshot.active.tokens)) {
@@ -76,6 +94,8 @@ export class ThemePresenter {
     document.documentElement.removeAttribute(THEME_SOURCE_ATTRIBUTE)
     const body = document.body
     body.removeAttribute(DARK_ATTRIBUTE)
+    body.removeAttribute(OUTPUT_DENOISE_ATTRIBUTE)
+    body.removeAttribute(UI_MODE_ATTRIBUTE)
     body.style.removeProperty(CONTENT_FONT_SIZE_VARIABLE)
     for (const name of this.appliedTokens) body.style.removeProperty(name)
     this.appliedTokens = []

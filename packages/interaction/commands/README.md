@@ -45,6 +45,8 @@ ctx.commands.register({
 
 The handler returns `success` or `error` plus optional UI text that the adapter renders. `recordInput` defaults to true; a command whose own authoritative domain event already carries the payload sets it to false so the session log does not duplicate the input. Registering the same name twice in one scope throws.
 
+An optional `section` (`'add' | 'functions' | 'commands'`) advertises the command's discovery row to capable composer menus, which group declared rows under their section heading; an undeclared command keeps the client's legacy placement. The section is presentation metadata only — it never enters a model request.
+
 ### Command syntax
 
 A command line starts with a slash at byte zero, a lowercase name containing letters, digits, `_` or `-`, and then either end-of-input or whitespace. Everything after the name — including separator whitespace — is the command's `rawInput`, and the command owns its own grammar for it. Lines that are not syntactically a command, or that name an unknown command, are rejected by the adapter instead of becoming a model prompt.

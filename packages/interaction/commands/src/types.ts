@@ -16,6 +16,13 @@ export type CommandSubmitAttachment =
   | ({ readonly type: 'image' } & EncodedImageAttachment)
   | { readonly type: 'file'; readonly receiptId: string }
 
+/**
+ * Composer-menu section a command's discovery row belongs to. Clients group
+ * declared rows under their section heading between the legacy hardcoded
+ * lists; an undeclared command keeps the client's legacy placement.
+ */
+export type CommandSection = 'add' | 'functions' | 'commands'
+
 /** Immutable metadata for a command's optional unstructured input. */
 export interface CommandInputDescriptor {
   /** Placeholder shown before the user supplies free-form input. */
@@ -63,6 +70,8 @@ export interface CommandDescriptor {
   readonly description: string
   /** Optional free-form input hint advertised to capable clients. */
   readonly input?: CommandInputDescriptor
+  /** Composer-menu section for this row; absent keeps the client's legacy placement. */
+  readonly section?: CommandSection
 }
 
 /**

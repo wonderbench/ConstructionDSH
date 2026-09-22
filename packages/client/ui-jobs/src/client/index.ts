@@ -1,10 +1,16 @@
 /**
  * Background-job plugin, browser half: contributes one session-header action
  * that renders this session's `ctx.jobs` records. The data arrives entirely
- * through the `jobsBySession` list mirror, so the plugin issues no RPC and
- * holds no state of its own beyond popover visibility.
+ * through the `jobsBySession` list mirror plus the framework's standard
+ * session seats (`useSessionStatus`, `useProjection`) and the `subagentsByParent`
+ * catalog mirror, so the plugin issues no RPC and holds no state of its own
+ * beyond popover visibility. The open popover aggregates the session's
+ * read-only status: pending confirmation, live goal, plan mode, subagent
+ * catalog rows, and the job list.
  */
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { GoalProjection } from '@deepseek-ai/dsh-goal/client'
+import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import { JobListAction } from './JobListAction.tsx'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -25,6 +31,8 @@ export const inject = ['sessions', 'slots', 'locale']
 
 /**
  * Client plugin body: register the dictionaries and the header action.
+ * The action's inject face carries this session's goal projection so the
+ * popover can summarize it read-only; the plugin itself still issues no RPC.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
@@ -37,6 +45,10 @@ export function apply(ctx: ClientContext): void {
       // After the subagent catalog: session lineage reads before process work.
       order: 20,
       locale: NS,
+      inject: (sessionId) => {
+        const face = ctx.sessions.binding(sessionId)?.session.projections.faceOf('goal')
+        return { goalFace: face as HostObservable<GoalProjection | null | undefined> | undefined }
+      },
     }, JobListAction),
   )
 }

@@ -21,6 +21,7 @@ import type {
   CommandExecution,
   CommandInputDescriptor,
   CommandResult,
+  CommandSection,
   CommandSubmitAttachment,
 } from './types.ts'
 
@@ -73,6 +74,11 @@ export interface CommandDefinition {
    * that payload in the session log.
    */
   readonly recordInput?: boolean
+  /**
+   * Composer-menu section advertising this command's discovery row to
+   * capable clients. Absent keeps the client's legacy placement.
+   */
+  readonly section?: CommandSection
   /** Execute against the receiving agent without sending the command to the model. */
   readonly handler: (invocation: CommandInvocation) => CommandResult | Promise<CommandResult>
 }
@@ -207,12 +213,18 @@ function normalizeDefinition(definition: CommandDefinition): RegisteredCommand {
       ...('attachments' in rawInput && rawInput.attachments === true) ? { attachments: true } : {},
     })
   }
+  const rawSection: unknown = definition.section
+  if (rawSection !== undefined
+    && rawSection !== 'add' && rawSection !== 'functions' && rawSection !== 'commands') {
+    throw new TypeError(`command "${definition.name}" section must be one of "add", "functions", "commands"`)
+  }
   const normalized = Object.freeze({
     ...definition.definitionId === undefined ? {} : { definitionId: definition.definitionId },
     name: definition.name,
     description: definition.description,
     ...input === undefined ? {} : { input },
     ...definition.recordInput === undefined ? {} : { recordInput: definition.recordInput },
+    ...rawSection === undefined ? {} : { section: rawSection },
     handler: definition.handler,
   })
   const descriptor = Object.freeze({
@@ -220,6 +232,7 @@ function normalizeDefinition(definition: CommandDefinition): RegisteredCommand {
     name: normalized.name,
     description: normalized.description,
     ...normalized.input === undefined ? {} : { input: normalized.input },
+    ...normalized.section === undefined ? {} : { section: normalized.section },
   })
   return { definition: normalized, descriptor }
 }
