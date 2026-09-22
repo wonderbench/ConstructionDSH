@@ -7,6 +7,8 @@ import type { ToolCallOwnerProps } from '@deepseek-ai/dsh-client-ui-tool/client'
 import { IconGlobeOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { webCardModel } from '../src/client/tool/models/web-card-model.ts'
 import { GenericToolCard } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { WebRow, webToolview } from '../src/client/tool/toolviews/web-row.tsx'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
@@ -186,7 +188,7 @@ describe('chat row web body', () => {
   it('the GenericToolCard fallback does not promote an unknown tool from metadata alone', () => {
     const view = render(<GenericToolCard {...ownerProps(settledSearch({
       call: { name: 'fx-web', argsRaw: SEARCH_ARGS },
-    }), 'fx-web')} t={t} />)
+    }), 'fx-web')} t={t} tTool={tTool} />)
     toggleRow(view)
     expect(view.container.querySelector('[data-web]')).toBeNull()
     expect(view.getByText('search text')).toBeTruthy()
@@ -196,7 +198,7 @@ describe('chat row web body', () => {
     const view = render(<GenericToolCard {...ownerProps(settledSearch({
       call: { name: 'echo', argsRaw: '{}' },
       meta: undefined,
-    }), 'echo')} t={t} />)
+    }), 'echo')} t={t} tTool={tTool} />)
     expect(view.container.querySelector('[data-web]')).toBeNull()
   })
 })

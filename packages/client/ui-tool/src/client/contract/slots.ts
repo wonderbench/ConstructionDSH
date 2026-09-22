@@ -1,6 +1,6 @@
 /** Tool UI slot declarations and their composed component props. */
 import type {
-  HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime,
+  HostObservable, InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, TranslateNS,
 } from '@deepseek-ai/dsh-client-ui-slots'
 import type { RemoteHostFacts } from '@deepseek-ai/dsh-api-remotes/client'
 import type { OpenFileOptions, ToolCallBlock } from '@deepseek-ai/dsh-client-ui-chat/client'
@@ -96,8 +96,19 @@ export type ToolHostInfoInjected = {
   }
 }
 
+/**
+ * Injected translator for the Tool-owned 'tool' namespace (denoise layering
+ * copy). The locale service binds one stable function per namespace, so the
+ * reference rides inject surfaces without breaking memoization and reads the
+ * active locale at call time.
+ */
+export interface ToolLocaleInjected {
+  /** Translator for the Tool-owned denoise-layer dictionary. */
+  tTool: TranslateNS<'tool'>
+}
+
 /** Full props of the Tool call-tree renderer registered as a `tool-call` Chat Node. */
 export type ToolTreeProps = PropsRuntime<'conversation.chat.node', 'tool-call'>
   & PropsRenderSlots<'tool.call.toolview'>
   & PropsLocale<'conversation'>
-  & InjectFace<ToolHostInfoInjected>
+  & InjectFace<ToolHostInfoInjected & ToolLocaleInjected>

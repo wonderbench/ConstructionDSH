@@ -8,11 +8,13 @@ import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
 import { apply as settingsApply, inject as settingsInject } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { apply, inject, SETTINGS_NS } from '@deepseek-ai/dsh-client-ui-theme/client'
-import type { AppearanceRowInjected, FontSizeRowInjected, ThemeRuntime } from '@deepseek-ai/dsh-client-ui-theme/client'
+import type { AppearanceRowInjected, FontSizeRowInjected, OutputDenoiseRowInjected, ThemeRuntime, UiModeRowInjected } from '@deepseek-ai/dsh-client-ui-theme/client'
 import { THEME_SETTINGS_NAMESPACE, ThemeSettingsSchema } from '../src/theme-settings.ts'
 import { AppearanceRow } from '../src/client/AppearanceRow.tsx'
 import { FontSizeRow } from '../src/client/FontSizeRow.tsx'
-import type { createAppearanceRowStore, createFontSizeRowStore } from '../src/client/settings-store.ts'
+import { OutputDenoiseRow } from '../src/client/OutputDenoiseRow.tsx'
+import { UiModeRow } from '../src/client/UiModeRow.tsx'
+import type { createAppearanceRowStore, createFontSizeRowStore, createOutputDenoiseRowStore, createUiModeRowStore } from '../src/client/settings-store.ts'
 
 // These specs assert the shipped Chinese copy. The lane has no jsdom `window`,
 // so browser-language detection never runs and a fresh LocaleRuntime opens on
@@ -32,7 +34,7 @@ async function bench(isLoopback = true) {
   const locale = new LocaleRuntime(ctx)
   locale.setLocale('zh')
   ctx.provide('locale', locale)
-  const section: Record<string, unknown> = { preference: 'system', fontSize: 14 }
+  const section: Record<string, unknown> = { preference: 'system', fontSize: 14, outputDenoise: false, uiMode: 'business' }
   const namespace = () => ({
     ns: THEME_SETTINGS_NAMESPACE,
     schema: ThemeSettingsSchema.toJSON(),
@@ -86,6 +88,24 @@ function fontSizeFaceOf(slots: SlotRegistry) {
   return { entry, instance, face }
 }
 
+/** The same choreography for the interface-mode row entry. */
+function uiModeFaceOf(slots: SlotRegistry) {
+  const entry = slots.entries(SLOT).find(e => e.component === UiModeRow)!
+  const handle = entry.store as ReturnType<typeof createUiModeRowStore>
+  const instance = handle.create()
+  const face = (entry.inject as unknown as (a: typeof instance.actions) => UiModeRowInjected)(instance.actions)
+  return { entry, instance, face }
+}
+
+/** The same choreography for the output-denoise row entry. */
+function outputDenoiseFaceOf(slots: SlotRegistry) {
+  const entry = slots.entries(SLOT).find(e => e.component === OutputDenoiseRow)!
+  const handle = entry.store as ReturnType<typeof createOutputDenoiseRowStore>
+  const instance = handle.create()
+  const face = (entry.inject as unknown as (a: typeof instance.actions) => OutputDenoiseRowInjected)(instance.actions)
+  return { entry, instance, face }
+}
+
 describe('ui-theme apply', () => {
   it('declares the slot and locale services', () => {
     expect(inject).toEqual(['slots', 'locale', 'remote', 'settingsScope'])
@@ -104,6 +124,9 @@ describe('ui-theme apply', () => {
     const fontEntry = before.slots.entries(SLOT).find(e => e.component === FontSizeRow)!
     expect(fontEntry.options).toMatchObject({ id: 'font-size', order: 11 })
     expect(fontEntry.locale).toBe(SETTINGS_NS)
+    const uiModeEntry = before.slots.entries(SLOT).find(e => e.component === UiModeRow)!
+    expect(uiModeEntry.options).toMatchObject({ id: 'ui-mode', order: 13 })
+    expect(uiModeEntry.locale).toBe(SETTINGS_NS)
 
     const after = await bench()
     const fiber = after.ctx.plugin({ inject: [...inject], apply })
@@ -113,6 +136,7 @@ describe('ui-theme apply', () => {
     await Promise.resolve()
     expect(after.slots.entries(SLOT).some(e => e.component === AppearanceRow)).toBe(true)
     expect(after.slots.entries(SLOT).some(e => e.component === FontSizeRow)).toBe(true)
+    expect(after.slots.entries(SLOT).some(e => e.component === UiModeRow)).toBe(true)
   })
 
   it('projects service snapshots into the row store and routes face writes back', async () => {
@@ -150,6 +174,42 @@ describe('ui-theme apply', () => {
     face.setFontSize(12)
     expect(theme.getTheme().fontSize).toBe(12)
     expect(instance.getSnapshot().fontSize).toBe(12)
+    await vi.waitFor(() => { expect(b.mutate).toHaveBeenCalledTimes(2) })
+  })
+
+  it('projects ui-mode snapshots into its row store and routes face writes back', async () => {
+    const b = await bench()
+    declareItems(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const theme = b.ctx.get('theme') as ThemeRuntime
+    // An event ahead of any inject hits the unbound-actions arm.
+    theme.setUiMode('expert')
+
+    const { instance, face } = uiModeFaceOf(b.slots)
+    // The inject-time re-sync sealed the init window: the mirror is current.
+    expect(instance.getSnapshot().mode).toBe('expert')
+
+    face.setUiMode('business')
+    expect(theme.getTheme().uiMode).toBe('business')
+    expect(instance.getSnapshot().mode).toBe('business')
+    await vi.waitFor(() => { expect(b.mutate).toHaveBeenCalledTimes(2) })
+  })
+
+  it('projects output-denoise snapshots into its row store and routes face writes back', async () => {
+    const b = await bench()
+    declareItems(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const theme = b.ctx.get('theme') as ThemeRuntime
+    // An event ahead of any inject hits the unbound-actions arm.
+    theme.setOutputDenoise(true)
+
+    const { instance, face } = outputDenoiseFaceOf(b.slots)
+    // The inject-time re-sync sealed the init window: the mirror is current.
+    expect(instance.getSnapshot().enabled).toBe(true)
+
+    face.setOutputDenoise(false)
+    expect(theme.getTheme().outputDenoise).toBe(false)
+    expect(instance.getSnapshot().enabled).toBe(false)
     await vi.waitFor(() => { expect(b.mutate).toHaveBeenCalledTimes(2) })
   })
 
@@ -218,7 +278,7 @@ describe('ui-theme apply', () => {
     const b = await bench()
     const host = declareItems(b.slots)
     await b.ctx.plugin({ inject: [...inject], apply }).await()
-    expect(b.slots.entries(SLOT)).toHaveLength(2)
+    expect(b.slots.entries(SLOT)).toHaveLength(4)
 
     // Collapse: the declarer dies, the cascade removes our entries while the
     // apply closure still holds its (now stale) disposers.
@@ -229,6 +289,8 @@ describe('ui-theme apply', () => {
     await Promise.resolve()
     expect(b.slots.entries(SLOT).some(e => e.component === AppearanceRow)).toBe(true)
     expect(b.slots.entries(SLOT).some(e => e.component === FontSizeRow)).toBe(true)
+    expect(b.slots.entries(SLOT).some(e => e.component === OutputDenoiseRow)).toBe(true)
+    expect(b.slots.entries(SLOT).some(e => e.component === UiModeRow)).toBe(true)
   })
 
   it('teardown removes the rows and the dictionaries; teardown without a declaration is quiet', async () => {
@@ -236,7 +298,7 @@ describe('ui-theme apply', () => {
     declareItems(b.slots)
     const fiber = b.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
-    expect(b.slots.entries(SLOT)).toHaveLength(2)
+    expect(b.slots.entries(SLOT)).toHaveLength(4)
     await fiber.dispose()
     expect(b.slots.entries(SLOT)).toHaveLength(0)
     // Dictionary disposal: translation falls back to the bare key.

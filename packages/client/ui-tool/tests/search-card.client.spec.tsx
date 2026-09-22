@@ -9,6 +9,8 @@ import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts
 import { CHAT_SEARCH_MAX_LINES, searchCardModel } from '../src/client/tool/models/search-card-model.ts'
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { SearchRow, searchToolview } from '../src/client/tool/toolviews/search-row.tsx'
 
 type SearchRowProps = Parameters<typeof SearchRow>[0]
@@ -176,7 +178,7 @@ describe('searchCardModel', () => {
 describe('chat row search body (GenericToolCard fallback)', () => {
   const ownerProps = (block: RunningToolCall | ToolResultNode, toolName: string): GenericToolCardProps => ({
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    callId: 'c1', toolName, block, openFile: vi.fn(), t,
+    callId: 'c1', toolName, block, openFile: vi.fn(), t, tTool,
   })
   /** The whole summary row is the expand toggle (ToolRow's unified interaction). */
   const toggleRow = (view: { container: HTMLElement }) => {

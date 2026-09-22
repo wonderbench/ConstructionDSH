@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-client-ui-theme` 让 Web GUI 用户在设置中选择 `light`、`dark` 或 `system`，并把会话正文字号设为 12 至 17 px。回环客户端把两个值存入 `ui-theme` 设置命名空间，本地提供方默认将其持久化到 `$DSH_HOME/settings.yaml`。插件通过 `prefers-color-scheme` 解析 `system` 并发布不可变的 `ThemeSnapshot`；ui-layout 把每份快照应用到文档。本包还提供 `--dsw-*` token 样式表，并注入同步引导，使所选调色板与字号在外壳加载前生效。第三方主题可通过 `ctx.theme` 注册别名 token 覆盖。
+`dsh-client-ui-theme` 让 Web GUI 用户在设置中选择 `light`、`dark` 或 `system`，把会话正文字号设为 12 至 17 px，并选择呈现模式（默认 `business` 或 `expert`）。回环客户端把这些值存入 `ui-theme` 设置命名空间，本地提供方默认将其持久化到 `$DSH_HOME/settings.yaml`。插件通过 `prefers-color-scheme` 解析 `system` 并发布不可变的 `ThemeSnapshot`；ui-layout 把每份快照应用到文档。本包还提供 `--dsw-*` token 样式表，并注入同步引导，使所选调色板、字号与呈现模式在外壳加载前生效。第三方主题可通过 `ctx.theme` 注册别名 token 覆盖。
 
 ## 目录
 
@@ -25,11 +25,15 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-用户从设置（「通用」分区）的两行中切换配色方案与正文字号；在回环浏览器上，两个选择都会跨重启持久化。功能插件通过 `ctx.theme` 消费当前快照，并在 CSS 中读取 `--dsw-*` token；它们不自行管理主题状态。
+用户从设置（「通用」分区）的行中切换配色方案、正文字号、输出降噪 Beta 开关与界面模式；在回环浏览器上，这些选择都会跨重启持久化。功能插件通过 `ctx.theme` 消费当前快照，并在 CSS 中读取 `--dsw-*` token；它们不自行管理主题状态。
 
 ### 外观与字号
 
 插件在「通用」分区注册外观偏好方块与字号步进器。步进器接受 12 至 17 px 的整数，默认值为 14 px。它以相同增量调整会话标题与基础文本，包括用户气泡与 composer 草稿；流内行的标题、摘要与表格跟随比正文低一档的字号，小号文本和代码保持固定字号。每次通过的变更都经 Host settings API 写入。连续快速变更按操作顺序携带命名空间 revision 串行写入，最新写入被拒时重新加载持久值。非 loopback 页面把两个选择都保留在进程内。
+
+「通用」分区的第三行暴露**输出降噪 Beta 开关**（默认关闭）。开启后，下游界面可以把模型的说明性长文收起、把技术字段分层折叠；该开关只影响呈现，并走同一条快照管线——`ThemeSnapshot.outputDenoise`、boot 脚本写入的 `body[data-dsw-output-denoise]`，以及 ui-layout 展示转换器的属性投影。在该呈现行为转正之前，此开关保持 Beta 状态。
+
+「通用」分区的第四行在 `business`（默认）与 `expert` 之间切换**界面模式**。该模式只影响呈现——不改变功能与权限，审批与确认在任何模式下都完整显示——并走同一条快照管线：`ThemeSnapshot.uiMode`、boot 脚本写入的 `body[data-dsw-ui-mode]`（属性缺省时读作 `business`），以及 ui-layout 展示转换器的属性投影。非 React 消费方用本包 `/client` 入口导出的 `readUiMode()` 读取当前模式。
 
 ### 注册主题
 
@@ -37,7 +41,7 @@ kind: "package-reference"
 
 ### 插件前调色板
 
-当主机组合包含 HTTP 服务器时，宿主侧会把已注册的 `ui-theme` 设置或 schema 默认值嵌入每份 index 响应。head CSS 会在任何脚本运行前选择文档画布的配色方案，其中 `system` 偏好使用 `prefers-color-scheme` 查询；随后，body 脚本会在加载页面和应用脚本之前设置 `body[data-ds-dark-theme]` 与 `--dsh-content-font-size`，因此首帧绘制就采用所选调色板与字号。
+当主机组合包含 HTTP 服务器时，宿主侧会把已注册的 `ui-theme` 设置或 schema 默认值嵌入每份 index 响应。head CSS 会在任何脚本运行前选择文档画布的配色方案，其中 `system` 偏好使用 `prefers-color-scheme` 查询；随后，body 脚本会在加载页面和应用脚本之前设置 `body[data-ds-dark-theme]`、`--dsh-content-font-size` 与呈现模式 `body[data-dsw-ui-mode]`，因此首帧绘制就采用所选调色板、字号与模式。
 
 -----
 
@@ -47,11 +51,11 @@ kind: "package-reference"
 <details>
 <summary>实现细节——点击展开</summary>
 
-服务拥有主题与字号状态并发布快照。ui-layout 展示转换器应用这些快照，token 样式表则拥有颜色与会话文本尺度。
+服务拥有主题与字号状态并发布快照。ui-layout 展示转换器应用这些快照，token 样式表则拥有颜色与会话文本尺度。`typography.css` 另行声明界面文字字号角色（`--dsw-ui-font-*` / `--dsw-ui-line-*`，strong → base → secondary → caption），与会话内容字号轴分离；这些角色仅作声明，在界面逐一采用之前不产生任何视觉变化。
 
 ### 样式表
 
-`src/styles/` 下有六张样式表，由 ui-theme 的动态客户端 entry 依次导入：`base.css`、`corner-shape.css`、`design-platform.css`、`scrollbar.css`、`gradient-shadow-text.css` 与 `shiki.css`。客户端 bundle 将其编译并注入为插件持有的全局样式，因此卸载与 HMR（热模块替换）会随 ui-theme 一同移除。`scrollbar.css` 是 `--dsw-alias-scrollbar-*` token 的唯一消费方，必须排在声明这些 token 的 `design-platform.css` 之后。
+`src/styles/` 下有七张样式表，由 ui-theme 的动态客户端 entry 依次导入：`base.css`、`typography.css`、`corner-shape.css`、`design-platform.css`、`scrollbar.css`、`gradient-shadow-text.css` 与 `shiki.css`。客户端 bundle 将其编译并注入为插件持有的全局样式，因此卸载与 HMR（热模块替换）会随 ui-theme 一同移除。`scrollbar.css` 是 `--dsw-alias-scrollbar-*` token 的唯一消费方，必须排在声明这些 token 的 `design-platform.css` 之后。
 
 `corner-shape.css` 平滑所有圆角：在 `@supports (corner-shape: superellipse(1.5))` 内定义 `--dsw-corner-shape`，并通过通配选择器应用到所有元素及其 `::before`/`::after`，因此不支持 `corner-shape` 的引擎保持普通圆弧。正圆形状——`border-radius: 50%` 的圆与胶囊半径——因超级椭圆会使其变形，须在所属组件样式表中把 `corner-shape: round` 与半径声明配对；corner-shape 样式表 spec 跨全部包样式表强制这一配对。
 

@@ -20,16 +20,16 @@
 }
 
 .title {
-  font-size: 14px;
+  font-size: var(--dsw-ui-font-strong);
   font-weight: 400;
-  line-height: 22px;
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-primary);
 }
 
 .desc {
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   font-weight: 400;
-  line-height: 18px;
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -56,15 +56,15 @@
 .value {
   min-width: 18px;
   text-align: center;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-variant-numeric: tabular-nums;
   color: var(--dsw-alias-label-primary);
 }
 
 .unit {
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-secondary);
 }
 

@@ -1,0 +1,42 @@
+/* Technical-details disclosure for the output-denoise field layer. The
+   control repeats the ToolRow Inspect pill chrome (quiet in-flow affordance,
+   base background); content keeps the row's card indent rhythm. */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 0 4px 4px;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-secondary);
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+.chevron {
+  transition: transform 100ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.content {
+  margin-top: 4px;
+}

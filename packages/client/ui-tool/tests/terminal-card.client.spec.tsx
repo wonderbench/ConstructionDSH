@@ -14,6 +14,8 @@ import {
   localizeTerminalCardModel, terminalCardModel, terminalFailed,
 } from '../src/client/tool/models/terminal-card-model.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { BashRow } from '../src/client/tool/toolviews/bash-sample.tsx'
 import { en, zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 
@@ -293,7 +295,7 @@ describe('terminalCardModel', () => {
 describe('chat row terminal body', () => {
   const ownerProps = (block: RunningToolCall | ToolResultNode): GenericToolCardProps => ({
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    callId: 'c1', toolName: 'bash', block, openFile: vi.fn(), t,
+    callId: 'c1', toolName: 'bash', block, openFile: vi.fn(), t, tTool,
   })
 
   /** The whole summary row is the expand toggle (ToolRow's unified interaction). */

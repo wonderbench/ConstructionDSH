@@ -157,7 +157,7 @@
   border: none;
   border-radius: 14px;
   padding: 4px 12px;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-label-secondary);
   background: var(--dsw-alias-interactive-bg-hover-solid);
   cursor: pointer;

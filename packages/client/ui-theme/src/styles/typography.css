@@ -1,0 +1,26 @@
+/* Interface typography roles (P6): interface text sizes separated from the
+ * conversation content axis (--dsh-content-font-size). Declared in batch 1
+ * and adopted across the interface in the follow-up sweep (~100 CSS files):
+ * interface text no longer renders below the 11px caption floor. Do not
+ * repurpose: values are roles, not one-off tweaks; a surface needing a
+ * different size is a new role discussion, not a local override. */
+
+:root {
+  /* Primary interface text: row titles, item names, primary status lines. */
+  --dsw-ui-font-strong: 14px;
+  --dsw-ui-line-strong: 22px;
+
+  /* Default interface text: descriptions, secondary values, menu entries. */
+  --dsw-ui-font-base: 13px;
+  --dsw-ui-line-base: 20px;
+
+  /* Supporting interface text: helper copy, path and timestamp metadata. */
+  --dsw-ui-font-secondary: 12px;
+  --dsw-ui-line-secondary: 18px;
+
+  /* Smallest allowed interface text: badges and dense counters. Nothing in
+   * the interface may render below this size (the former 10px captions move
+   * up to this floor as surfaces adopt the roles). */
+  --dsw-ui-font-caption: 11px;
+  --dsw-ui-line-caption: 14px;
+}

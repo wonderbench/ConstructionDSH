@@ -1,0 +1,85 @@
+/* Output-denoise row: title + Beta tag + description on the left, one toggle
+ * on the right. Same cell rhythm as the Font-size and Language rows (gap 8,
+ * pad 16/0, hairline separator; the section column strips the separator on
+ * its last child). */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 48px;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.title {
+  font-size: var(--dsw-ui-font-strong);
+  font-weight: 400;
+  line-height: var(--dsw-ui-line-strong);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Beta tag: quiet pill so the flag reads as opt-in, not as a finished default. */
+.beta {
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-module-platform);
+}
+
+.desc {
+  font-size: var(--dsw-ui-font-secondary);
+  font-weight: 400;
+  line-height: var(--dsw-ui-line-secondary);
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* Toggle: 36x20 pill track, 16px knob; on-state fills with the brand accent. */
+.track,
+.trackOn {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--dsw-alias-bg-module-platform);
+  cursor: pointer;
+}
+
+.trackOn {
+  background: var(--dsw-alias-brand-primary);
+}
+
+.knob,
+.knobOn {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+  transition: transform var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+}
+
+.knobOn {
+  transform: translateX(16px);
+}

@@ -5,21 +5,24 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-settings'
 import { bootThemeInjections } from './boot-theme.ts'
 import {
-  DEFAULT_FONT_SIZE, DEFAULT_PREFERENCE, THEME_SETTINGS_NAMESPACE, ThemeSettingsSchema,
-  type ThemePreference, type ThemeSettings,
+  DEFAULT_FONT_SIZE, DEFAULT_OUTPUT_DENOISE, DEFAULT_PREFERENCE, DEFAULT_UI_MODE, THEME_SETTINGS_NAMESPACE, ThemeSettingsSchema,
+  type ThemePreference, type ThemeSettings, type UiMode,
 } from './theme-settings.ts'
 
 export {
-  DEFAULT_FONT_SIZE, DEFAULT_PREFERENCE, FONT_SIZE_FIELD, FONT_SIZE_MAX, FONT_SIZE_MIN,
-  THEME_PREFERENCE_FIELD, THEME_PREFERENCES, THEME_SETTINGS_NAMESPACE,
-  type ThemePreference, type ThemeSettings,
+  DEFAULT_FONT_SIZE, DEFAULT_OUTPUT_DENOISE, DEFAULT_PREFERENCE, FONT_SIZE_FIELD, FONT_SIZE_MAX, FONT_SIZE_MIN,
+  OUTPUT_DENOISE_ATTRIBUTE, OUTPUT_DENOISE_FIELD,
+  THEME_PREFERENCE_FIELD, THEME_PREFERENCES, THEME_SETTINGS_NAMESPACE, UI_MODE_ATTRIBUTE, UI_MODE_FIELD,
+  type ThemePreference, type ThemeSettings, type UiMode,
 } from './theme-settings.ts'
 
 const THEME_NAMESPACE = THEME_SETTINGS_NAMESPACE
 
 /** Read the registered theme section or the schema defaults without a settings provider. */
-function readSection(ctx: Context): { preference: ThemePreference; fontSize: number } {
-  const fallback = { preference: DEFAULT_PREFERENCE, fontSize: DEFAULT_FONT_SIZE }
+function readSection(ctx: Context): { preference: ThemePreference; fontSize: number; outputDenoise: boolean; uiMode: UiMode } {
+  const fallback = {
+    preference: DEFAULT_PREFERENCE, fontSize: DEFAULT_FONT_SIZE, outputDenoise: DEFAULT_OUTPUT_DENOISE, uiMode: DEFAULT_UI_MODE,
+  }
   const settings = ctx.get('settings')
   if (settings === undefined) return fallback
   const section = settings.get(THEME_NAMESPACE) as ThemeSettings | undefined
@@ -39,6 +42,6 @@ export function apply(ctx: Context): void {
   })
   ctx.on('webserver/index-inject', (table) => {
     const section = readSection(ctx)
-    table.push(...bootThemeInjections(section.preference, section.fontSize))
+    table.push(...bootThemeInjections(section.preference, section.fontSize, section.outputDenoise, section.uiMode))
   }, { prepend: true })
 }

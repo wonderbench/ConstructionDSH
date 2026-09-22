@@ -1,12 +1,18 @@
 /**
  * Theme bootstrap row for the browser's pre-plugin interval. Each index
- * render embeds the current durable built-in preference and content font size.
- * Head CSS colors the document canvas before script execution; the body script
- * installs the palette selector and font size that the client presenters adopt.
+ * render embeds the current durable built-in preference, content font size,
+ * output-denoise flag, and presentation mode. Head CSS colors the document
+ * canvas before script execution; the body script installs the palette
+ * selector, font size, and presentation attributes that the client
+ * presenters adopt.
  */
 
 import type { IndexInjection } from '@deepseek-ai/dsh-host-webserver'
-import { DEFAULT_FONT_SIZE, DEFAULT_PREFERENCE, type ThemePreference } from './theme-settings.ts'
+import {
+  DEFAULT_FONT_SIZE, DEFAULT_OUTPUT_DENOISE, DEFAULT_PREFERENCE, DEFAULT_UI_MODE, OUTPUT_DENOISE_ATTRIBUTE,
+  UI_MODE_ATTRIBUTE,
+  type ThemePreference, type UiMode,
+} from './theme-settings.ts'
 
 const LIGHT_BACKGROUND = '#fff'
 const DARK_BACKGROUND = '#151517'
@@ -20,8 +26,8 @@ function bootThemeStyle(preference: ThemePreference): string {
   return `${light}@media(prefers-color-scheme:dark){${dark}}`
 }
 
-/** Build the body script that installs the palette selector and content size. */
-function bootThemeBodyScript(preference: ThemePreference, fontSize: number): string {
+/** Build the body script that installs the palette selector, content size, denoise flag, and ui mode. */
+function bootThemeBodyScript(preference: ThemePreference, fontSize: number, outputDenoise: boolean, uiMode: UiMode): string {
   return `(() => {
   const preference = ${JSON.stringify(preference)}
   const systemDark = preference === 'system'
@@ -31,23 +37,30 @@ function bootThemeBodyScript(preference: ThemePreference, fontSize: number): str
   document.documentElement.dataset.dsThemeSource = preference
   document.body.toggleAttribute('data-ds-dark-theme', dark)
   document.body.style.setProperty('--dsh-content-font-size', ${JSON.stringify(`${fontSize}px`)})
+  document.body.toggleAttribute(${JSON.stringify(OUTPUT_DENOISE_ATTRIBUTE)}, ${JSON.stringify(outputDenoise)})
+  document.body.setAttribute(${JSON.stringify(UI_MODE_ATTRIBUTE)}, ${JSON.stringify(uiMode)})
 })()`
 }
 
 /**
  * Theme bootstrap rows: head CSS colors the document canvas before
- * first paint, then the body script installs the palette selector and font
- * size before the shell mount and module script.
+ * first paint, then the body script installs the palette selector, font
+ * size, output-denoise flag, and presentation mode before the shell mount
+ * and module script.
  * @param preference - Current Host-backed built-in preference.
  * @param fontSize - Current Host-backed content font size in px.
+ * @param outputDenoise - Current Host-backed output-denoise Beta flag.
+ * @param uiMode - Current Host-backed presentation mode.
  * @returns head and body script rows in execution order.
  */
 export function bootThemeInjections(
   preference: ThemePreference = DEFAULT_PREFERENCE,
   fontSize: number = DEFAULT_FONT_SIZE,
+  outputDenoise: boolean = DEFAULT_OUTPUT_DENOISE,
+  uiMode: UiMode = DEFAULT_UI_MODE,
 ): IndexInjection[] {
   return [
     { kind: 'style', text: bootThemeStyle(preference) },
-    { kind: 'script', placement: 'body', text: bootThemeBodyScript(preference, fontSize) },
+    { kind: 'script', placement: 'body', text: bootThemeBodyScript(preference, fontSize, outputDenoise, uiMode) },
   ]
 }

@@ -179,8 +179,8 @@
      surface and reads too heavy for a quiet in-flow affordance. */
   background: var(--dsw-alias-bg-base);
   color: var(--dsw-alias-label-secondary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   cursor: pointer;
   opacity: 0;
   transition: opacity 100ms ease;

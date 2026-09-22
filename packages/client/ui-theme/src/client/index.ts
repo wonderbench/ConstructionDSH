@@ -4,8 +4,9 @@
  * `prefers-color-scheme`, and publishes immutable snapshots; it never touches
  * the DOM — ui-layout's presenter consumes the resolved snapshot. The Host
  * settings scope loads and stores the preference in the user-settings
- * document. The plugin also registers the Appearance preference row into the
- * settings General section — the theme feature owns its own settings surface.
+ * document. The plugin also registers its settings rows into the General
+ * section's item slot (Appearance, font size, output denoise, interface
+ * mode) — the theme feature owns its own settings surface.
  */
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
@@ -20,20 +21,30 @@ import type { AppearanceRowInjected } from './AppearanceRow.tsx'
 import { AppearanceRow } from './AppearanceRow.tsx'
 import type { FontSizeRowInjected } from './FontSizeRow.tsx'
 import { FontSizeRow } from './FontSizeRow.tsx'
-import { createAppearanceRowStore, createFontSizeRowStore } from './settings-store.ts'
+import type { OutputDenoiseRowInjected } from './OutputDenoiseRow.tsx'
+import { OutputDenoiseRow } from './OutputDenoiseRow.tsx'
+import type { UiModeRowInjected } from './UiModeRow.tsx'
+import { UiModeRow } from './UiModeRow.tsx'
+import { readUiMode } from './ui-mode.ts'
+import { createAppearanceRowStore, createFontSizeRowStore, createOutputDenoiseRowStore, createUiModeRowStore } from './settings-store.ts'
 import { installThemeStyles } from './styles.ts'
 import { en, zh, type ThemeKey } from './locales.ts'
 import {
-  DEFAULT_FONT_SIZE, DEFAULT_PREFERENCE, FONT_SIZE_FIELD, FONT_SIZE_MAX, FONT_SIZE_MIN,
-  isThemePreference, THEME_PREFERENCE_FIELD, THEME_SETTINGS_NAMESPACE,
-  type ThemePreference, type ThemeSettings,
+  DEFAULT_FONT_SIZE, DEFAULT_OUTPUT_DENOISE, DEFAULT_PREFERENCE, FONT_SIZE_FIELD, FONT_SIZE_MAX, FONT_SIZE_MIN,
+  isThemePreference, isUiMode, OUTPUT_DENOISE_ATTRIBUTE, OUTPUT_DENOISE_FIELD, THEME_PREFERENCE_FIELD, THEME_SETTINGS_NAMESPACE,
+  UI_MODE_FIELD,
+  type ThemePreference, type ThemeSettings, type UiMode,
 } from '../theme-settings.ts'
 
 export type { AppearanceRowComponentProps, AppearanceRowInjected } from './AppearanceRow.tsx'
 export type { FontSizeRowComponentProps, FontSizeRowInjected } from './FontSizeRow.tsx'
-export type { AppearanceRowState, FontSizeRowState } from './settings-store.ts'
+export type { OutputDenoiseRowComponentProps, OutputDenoiseRowInjected } from './OutputDenoiseRow.tsx'
+export type { UiModeRowComponentProps, UiModeRowInjected } from './UiModeRow.tsx'
+export type { AppearanceRowState, FontSizeRowState, OutputDenoiseRowState, UiModeRowState } from './settings-store.ts'
+export { OUTPUT_DENOISE_ATTRIBUTE, UI_MODE_ATTRIBUTE } from '../theme-settings.ts'
+export { readUiMode } from './ui-mode.ts'
 export type { ThemeKey } from './locales.ts'
-export type { ThemePreference, ThemeSettings } from '../theme-settings.ts'
+export type { ThemePreference, ThemeSettings, UiMode } from '../theme-settings.ts'
 
 /** Namespace owning this feature's settings-row copy. */
 export const SETTINGS_NS = 'settings.theme'
@@ -82,6 +93,19 @@ export interface ThemeSnapshot {
   preference: ThemePreference
   /** Conversation content font size in px (integer within FONT_SIZE_MIN..FONT_SIZE_MAX). */
   fontSize: number
+  /**
+   * Output-denoise Beta flag (default off). When on, consumers may fold
+   * explanatory model prose and layer technical fields behind details;
+   * presentation-only, published so any surface can key off one source.
+   */
+  outputDenoise: boolean
+  /**
+   * Presentation mode (`business` default, `expert` on demand). One published
+   * source for every surface that keys off the mode; an absent document value
+   * reads as `business`. Presentation-only — never changes features or
+   * permissions, and approvals stay visible in both modes.
+   */
+  uiMode: UiMode
   /**
    * The resolved active theme (`system` resolved via prefers-color-scheme)
    * with override layers folded into its tokens (seq order, later layers win
@@ -161,6 +185,8 @@ export class ThemeRuntime {
   private themes: ThemeDefinition[] = [...BUILTIN_THEMES]
   private preference: ThemePreference
   private fontSize: number = bootstrapFontSize()
+  private outputDenoise: boolean = bootstrapOutputDenoise()
+  private uiMode: UiMode = readUiMode()
   private revision = 0
   private snapshot: ThemeSnapshot
   private readonly media: MediaQueryList | undefined
@@ -254,13 +280,46 @@ export class ThemeRuntime {
     this.publish()
   }
 
+  /**
+   * Toggle the output-denoise Beta flag — the only denoise write entry.
+   * Accepted values are written through the settings scope and emit
+   * `theme/change`.
+   * @param enabled - whether denoise presentation may fold explanatory prose.
+   */
+  setOutputDenoise(enabled: boolean): void {
+    if (this.outputDenoise === enabled) return
+    this.outputDenoise = enabled
+    void this.host.set(OUTPUT_DENOISE_FIELD, enabled)
+    this.publish()
+  }
+
+  /**
+   * Switch the presentation mode — the only ui-mode write entry. Accepted
+   * values are written through the settings scope and emit `theme/change`.
+   * Presentation-only: the mode never gates features or permissions.
+   * @param mode - `business` or `expert`; unknown values throw.
+   */
+  setUiMode(mode: UiMode): void {
+    // Runtime callers through the dynamic-package façade pass untyped JS.
+    if (!isUiMode(mode)) throw new Error(`ui mode ${JSON.stringify(mode)} is not a known mode`)
+    if (this.uiMode === mode) return
+    this.uiMode = mode
+    void this.host.set(UI_MODE_FIELD, mode)
+    this.publish()
+  }
+
   /** Adopt the scope's accepted durable preference without writing it back. */
   private adopt(): void {
     const section = this.host.getSnapshot().value
     if (section === undefined) return
-    if (this.preference === section.preference && this.fontSize === section.fontSize) return
+    if (this.preference === section.preference
+      && this.fontSize === section.fontSize
+      && this.outputDenoise === section.outputDenoise
+      && this.uiMode === section.uiMode) return
     this.preference = section.preference
     this.fontSize = section.fontSize
+    this.outputDenoise = section.outputDenoise
+    this.uiMode = section.uiMode
     this.publish()
   }
 
@@ -328,6 +387,8 @@ export class ThemeRuntime {
     return Object.freeze({
       preference: this.preference,
       fontSize: this.fontSize,
+      outputDenoise: this.outputDenoise,
+      uiMode: this.uiMode,
       active: this.composeActive(active),
       themes: Object.freeze([...this.themes]),
       revision: this.revision,
@@ -373,6 +434,17 @@ function bootstrapFontSize(): number {
   return Number.isInteger(parsed) && parsed >= FONT_SIZE_MIN && parsed <= FONT_SIZE_MAX
     ? parsed
     : DEFAULT_FONT_SIZE
+}
+
+/**
+ * Read the denoise flag the Host boot script wrote on `body` before any plugin
+ * ran, so the initial snapshot matches first paint. Non-browser runs and
+ * mounts without the boot script fall back to the schema default (off).
+ */
+function bootstrapOutputDenoise(): boolean {
+  /* v8 ignore next -- needs a documentless run (node e2e booting the client tree), not constructible under jsdom */
+  if (typeof document === 'undefined') return DEFAULT_OUTPUT_DENOISE
+  return document.body.hasAttribute(OUTPUT_DENOISE_ATTRIBUTE)
 }
 
 /**
@@ -437,9 +509,15 @@ export function apply(ctx: ClientContext): void {
   let bound: BoundActions<typeof store> | undefined
   const fontSizeStore = createFontSizeRowStore()
   let fontSizeBound: BoundActions<typeof fontSizeStore> | undefined
+  const outputDenoiseStore = createOutputDenoiseRowStore()
+  let outputDenoiseBound: BoundActions<typeof outputDenoiseStore> | undefined
+  const uiModeStore = createUiModeRowStore()
+  let uiModeBound: BoundActions<typeof uiModeStore> | undefined
   const sync = (snapshot: ThemeSnapshot): void => {
     bound?.sync(snapshot.preference, snapshot.revision)
     fontSizeBound?.sync(snapshot.fontSize, snapshot.revision)
+    outputDenoiseBound?.sync(snapshot.outputDenoise, snapshot.revision)
+    uiModeBound?.sync(snapshot.uiMode, snapshot.revision)
   }
   ctx.on('theme/change', sync)
   const injected = (actions: BoundActions<typeof store>): AppearanceRowInjected => {
@@ -475,4 +553,40 @@ export function apply(ctx: ClientContext): void {
     locale: SETTINGS_NS,
     inject: fontSizeInjected,
   }, FontSizeRow))
+
+  const outputDenoiseInjected = (actions: BoundActions<typeof outputDenoiseStore>): OutputDenoiseRowInjected => {
+    outputDenoiseBound = actions
+    sync(theme.getTheme())
+    return {
+      setOutputDenoise: (enabled) => { theme.setOutputDenoise(enabled) },
+    }
+  }
+  // Beta: the row opts users into the output-denoise presentation; the flag
+  // stays off until this behavior graduates from Beta.
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'output-denoise',
+    order: 12,
+    store: outputDenoiseStore,
+    locale: SETTINGS_NS,
+    inject: outputDenoiseInjected,
+  }, OutputDenoiseRow))
+
+  const uiModeInjected = (actions: BoundActions<typeof uiModeStore>): UiModeRowInjected => {
+    uiModeBound = actions
+    sync(theme.getTheme())
+    return {
+      setUiMode: (mode) => { theme.setUiMode(mode) },
+    }
+  }
+  // Presentation-only: the row switches the business/expert interface mode; it
+  // never gates features or permissions (approvals stay visible in both).
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'ui-mode',
+    order: 13,
+    store: uiModeStore,
+    locale: SETTINGS_NS,
+    inject: uiModeInjected,
+  }, UiModeRow))
 }

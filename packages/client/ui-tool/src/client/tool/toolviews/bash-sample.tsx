@@ -4,8 +4,10 @@ import clsx from 'clsx'
 import {
   IconApiOutline14, IconChevronDownOutline14, IconInspectOutline12, StateDot, TerminalBlock,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ToolCallViewProps } from '../../contract/slots.ts'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import type { ToolCallViewProps, ToolLocaleInjected } from '../../contract/slots.ts'
+import { readToolPresentation } from '../denoise-presentation.ts'
+import { TechnicalDetails } from '../components/TechnicalDetails.tsx'
 import {
   isSettledPersistentShellCall,
   isSpilledShellCall,
@@ -15,10 +17,12 @@ import {
   terminalFailed,
 } from '../models/terminal-card-model.ts'
 import { formatToolBody, toolRowModel, type ToolRowState } from '../models/tool-call-model.ts'
-import { CONVERSATION_NS as NS } from '../../locale.ts'
+import { CONVERSATION_NS as NS, TOOL_NS } from '../../locale.ts'
 import css from './bash-sample.module.css'
 
-type BashRowProps = ToolCallViewProps & PropsLocale<'conversation'>
+export type BashRowProps = ToolCallViewProps
+  & PropsLocale<'conversation'>
+  & InjectFace<ToolLocaleInjected>
 
 function leadingFor(state: ToolRowState) {
   switch (state) {
@@ -40,7 +44,7 @@ function stateStatus(state: ToolRowState, t: BashRowProps['t']): string | null {
 }
 
 /** Renders expandable Bash output with an accessible lifecycle label. */
-export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }: BashRowProps) {
+export function BashRow({ toolName, block, sessionId, useSessions, inspect, t, tTool }: BashRowProps) {
   const model = toolRowModel(toolName, block)
   // An omitted shell workdir is the session workspace; relative values resolve
   // against it before reaching the terminal primitive.
@@ -52,6 +56,10 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
   const state = model.state === 'ok' && terminalModel !== null && terminalFailed(terminalModel)
     ? 'error'
     : model.state
+  // Denoise layering: while the flag is on, the full terminal output (and the
+  // generic io card of persistent-shell/spill rows) moves under the
+  // technical-details disclosure, expanded by default in expert mode.
+  const presentation = readToolPresentation()
   const status = stateStatus(state, t)
   const [expanded, setExpanded] = useState(false)
   // Failures, persistent-shell results, and spill previews use a generic body;
@@ -86,6 +94,37 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
         </>
       )
       : leadingFor(state)
+  const genericIoCard = (
+    <div className={css.ioCard}>
+      {body !== null && (
+        <div className={css.ioSection}>
+          <span className={css.ioLabel}>{t('row.input')}</span>
+          <span className={css.ioText}>{body}</span>
+        </div>
+      )}
+      {body !== null && model.output !== null && (
+        <span className={css.ioDivider} aria-hidden />
+      )}
+      {model.output !== null && (
+        <div className={css.ioSection}>
+          <span className={css.ioLabel}>{t('row.output')}</span>
+          <span className={css.ioText} data-error={state === 'error' || undefined}>
+            {model.output}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+  const terminalBody = terminal !== null
+    ? (
+      <TerminalBlock
+        {...terminal.card}
+        maxLines={Infinity}
+        labels={terminalBlockLabels(t)}
+        className={css.terminal}
+      />
+    )
+    : genericIoCard
   return (
     <div className={css.card}>
       <div
@@ -110,36 +149,13 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
       </div>
       {open && (
         <div className={css.bodyWrap}>
-          {terminal !== null
+          {presentation.denoise
             ? (
-              <TerminalBlock
-                {...terminal.card}
-                maxLines={Infinity}
-                labels={terminalBlockLabels(t)}
-                className={css.terminal}
-              />
+              <TechnicalDetails t={tTool} defaultOpen={presentation.expert}>
+                {terminalBody}
+              </TechnicalDetails>
             )
-            : (
-              <div className={css.ioCard}>
-                {body !== null && (
-                  <div className={css.ioSection}>
-                    <span className={css.ioLabel}>{t('row.input')}</span>
-                    <span className={css.ioText}>{body}</span>
-                  </div>
-                )}
-                {body !== null && model.output !== null && (
-                  <span className={css.ioDivider} aria-hidden />
-                )}
-                {model.output !== null && (
-                  <div className={css.ioSection}>
-                    <span className={css.ioLabel}>{t('row.output')}</span>
-                    <span className={css.ioText} data-error={state === 'error' || undefined}>
-                      {model.output}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+            : terminalBody}
           {inspect !== undefined && (
             <button type="button" className={css.inspectButton} onClick={inspect}>
               <IconInspectOutline12 />
@@ -155,9 +171,10 @@ export function BashRow({ toolName, block, sessionId, useSessions, inspect, t }:
 /** Registers the standalone Bash conversation-row sample. */
 export const bashToolviewSample = {
   name: 'bash-toolview-sample',
-  inject: ['slots'],
+  inject: ['slots', 'locale'],
   apply(ctx: Context): void {
+    const tTool = ctx.locale.bind(TOOL_NS)
     ctx.slots.inject('tool.call.toolview', () =>
-      ctx.slots.register({ name: 'tool.call.toolview', key: 'bash', locale: NS }, BashRow))
+      ctx.slots.register({ name: 'tool.call.toolview', key: 'bash', locale: NS, inject: () => ({ tTool }) }, BashRow))
   },
 }

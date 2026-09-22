@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-client-ui-theme` lets Web GUI users choose `light`, `dark`, or `system` and set conversation content text from 12 to 17 px in Settings. A loopback client stores both values in the `ui-theme` settings namespace, which the local provider persists in `$DSH_HOME/settings.yaml` by default. The plugin resolves `system` through `prefers-color-scheme` and publishes immutable `ThemeSnapshot`s; ui-layout applies each snapshot to the document. The package also ships the `--dsw-*` token stylesheets and injects a synchronous bootstrap so the selected palette and font size apply before the shell loads. Third-party themes can register alias-token overrides through `ctx.theme`.
+`dsh-client-ui-theme` lets Web GUI users choose `light`, `dark`, or `system`, set conversation content text from 12 to 17 px, and pick a presentation mode (`business` default or `expert`) in Settings. A loopback client stores these values in the `ui-theme` settings namespace, persisted in `$DSH_HOME/settings.yaml` by default. The plugin resolves `system` through `prefers-color-scheme` and publishes immutable `ThemeSnapshot`s; ui-layout applies each snapshot to the document. The package also ships the `--dsw-*` token stylesheets and injects a synchronous bootstrap so the selected palette, font size, and presentation mode apply before the shell loads. Third-party themes can register alias-token overrides through `ctx.theme`.
 
 ## Table of Contents
 
@@ -25,11 +25,15 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Users switch the color scheme and content font size from two rows in Settings (General section); both choices persist across restarts on a loopback browser. Feature plugins consume the current snapshot through `ctx.theme` and read the `--dsw-*` tokens in CSS; they do not manage theme state themselves.
+Users switch the color scheme, content font size, output-denoise Beta flag, and interface mode from rows in Settings (General section); these choices persist across restarts on a loopback browser. Feature plugins consume the current snapshot through `ctx.theme` and read the `--dsw-*` tokens in CSS; they do not manage theme state themselves.
 
 ### Appearance and font size
 
 The plugin registers Appearance preference cubes and a font-size stepper in the General section. The stepper accepts integer values from 12 through 17 px and defaults to 14 px. It changes conversation headings and base text by the same increment, including the user bubble and composer draft; flow-row titles, summaries, and tables follow one step under the body size, while small text and code keep fixed sizes. Each accepted change writes through the Host settings API. Rapid changes serialize in gesture order with namespace revisions, and a rejected latest write reloads the durable values. Non-loopback pages keep both choices process-local.
+
+A third General-section row exposes the **output-denoise Beta flag** (default off). When enabled, downstream surfaces may fold explanatory model prose and layer technical fields behind details; the flag is presentation-only and rides the same snapshot pipeline — `ThemeSnapshot.outputDenoise`, the boot script's `body[data-dsw-output-denoise]`, and the ui-layout presenter's attribute projection. It stays Beta until that presentation behavior graduates.
+
+A fourth General-section row switches the **interface mode** between `business` (default) and `expert`. The mode is presentation-only — it never changes features or permissions, and approvals and confirmations stay visible in every mode — and it rides the same snapshot pipeline: `ThemeSnapshot.uiMode`, the boot script's `body[data-dsw-ui-mode]` (an absent attribute reads as `business`), and the ui-layout presenter's attribute projection. Non-React consumers read the current mode with `readUiMode()` from the package's `/client` entry.
 
 ### Registering a theme
 
@@ -37,7 +41,7 @@ A composition can register a third-party theme id with alias-token overrides thr
 
 ### Pre-plugin palette
 
-When the host composition includes an HTTP server, the host half embeds the registered `ui-theme` settings, or schema defaults, into each index response. Head CSS selects the document canvas color scheme before any script runs, including a `prefers-color-scheme` query for the `system` preference. A body script then sets `body[data-ds-dark-theme]` and `--dsh-content-font-size` before the loading page and application scripts, so the first paint uses the selected palette and text size.
+When the host composition includes an HTTP server, the host half embeds the registered `ui-theme` settings, or schema defaults, into each index response. Head CSS selects the document canvas color scheme before any script runs, including a `prefers-color-scheme` query for the `system` preference. A body script then sets `body[data-ds-dark-theme]`, `--dsh-content-font-size`, and the `body[data-dsw-ui-mode]` presentation mode before the loading page and application scripts, so the first paint uses the selected palette, text size, and mode.
 
 -----
 
@@ -47,11 +51,11 @@ When the host composition includes an HTTP server, the host half embeds the regi
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The service owns theme and font-size state and publishes snapshots. The ui-layout presenter applies those snapshots, and the token sheets own the color and conversation text scales.
+The service owns theme and font-size state and publishes snapshots. The ui-layout presenter applies those snapshots, and the token sheets own the color and conversation text scales. `typography.css` additionally declares the interface typography roles (`--dsw-ui-font-*` / `--dsw-ui-line-*`, strong → base → secondary → caption) separately from the conversation content axis; the roles are declaration-only until surfaces adopt them, so shipping them changes nothing visually.
 
 ### Stylesheets
 
-`src/styles/` holds six sheets imported in order by ui-theme's dynamic client entry: `base.css`, `corner-shape.css`, `design-platform.css`, `scrollbar.css`, `gradient-shadow-text.css`, and `shiki.css`. The client bundle compiles and injects them as plugin-owned global styles, so unload and HMR remove them with ui-theme. `scrollbar.css` is the sole consumer of the `--dsw-alias-scrollbar-*` tokens and must follow `design-platform.css`, which declares them.
+`src/styles/` holds seven sheets imported in order by ui-theme's dynamic client entry: `base.css`, `typography.css`, `corner-shape.css`, `design-platform.css`, `scrollbar.css`, `gradient-shadow-text.css`, and `shiki.css`. The client bundle compiles and injects them as plugin-owned global styles, so unload and HMR remove them with ui-theme. `scrollbar.css` is the sole consumer of the `--dsw-alias-scrollbar-*` tokens and must follow `design-platform.css`, which declares them.
 
 `corner-shape.css` smooths every rounded corner: inside `@supports (corner-shape: superellipse(1.5))` it defines `--dsw-corner-shape` and applies it to all elements and their `::before`/`::after` through the universal selector, so engines without `corner-shape` keep circular corners. Full-round shapes — `border-radius: 50%` circles and pill radii — pair `corner-shape: round` with their radius in the owning component sheet because a superellipse deforms them; the corner-shape stylesheet spec enforces that pairing across every package stylesheet.
 

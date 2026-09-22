@@ -11,6 +11,8 @@ import {
 } from '../src/client/tool/models/tool-call-model.ts'
 import { ToolRow } from '../src/client/tool/components/ToolRow.tsx'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 
 afterEach(() => {
@@ -495,7 +497,7 @@ describe('ToolRow', () => {
 describe('GenericToolCard', () => {
   const props = (toolName: string, block: RunningToolCall | ToolResultNode): GenericToolCardProps => ({
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    callId: 'c1', toolName, block, openFile: vi.fn(), t,
+    callId: 'c1', toolName, block, openFile: vi.fn(), t, tTool,
   })
 
   it('renders the classified variant row from the frozen slice', () => {

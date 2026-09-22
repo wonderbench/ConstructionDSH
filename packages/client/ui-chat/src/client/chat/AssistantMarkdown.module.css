@@ -58,16 +58,16 @@
 }
 
 /* Interrupted-turn terminal marker: quiet inline tag, no animation. Fixed
-   size like the small/code token variants — 11px is dense secondary text
-   that would fall to an illegible 9px at the 12px floor. */
+ * size like the small/code token variants — the caption role is dense
+ * secondary text that would fall to an illegible 9px at the 12px floor. */
 .stopped {
   align-self: flex-start;
   padding: 0 6px;
   border-radius: 6px;
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 /* Finalized footer offset (figma 43:32997); chrome lives in MessageIconActions. */

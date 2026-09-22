@@ -1,0 +1,48 @@
+/* Output-denoise fold around one settled Assistant body: the verbatim
+   conclusion line, then a quiet disclosure-style control that expands the
+   untouched AssistantMarkdown body. The conclusion reads at the secondary
+   content tier like the think row; the control repeats the ToolRow Inspect
+   pill chrome (quiet in-flow affordance, base background). */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.conclusion {
+  margin: 0 0 4px;
+  font: var(--dsw-font-sm-13);
+  color: var(--dsw-alias-label-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 4px;
+  padding: 2px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-secondary);
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+  color: var(--dsw-alias-label-primary);
+}
+
+.chevron {
+  transition: transform 100ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}

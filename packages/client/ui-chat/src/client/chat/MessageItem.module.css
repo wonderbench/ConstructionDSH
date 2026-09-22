@@ -372,9 +372,9 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   color: var(--dsw-alias-label-primary);
-  font-size: 14px;
+  font-size: var(--dsw-ui-font-strong);
   font-weight: 500;
-  line-height: 22px;
+  line-height: var(--dsw-ui-line-strong);
 }
 
 .fileMeta {
@@ -382,6 +382,6 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, 0.45));
-  font-size: 12px;
-  line-height: 15px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }

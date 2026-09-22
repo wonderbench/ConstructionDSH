@@ -11,6 +11,8 @@ import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { CHAT_DIFF_MAX_LINES, diffCardModel } from '../src/client/tool/models/diff-card-model.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { FileMutationRow, fileMutationToolview } from '../src/client/tool/toolviews/file-mutation-row.tsx'
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 
@@ -160,7 +162,7 @@ describe('diffCardModel', () => {
 describe('chat row diff body', () => {
   const ownerProps = (block: RunningToolCall | ToolResultNode): GenericToolCardProps => ({
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    callId: 'c1', toolName: 'edit', block, openFile: vi.fn(), t,
+    callId: 'c1', toolName: 'edit', block, openFile: vi.fn(), t, tTool,
   })
 
   it('the expanded body is the applied diff, capped tighter than the panel', () => {
@@ -185,7 +187,7 @@ describe('chat row diff body', () => {
     // args body is the fallback the diff card must not have replaced.
     const view = render(<GenericToolCard {...{
       callId: 'c1', toolName: 'some_tool', openFile: vi.fn(),
-      loadImage: vi.fn(() => Promise.reject(new Error('not used'))), t,
+      loadImage: vi.fn(() => Promise.reject(new Error('not used'))), t, tTool,
       block: settled({
         call: { name: 'some_tool', argsRaw: '{"foo":"bar"}' },
         meta: undefined,

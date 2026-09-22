@@ -11,6 +11,8 @@ import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/c
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { CHAT_READ_MAX_LINES, readCallLine, readCardModel } from '../src/client/tool/models/read-card-model.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 import { ReadRow, readToolview } from '../src/client/tool/toolviews/read-row.tsx'
 
@@ -165,7 +167,7 @@ describe('readCallLine', () => {
 describe('GenericToolCard read body', () => {
   const ownerProps = (block: RunningToolCall | ToolResultNode): GenericToolCardProps => ({
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    callId: 'c1', toolName: 'read', block, openFile: vi.fn(), t,
+    callId: 'c1', toolName: 'read', block, openFile: vi.fn(), t, tTool,
   })
 
   /** The whole summary row is the expand toggle (ToolRow's unified interaction). */
@@ -189,7 +191,7 @@ describe('GenericToolCard read body', () => {
     const view = render(<GenericToolCard {...({
       callId: 'c1', toolName: 'echo', block: settled({
         call: { name: 'echo', argsRaw: '{"text":"x"}' }, meta: undefined,
-      }), openFile: vi.fn(), loadImage: vi.fn(() => Promise.reject(new Error('not used'))), t,
+      }), openFile: vi.fn(), loadImage: vi.fn(() => Promise.reject(new Error('not used'))), t, tTool,
     })} />)
     toggleRow(view)
     expect(view.container.querySelector('[data-read]')).toBeNull()

@@ -27,6 +27,8 @@ describe('ThemeRuntime', () => {
     const snapshot = theme.getTheme()
     expect(snapshot.preference).toBe('system')
     expect(snapshot.fontSize).toBe(14)
+    expect(snapshot.outputDenoise).toBe(false)
+    expect(snapshot.uiMode).toBe('business')
     // jsdom matchMedia is absent; system resolves to light.
     expect(snapshot.active.id).toBe('light')
     expect(snapshot.active.colorScheme).toBe('light')
@@ -44,6 +46,57 @@ describe('ThemeRuntime', () => {
     } finally {
       document.body.style.removeProperty('--dsh-content-font-size')
     }
+  })
+
+  it('seeds the denoise flag from the boot-script body attribute', () => {
+    document.body.setAttribute('data-dsw-output-denoise', '')
+    try {
+      expect(make().theme.getTheme().outputDenoise).toBe(true)
+    } finally {
+      document.body.removeAttribute('data-dsw-output-denoise')
+    }
+  })
+
+  it('seeds the ui mode from the boot-script body attribute, defaulting business on absent or junk', () => {
+    document.body.setAttribute('data-dsw-ui-mode', 'expert')
+    try {
+      expect(make().theme.getTheme().uiMode).toBe('expert')
+      document.body.setAttribute('data-dsw-ui-mode', 'kiosk')
+      expect(make().theme.getTheme().uiMode).toBe('business')
+      document.body.removeAttribute('data-dsw-ui-mode')
+      expect(make().theme.getTheme().uiMode).toBe('business')
+    } finally {
+      document.body.removeAttribute('data-dsw-ui-mode')
+    }
+  })
+
+  it('setUiMode switches, writes through the scope, and republishes; same value and unknown values are rejected or no-ops', () => {
+    const { theme, events, host } = make()
+    theme.setUiMode('expert')
+    expect(theme.getTheme().uiMode).toBe('expert')
+    expect(host.set).toHaveBeenCalledWith('uiMode', 'expert')
+    expect(events).toHaveLength(1)
+    theme.setUiMode('expert')
+    expect(events).toHaveLength(1)
+    expect(host.set).toHaveBeenCalledOnce()
+    // Runtime callers through the dynamic-package façade pass untyped JS.
+    expect(() => { theme.setUiMode('kiosk' as never) }).toThrow('not a known mode')
+    expect(events).toHaveLength(1)
+    theme.setUiMode('business')
+    expect(theme.getTheme().uiMode).toBe('business')
+  })
+
+  it('setOutputDenoise toggles, writes through the scope, and republishes; same value is a no-op', () => {
+    const { theme, events, host } = make()
+    theme.setOutputDenoise(true)
+    expect(theme.getTheme().outputDenoise).toBe(true)
+    expect(host.set).toHaveBeenCalledWith('outputDenoise', true)
+    expect(events).toHaveLength(1)
+    theme.setOutputDenoise(true)
+    expect(events).toHaveLength(1)
+    expect(host.set).toHaveBeenCalledOnce()
+    theme.setOutputDenoise(false)
+    expect(theme.getTheme().outputDenoise).toBe(false)
   })
 
   it('setFontSize switches, writes through the scope, and republishes; same value is a no-op', () => {
@@ -68,8 +121,9 @@ describe('ThemeRuntime', () => {
 
   it('adopts a published Host font size without writing it back', () => {
     const { theme, events, host } = make()
-    host.publish({ status: 'ready', value: { preference: 'system', fontSize: 12 }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'system', fontSize: 12, outputDenoise: true, uiMode: 'business' }, revision: 1, writable: true })
     expect(theme.getTheme().fontSize).toBe(12)
+    expect(theme.getTheme().outputDenoise).toBe(true)
     expect(events).toHaveLength(1)
     expect(host.set).not.toHaveBeenCalled()
   })
@@ -92,17 +146,25 @@ describe('ThemeRuntime', () => {
 
   it('adopts a published Host section without writing it back', () => {
     const { theme, events, host } = make()
-    host.publish({ status: 'ready', value: { preference: 'dark', fontSize: 14 }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'dark', fontSize: 14, outputDenoise: false, uiMode: 'business' }, revision: 1, writable: true })
     expect(theme.getTheme().preference).toBe('dark')
     expect(events).toHaveLength(1)
     expect(host.set).not.toHaveBeenCalled()
-    host.publish({ value: { preference: 'dark', fontSize: 14 }, revision: 2 })
+    host.publish({ value: { preference: 'dark', fontSize: 14, outputDenoise: false, uiMode: 'business' }, revision: 2 })
     expect(events).toHaveLength(1)
+  })
+
+  it('adopts a published Host ui mode without writing it back', () => {
+    const { theme, events, host } = make()
+    host.publish({ status: 'ready', value: { preference: 'system', fontSize: 14, outputDenoise: false, uiMode: 'expert' }, revision: 1, writable: true })
+    expect(theme.getTheme().uiMode).toBe('expert')
+    expect(events).toHaveLength(1)
+    expect(host.set).not.toHaveBeenCalled()
   })
 
   it('adopts a section already standing at construction', () => {
     const host = stubSettingsScope<ThemeSettings>()
-    host.publish({ status: 'ready', value: { preference: 'dark', fontSize: 14 }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: { preference: 'dark', fontSize: 14, outputDenoise: false, uiMode: 'business' }, revision: 1, writable: true })
     const { theme } = make(host)
     expect(theme.getTheme().preference).toBe('dark')
   })

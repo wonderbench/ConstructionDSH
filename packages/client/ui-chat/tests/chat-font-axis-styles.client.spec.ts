@@ -158,10 +158,11 @@ describe('chat flow font-size axis', () => {
 
   it('the interrupted-turn tag stays fixed like the dense token variants', () => {
     // 11px would fall to an illegible 9px at the 12px floor; the tag is
-    // exempt from the axis the same way small/code tokens are.
+    // exempt from the axis the same way small/code tokens are, riding the
+    // fixed caption role instead.
     expect(declarationsFrom(read('AssistantMarkdown.module.css'), '.stopped')).toEqual(expect.arrayContaining([
-      'font-size: 11px',
-      'line-height: 18px',
+      'font-size: var(--dsw-ui-font-caption)',
+      'line-height: var(--dsw-ui-line-caption)',
     ]))
   })
 })

@@ -2,7 +2,9 @@ import type { ReactNode } from 'react'
 import {
   IconApiOutline14, IconBrowseOutline16, IconCodeOutline16, IconEditOutline16, IconSearchOutline16, IconSparkle16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallOwnerProps, ToolTreeProps } from '../../contract/slots.ts'
+import { readToolPresentation } from '../denoise-presentation.ts'
 import { readCardModel } from '../models/read-card-model.ts'
 import { diffCardModel } from '../models/diff-card-model.ts'
 import { searchCardModel } from '../models/search-card-model.ts'
@@ -26,9 +28,11 @@ const VARIANT_ICONS: Record<ToolRowVariant, ReactNode> = {
 /** Card props: the owner payload plus the render site's locale seat (plain prop). */
 export interface GenericToolCardProps extends ToolCallOwnerProps {
   t: ToolTreeProps['t']
+  /** Translator for the Tool-owned denoise-layer dictionary. */
+  tTool: TranslateNS<'tool'>
 }
 
-export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, t }: GenericToolCardProps) {
+export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, t, tTool }: GenericToolCardProps) {
   const model = toolRowModel(toolName, block, cwd, home)
   const autoReview = model.autoReviewDenial === null
     ? null
@@ -44,6 +48,13 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
     ? 'error'
     : model.state
   const singleFile = model.filePath !== undefined
+  // Denoise layering: while the flag is on, the generic row's raw argument
+  // JSON and flattened output move under the technical-details disclosure
+  // (expanded by default in expert mode); the flag off never passes `technical`.
+  const presentation = readToolPresentation()
+  const technical = presentation.denoise && (model.bodyRaw !== null || model.output !== null)
+    ? { t: tTool, defaultOpen: presentation.expert }
+    : undefined
   return (
     <ToolRow
       t={t}
@@ -67,6 +78,7 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
       filePath={model.filePath}
       onOpenFile={singleFile ? openFile : undefined}
       inspect={inspect}
+      technical={technical}
     />
   )
 }

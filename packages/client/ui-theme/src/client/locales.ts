@@ -11,6 +11,14 @@ export const zh = {
   'fontSize.unit': 'px',
   'fontSize.increase': '增大字号',
   'fontSize.decrease': '减小字号',
+  'outputDenoise.title': '输出降噪',
+  'outputDenoise.beta': 'Beta',
+  'outputDenoise.description': '实验功能：默认收起模型的说明性内容，只保留结论与成果',
+  'outputDenoise.toggle': '切换输出降噪',
+  'uiMode.title': '界面模式',
+  'uiMode.description': '仅影响界面呈现，不改变功能与权限；审批与确认在任何模式下都完整显示',
+  'uiMode.business': '业务',
+  'uiMode.expert': '专家',
 } satisfies Record<string, string>
 
 /** The settings.theme namespace key union. */
@@ -27,4 +35,12 @@ export const en = {
   'fontSize.unit': 'px',
   'fontSize.increase': 'Increase font size',
   'fontSize.decrease': 'Decrease font size',
+  'outputDenoise.title': 'Output denoise',
+  'outputDenoise.beta': 'Beta',
+  'outputDenoise.description': 'Experimental: folds explanatory model output by default, keeping conclusions and results',
+  'outputDenoise.toggle': 'Toggle output denoise',
+  'uiMode.title': 'Interface mode',
+  'uiMode.description': 'Affects presentation only — never changes features or permissions; approvals and confirmations stay visible in every mode',
+  'uiMode.business': 'Business',
+  'uiMode.expert': 'Expert',
 } satisfies Record<ThemeKey, string>

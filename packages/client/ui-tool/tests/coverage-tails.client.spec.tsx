@@ -9,6 +9,8 @@ import type { RunningToolCall, ToolResultNode } from '@deepseek-ai/dsh-client-ui
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
+import { toolZh } from '../src/client/locale.ts'
+const tTool = makeTranslate(toolZh, commonZh)
 import { ToolRow } from '../src/client/tool/components/ToolRow.tsx'
 import { BashRow } from '../src/client/tool/toolviews/bash-sample.tsx'
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
@@ -58,7 +60,7 @@ describe('Tool presentation tails', () => {
     }
     const props: GenericToolCardProps = {
       loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-      callId: 'c5', toolName: 'todo_write', block: settled, openFile: vi.fn(), t,
+      callId: 'c5', toolName: 'todo_write', block: settled, openFile: vi.fn(), t, tTool,
     }
     const view = render(<GenericToolCard {...props} />)
     expect(view.container.querySelector('[data-variant="others"] svg')).not.toBeNull()

@@ -105,7 +105,8 @@ These limits define the dispatch depth and the view ownership; they are current 
 
 - **The Host excludes `run_code` from PTC mode program bindings** — production events produce one dispatch level; the recursive Runtime/UI contract supports nesting.
 - **First-party Tool views are colocated here** — they can move to their owning business packages independently through the keyed slot.
-- **Tool copy reuses the `ui-conversation` locale namespace** — tool titles, row chrome, and Cordis-free primitive labels use that dictionary; presenter models retain locale keys or data rather than rendered wording.
+- **Tool copy reuses the `ui-conversation` locale namespace** — tool titles, row chrome, and Cordis-free primitive labels use that dictionary; presenter models retain locale keys or data rather than rendered wording. The output-denoise technical-details layer is the one exception: its small `tool` namespace dictionary is owned here.
+- **Output denoise layers technical fields (Beta, default off)** — with `body[data-dsw-output-denoise]` set, the generic fallback row and the Bash row move their raw fields (argument JSON, flattened output, terminal transcript) behind a collapsible `Technical details` disclosure; expert UI mode opens it by default and the flag off renders the pre-layer shape exactly. Rows adopt the shared layer through the `technical` ToolRow prop plus the injected `tTool` translator. Failure summaries and state dots stay on the row, so completion judgement still comes from the frozen call/result slice — never from model prose.
 
 <a id="dev-note"></a>
 ### Dev Note

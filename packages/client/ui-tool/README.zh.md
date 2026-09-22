@@ -105,7 +105,8 @@ terminal model 使用浏览器安全入口 `@deepseek-ai/dsh-spill-policy/notice
 
 - **Host 不把 `run_code` 暴露为 PTC mode 程序 binding**：生产事件只产生一层分发；递归的运行时/UI 约定支持嵌套。
 - **第一方工具视图集中在本包**：它们可以通过 keyed slot 独立迁移到各自所属的业务包。
-- **工具文案复用 `ui-conversation` locale namespace**：工具标题、行 chrome 与无 Cordis 的 primitive label 使用该字典；展示转换器模型保留 locale key 或数据，而不是已渲染文案。
+- **工具文案复用 `ui-conversation` locale namespace**：工具标题、行 chrome 与无 Cordis 的 primitive label 使用该字典；展示转换器模型保留 locale key 或数据，而不是已渲染文案。输出降噪的「技术详情」分层是唯一的例外：它的小型 `tool` 命名空间字典由本包自有。
+- **输出降噪把技术字段分层折叠（Beta，默认关闭）**：设置 `body[data-dsw-output-denoise]` 后，通用兜底行与 Bash 行把原始字段（参数 JSON、扁平化输出、终端全量记录）收进可折叠的「技术详情」区；专家界面模式默认展开，开关关闭时呈现与分层前完全一致。各行通过共享的 `technical` ToolRow prop 加上注入的 `tTool` 翻译函数接入该层。失败摘要与状态点保留在行上，因此完成判定仍来自冻结的调用/结果切片——绝不来自模型散文。
 
 <a id="dev-note"></a>
 ### 开发备注

@@ -1,5 +1,5 @@
 /** Browser Tool plugin: whole-call composition and keyed atomic Tool views. */
 export { apply, inject } from './apply.ts'
 export type {
-  ToolCallOwnerProps, ToolCallViewProps, ToolHostInfoInjected, ToolTreeProps,
+  ToolCallOwnerProps, ToolCallViewProps, ToolHostInfoInjected, ToolLocaleInjected, ToolTreeProps,
 } from './contract/slots.ts'
