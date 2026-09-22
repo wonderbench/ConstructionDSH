@@ -1,73 +1,46 @@
 - dialog "设置":
   - navigation:
     - text: 设置
-    - button "通用设置":
-      - img
-      - text: 通用设置
-    - button "模型":
-      - img
-      - text: 模型
-    - button "内置插件":
-      - img
-      - text: 内置插件
-    - button "Agent 预设":
-      - img
-      - text: Agent 预设
-    - button "已归档会话":
-      - img
-      - text: 已归档会话
+    - button "通用设置"
+    - button "模型"
+    - button "内置插件"
+    - button "Agent 预设"
   - button "打开配置文件"
-  - button "关闭":
-    - img
-    - text: 关闭
+  - button "关闭"
   - heading "Agent 预设" [level=2]
-  - paragraph: 预设即一个会话的 Agent 所运行的插件组装 —— 它的工具、提示词与能力。复制一份既有预设改成自己的，或用「创造模式」让 Agent 帮你创建。
-  - text: 允许切换agent模式 beta
-  - paragraph: 开启后，新任务可选择标准、图纸拆解、工程专业及自定义模式；关闭后统一使用默认模式（默认为标准模式，可自定义）。仅影响新任务。
-  - switch "允许切换agent模式" [checked]
+  - paragraph: 选择 Agent 的工具和工作方式。日常任务用「标准模式」，扩展 DSH 的能力用「创造模式」。
+  - text: 新任务可选择模式 Beta
+  - paragraph: 开启后，可为每个新任务选择模式，并在这里设置默认值。关闭后，新任务使用应用配置的默认预设。已有任务不受影响。
+  - switch "新任务可选择模式" [checked]
   - heading "内置" [level=3]
   - list:
     - listitem:
       - 'button "新任务默认: 标准模式" [disabled] [pressed]':
-        - text: 标准模式 内置 新任务默认 功能完整的编码 Agent，支持文件编辑、Shell、文件与网页检索、Skills、计划、目标、子代理和工作流。
+        - text: 标准模式 新任务默认
         - code: standard
-      - 'button "查看: 标准模式"':
-        - img
-        - text: 查看
-      - 'button "复制: 标准模式"':
-        - img
-        - text: 复制
+        - text: 处理代码、文件和资料，适合大多数任务。Agent 会按需使用检索、编辑和终端等工具。
+      - 'button "模式说明: 标准模式"': 模式说明
+      - 'button "如何使用: 标准模式"': 如何使用
     - listitem:
-      - 'button "设为默认: 图纸拆解模式"':
-        - text: 图纸拆解模式 内置 多份长图纸 PDF 的机械拆分：逐份检查、按页范围/逐页/书签复制拆分、交付文件与索引后即停止；不做结构化拆解（MinerU），不自动跟进后续业务。
-        - code: drawing-split
-      - 'button "查看: 图纸拆解模式"':
-        - img
-        - text: 查看
-      - 'button "复制: 图纸拆解模式"':
-        - img
-        - text: 复制
+      - 'button "设为新任务默认: PTC 模式"':
+        - text: PTC 模式 内置
+        - code: ptc
+        - text: 包含标准模式的所有能力，更适合批量调用工具，并对结果进行筛选、整理、去重、统计或汇总的任务。
+      - 'button "模式说明: PTC 模式"': 模式说明
+      - 'button "如何使用: PTC 模式"': 如何使用
     - listitem:
-      - 'button "设为默认: 工程专业模式"':
-        - text: 工程专业模式 内置 完整编码 Agent 能力之外挂载工程运行时：工程文件读取、图纸 PDF 拆分、造价、进度与报告工具，并内置造价、质量、安全、进度四个行业 Skills。
-        - code: engineering
-      - 'button "查看: 工程专业模式"':
-        - img
-        - text: 查看
-      - 'button "复制: 工程专业模式"':
-        - img
-        - text: 复制
+      - 'button "设为新任务默认: 极简模式"':
+        - text: 极简模式 内置
+        - code: minimal
+        - text: Agent 仅使用终端工具完成任务，适合测试和对比其基础表现。
+      - 'button "模式说明: 极简模式"': 模式说明
+      - 'button "如何使用: 极简模式"': 如何使用
     - listitem:
-      - 'button "设为默认: 创造模式"':
-        - text: 创造模式 内置 用于创建自定义 Agent preset：具备标准模式的全部能力，并提供运行时检查、持久化插件管理和 preset 创作指导。
+      - 'button "设为新任务默认: 创造模式"':
+        - text: 创造模式 内置
         - code: cordis
-      - 'button "查看: 创造模式"':
-        - img
-        - text: 查看
-      - 'button "复制: 创造模式"':
-        - img
-        - text: 复制
+        - text: 用对话定制 DSH：让 Agent 编写插件，添加新功能或界面；也能组合工具和提示词，创建自己的模式。
+      - 'button "模式说明: 创造模式"': 模式说明
+      - 'button "如何使用: 创造模式"': 如何使用
   - heading "自定义" [level=3]
-  - button "用「创造模式」创作自定义预设":
-    - img
-    - text: 用「创造模式」创作自定义预设
+  - button "让 Agent 帮我创建预设模式"

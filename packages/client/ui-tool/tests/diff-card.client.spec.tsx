@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { useDisclosure } from '@deepseek-ai/dsh-client-ui-chat/src/client/chat/use-disclosure.ts'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
@@ -11,8 +12,6 @@ import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { CHAT_DIFF_MAX_LINES, diffCardModel } from '../src/client/tool/models/diff-card-model.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
-import { toolZh } from '../src/client/locale.ts'
-const tTool = makeTranslate(toolZh, commonZh)
 import { FileMutationRow, fileMutationToolview } from '../src/client/tool/toolviews/file-mutation-row.tsx'
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 
@@ -162,7 +161,7 @@ describe('diffCardModel', () => {
 describe('chat row diff body', () => {
   const ownerProps = (block: RunningToolCall | ToolResultNode): GenericToolCardProps => ({
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    callId: 'c1', toolName: 'edit', block, openFile: vi.fn(), t, tTool,
+    useDisclosure, callId: 'c1', toolName: 'edit', block, openFile: vi.fn(), t,
   })
 
   it('the expanded body is the applied diff, capped tighter than the panel', () => {
@@ -186,8 +185,8 @@ describe('chat row diff body', () => {
     // A non-file tool name so the row is not single-file (no path link), and its
     // args body is the fallback the diff card must not have replaced.
     const view = render(<GenericToolCard {...{
-      callId: 'c1', toolName: 'some_tool', openFile: vi.fn(),
-      loadImage: vi.fn(() => Promise.reject(new Error('not used'))), t, tTool,
+      useDisclosure, callId: 'c1', toolName: 'some_tool', openFile: vi.fn(),
+      loadImage: vi.fn(() => Promise.reject(new Error('not used'))), t,
       block: settled({
         call: { name: 'some_tool', argsRaw: '{"foo":"bar"}' },
         meta: undefined,
@@ -204,14 +203,14 @@ describe('FileMutationRow diff card', () => {
     ids: [SID],
     byId: { [SID]: { id: SID, displayTitle: 'r', running: false, retainedBy: {}, blank: false, updatedAt: 0, cwd: '/w/app' } },
     phase: 'ready',
-    subagentsByParent: {}, jobsBySession: {},
+    projectionsBySession: {},
   })
 
   const rowProps = (block: RunningToolCall | ToolResultNode, toolName = 'edit'): FileMutationRowProps => ({
-    callId: 'c1', toolName, block, openFile: vi.fn(), cwd: '/w/app',
+    useDisclosure, callId: 'c1', toolName, block, openFile: vi.fn(), cwd: '/w/app',
     sessionId: SID, useSessions: bindSnapshotSelector(list()),
     t,
-  } as unknown as FileMutationRowProps)
+  } as FileMutationRowProps)
 
   /** The whole summary row is the expand toggle (ToolRow's unified interaction). */
   const toggleRow = (view: { container: HTMLElement }) => {
@@ -258,6 +257,7 @@ describe('FileMutationRow diff card', () => {
     cleanup()
     const errorView = render(<FileMutationRow {...rowProps(settled({ isError: true }))} />)
     expect(errorView.container.querySelector('[data-state="error"]')).not.toBeNull()
+    expect(errorView.container.querySelector('[data-state="error"] svg')).not.toBeNull()
   })
 
   it('a mutation result with no metadata renders the summary row alone', () => {
@@ -301,9 +301,9 @@ describe('FileMutationRow diff card', () => {
       error: { name: 'ToolError', code: 'interrupted' },
     }))} />)
     expect(view.container.querySelector('[data-state="stopped"]')).not.toBeNull()
-    // The amber StateDot is aria-hidden, so ToolRow carries the state to AT as
-    // visually-hidden text; without it a stopped row is a colour-only signal.
-    expect(view.getByText('已停止')).toBeTruthy()
+    expect(view.container.querySelector('[data-state="stopped"] svg')).not.toBeNull()
+    expect(view.getByText('已停止').className).toContain('visuallyHidden')
+    expect(view.container.querySelector('[class*="_stoppedSummary_"]')?.textContent).toBe('notes/demo.txt')
   })
 
   it('renders a plain summary span when the call carries no file path', () => {

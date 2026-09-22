@@ -28,38 +28,8 @@
   border-bottom: 0.5px solid var(--dsw-alias-border-l3);
 }
 
-/* The path is never ellipsized. Its text sits at the left while it fits: the
-   auto margin takes the free space. Once it is wider than the box, the auto
-   margin is zero and `flex-end` holds the name at the right edge, so the
-   directories run off the left and the box clips them there, faded by the
-   mask while `data-textpreview-path-clipped` is set. The margin plus the row's
-   gap put the text 16px clear of the first control. */
 .path {
-  display: flex;
-  flex: 1 1 auto;
-  justify-content: flex-end;
-  min-width: 0;
   margin-right: 12px;
-  overflow: hidden;
-  font-size: var(--dsw-ui-font-secondary);
-  white-space: nowrap;
-}
-
-.path[data-textpreview-path-clipped] {
-  mask-image: linear-gradient(to right, transparent, black 28px);
-}
-
-.pathText {
-  flex: none;
-  margin-right: auto;
-}
-
-.pathDirectory {
-  color: var(--dsw-alias-label-tertiary);
-}
-
-.pathName {
-  color: var(--dsw-alias-label-primary);
 }
 
 /* Announced, not applied: the reader keeps the text they are looking at. */
@@ -71,7 +41,7 @@
   margin: 0;
   padding: 6px 10px;
   color: var(--dsw-alias-label-secondary);
-  font-size: var(--dsw-ui-font-secondary);
+  font-size: 12px;
   background: var(--dsw-alias-bg-layer-2);
   border-bottom: 0.5px solid var(--dsw-alias-border-l1);
 }
@@ -264,7 +234,7 @@
   margin: 8px 10px;
   padding: 4px 10px;
   color: var(--dsw-alias-label-secondary);
-  font-size: var(--dsw-ui-font-secondary);
+  font-size: 12px;
   font-family: var(--dsw-font, inherit);
   white-space: normal;
   background: var(--dsw-alias-bg-layer-2);
@@ -311,6 +281,11 @@
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-interactive-bg-hover);
 }
+
+.tool[data-textpreview-tool='auto-refresh'][aria-pressed='true'] {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
 .viewerTool {
   flex: none;
   width: auto;
@@ -318,7 +293,7 @@
   padding: 0 6px;
   overflow: hidden;
   color: var(--dsw-alias-label-secondary);
-  font-size: var(--dsw-ui-font-secondary);
+  font-size: 12px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }

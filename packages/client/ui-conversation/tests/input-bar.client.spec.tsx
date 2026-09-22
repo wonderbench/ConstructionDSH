@@ -8,6 +8,7 @@
 // root listener routes them through the keymap commands); draft writes drive
 // the shell (jsdom's beforeinput lacks the ranges Lexical needs).
 
+import './control-row-dom.ts'
 import type { InboxState } from '@deepseek-ai/dsh-agent/types'
 import type { GlobalStandardProps } from '@deepseek-ai/dsh-client-ui-slots'
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
@@ -19,15 +20,15 @@ import {
 } from '@deepseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { SessionListState, SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { ContextPressureProjection } from '@deepseek-ai/dsh-token-meter/client'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import type { SubmitOutcome } from '../src/client/contract/input.ts'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import { $replaceDetectSpanWithText, $selectDetectSpan } from '../src/client/input/editor/span-map.ts'
 import type {
-  ComposerAttachment, ComposerAttachmentsOwnerProps, DraftFileUploads,
+  ComposerAttachment, ComposerAttachmentsOwnerProps, DraftFileUploads, InputActivityOwnerProps,
 } from '../src/client/contract/slots.ts'
 import type { DraftAttachmentId } from '../src/client/contract/input.ts'
 import { InputBar } from '../src/client/skeleton/InputBar.tsx'
@@ -86,12 +87,6 @@ interface BenchOptions {
   nextStep?: InboxState['next-step']
   /** The hub's steer-all face (empty-draft accelerated Enter). */
   steerQueue?: () => void
-  /** Owning workspace row served to the global useWorkspaces seat. */
-  workspace?: { title: string; sessionIds: readonly SessionId[] }
-  /** Workspace-list phase (default 'ready'). */
-  workspacePhase?: 'pending' | 'ready'
-  /** cwd recorded for the bench session in the session list. */
-  sessionCwd?: string
   variant?: 'hero' | 'composer'
   placeholder?: string
   t?: InputBarProps['t']
@@ -99,13 +94,13 @@ interface BenchOptions {
   overlay?: React.ReactNode
   leftItems?: React.ReactNode
   rightItems?: React.ReactNode
+  activityEntry?: (owner: InputActivityOwnerProps) => React.ReactNode
+  contextPressure?: ContextPressureProjection
   footer?: React.ReactNode
   attachments?: readonly ComposerAttachment[]
-  /** Node the attachments slot entry renders (the rail's seat content). */
-  attachmentsEntry?: React.ReactNode
   /** Upload states served for file-kind drafts (absent = every file is ready). */
   fileUploads?: DraftFileUploads
-  addFiles?: (files: readonly File[]) => string | null
+  addFiles?: (files: readonly File[], directories?: ReadonlySet<File>) => string | null
   commandMenuOpen?: boolean
   busyEnter?: 'queue' | 'steer'
   toggleCommandMenu?: (selection: { start: number; end: number }) => void
@@ -165,13 +160,13 @@ function bench(over?: BenchOptions) {
   const renderSlot = ((key: string, owner: object) => {
     slotCalls.push({ key, owner })
     if (key === 'conversation.input.overlay') return over?.overlay ?? null
-    if (key === 'conversation.input.attachments') return over?.attachmentsEntry ?? null
     if (key === 'conversation.input.left') return over?.leftItems ?? null
     if (key === 'conversation.input.right') return over?.rightItems ?? null
     if (key === 'conversation.composer.dock') return over?.footer ?? null
     if (key === 'conversation.input.plan') return over?.planEntry ?? null
     if (key === 'conversation.input.permission') return over?.permissionEntry ?? null
     if (key === 'conversation.input.model') return over?.modelEntry ?? null
+    if (key === 'conversation.input.activity') return over?.activityEntry?.(owner as InputActivityOwnerProps) ?? null
     return null
   }) as never
   const props: InputBarProps = {
@@ -184,37 +179,18 @@ function bench(over?: BenchOptions) {
     useSessionRetainInfo: () => undefined,
     useResource,
     useSessions: bindSnapshotSelector(createSnapshotStore<SessionListState>({
-      ids: [SID],
-      byId: {
-        [SID]: {
-          id: SID,
-          displayTitle: 'bench',
-          cwd: over?.sessionCwd ?? '/tmp/bench-ws',
-          running: false,
-          retainedBy: {},
-          blank: false,
-          updatedAt: 0,
-        },
-      },
-      phase: 'ready',
-      subagentsByParent: {}, jobsBySession: {},
+      ids: [], byId: {}, phase: 'ready',
+      projectionsBySession: {},
     })),
     useWorkspaces: bindSnapshotSelector(createSnapshotStore({
-      items: over?.workspace === undefined ? [] : [{
-        workspaceId: 'w1' as WorkspaceId,
-        path: '/tmp/bench-ws',
-        title: over.workspace.title,
-        sessionIds: over.workspace.sessionIds,
-        createdAt: '',
-        updatedAt: '',
-      }],
-      archivedSessionIds: [], state: 'idle', phase: over?.workspacePhase ?? 'ready', error: null,
+      items: [], archivedSessionIds: [], pinnedSessionIds: [], state: 'idle', phase: 'ready', error: null,
     })),
     useProjection: ((key: string, selector?: (v: unknown) => unknown) =>
       (selector ?? (v => v))(key === 'plan'
         ? over?.plan
         : key === 'goal' ? over?.goal
-          : key === 'imageLimits' ? over?.imageLimits : undefined)),
+          : key === 'imageLimits' ? over?.imageLimits
+            : key === 'contextPressure' ? over?.contextPressure : undefined)),
     useInput: bindSnapshotSelector(shell.state),
     inputActions: shell.actions,
     keyboard: shell,
@@ -374,9 +350,32 @@ describe('image draft rail', () => {
         getData: () => '同时粘贴的文字',
       },
     })
-    expect(addFiles).toHaveBeenCalledWith([image])
+    expect(addFiles).toHaveBeenCalledWith([image], undefined)
     // The paste lands inside the PASTE_COMMAND update; its commit is a microtask away.
     await vi.waitFor(() => { expect(shell.snapshot.draft).toBe('同时粘贴的文字') })
+  })
+
+  it('passes known clipboard directories and keeps files whose entry metadata is unavailable', () => {
+    const addFiles = vi.fn(() => null)
+    const { textarea } = bench({ addFiles })
+    const folder = new File([], 'folder with spaces')
+    const emptyFile = new File([], 'empty-file')
+    const withoutApi = new File([], 'without-api')
+    const withoutEntry = new File([], 'without-entry')
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        items: [
+          { kind: 'string', getAsFile: () => null },
+          { kind: 'file', getAsFile: () => folder, webkitGetAsEntry: () => ({ isDirectory: true }) },
+          { kind: 'file', getAsFile: () => emptyFile, webkitGetAsEntry: () => ({ isDirectory: false }) },
+          { kind: 'file', getAsFile: () => withoutApi },
+          { kind: 'file', getAsFile: () => withoutEntry, webkitGetAsEntry: () => null },
+          { kind: 'file', getAsFile: () => null },
+        ],
+        getData: () => '',
+      },
+    })
+    expect(addFiles).toHaveBeenCalledWith([folder, emptyFile, withoutApi, withoutEntry], new Set([folder]))
   })
 
   it('pre-checks projected limits at intake: whole-batch refusal with product copy, none added', () => {
@@ -416,7 +415,7 @@ describe('image draft rail', () => {
     const within = bench({ addFiles: vi.fn(() => null), imageLimits: limits })
     const fits = png(16, 'fits.png')
     intake(within, [fits])
-    expect(within.props.addFiles).toHaveBeenCalledWith([fits])
+    expect(within.props.addFiles).toHaveBeenCalledWith([fits], undefined)
     expect(within.view.queryByRole('alert')).toBeNull()
   })
 
@@ -439,7 +438,7 @@ describe('image draft rail', () => {
       new File([new ArrayBuffer(64)], 'b.pdf', { type: 'application/pdf' }),
     ]
     act(() => { attachmentOwner(result.slotCalls).onAddFiles(files) })
-    expect(addFiles).toHaveBeenCalledWith(files)
+    expect(addFiles).toHaveBeenCalledWith(files, undefined)
     expect(result.view.getByRole('alert').textContent).toContain('仅支持 PNG、JPG、WebP、GIF 格式的图片')
   })
 
@@ -456,6 +455,17 @@ describe('image draft rail', () => {
       },
     })
     expect(attachmentOwner(result.slotCalls).dropLimits).toEqual({ count: 20, size: '5MB' })
+  })
+
+  it('forwards dropped directories to addFiles and announces its refusal', () => {
+    const addFiles = vi.fn((_files: readonly File[], directories?: ReadonlySet<File>) =>
+      directories !== undefined && directories.size > 0 ? '只有桌面端支持添加文件夹，浏览器里请添加单个文件' : null)
+    const result = bench({ addFiles })
+    const folder = new File([], 'project')
+    const note = new File([Uint8Array.of(1)], 'notes.md', { type: 'text/markdown' })
+    act(() => { attachmentOwner(result.slotCalls).onAddFiles([folder, note], new Set([folder])) })
+    expect(addFiles).toHaveBeenCalledWith([folder, note], new Set([folder]))
+    expect(result.view.getByRole('alert').textContent).toContain('只有桌面端支持添加文件夹')
   })
 
   it('announces server attachment rejections as product copy, other codes as developer text', () => {
@@ -1335,9 +1345,9 @@ describe('machine pending lock', () => {
 })
 
 describe('decorations', () => {
-  /** The claim-token styled leaf (the transform's inline warn color). */
+  /** The claim-token styled leaf (the transform's inline accent color). */
   function tokenSpanOf(container: HTMLElement): HTMLElement | null {
-    return container.querySelector('[data-lexical-text][style*="warn-label"]')
+    return container.querySelector('[data-lexical-text][style*="business-primary"]')
   }
 
   it('claimed token styles the leading leaf and sets the blank-args hint variable', () => {
@@ -1640,7 +1650,7 @@ describe('command launcher chrome and control seats', () => {
     expect([...new Set(slotCalls.map(c => c.key))]).toEqual([
       'conversation.input.overlay', 'conversation.input.attachments',
       'conversation.input.permission', 'conversation.input.plan', 'conversation.input.left',
-      'conversation.input.right', 'conversation.input.model',
+      'conversation.input.right', 'conversation.input.model', 'conversation.input.activity',
       'conversation.composer.dock',
     ])
     expect(view.queryByLabelText('Plan mode')).toBeNull()
@@ -1704,68 +1714,41 @@ describe('command launcher chrome and control seats', () => {
   })
 })
 
-describe('three-layer shell: context / input / controls', () => {
-  const FOLLOWING = Node.DOCUMENT_POSITION_FOLLOWING
-
-  it('names the owning workspace in the docked card, resolved from the workspace title', () => {
-    const { view } = bench({ workspace: { title: '路润工程', sessionIds: [SID] } })
-    const line = view.container.querySelector('[data-composer-context-workspace]')
-    expect(line?.textContent).toBe('路润工程')
+it('lets a toolbar activity replace accessories without replacing the draft editor or send action', () => {
+  const { view } = bench({ draft: 'keep this draft', modelEntry: <button>model choice</button>,
+    activityEntry: owner => <>
+      <button onClick={() => { owner.onActiveChange(true) }}>expand activity</button>
+      <button onClick={() => { owner.onActiveChange(false) }}>close activity</button>
+    </>,
   })
+  const editor = view.getByRole('textbox')
+  fireEvent.click(view.getByRole('button', { name: 'expand activity' }))
+  expect(view.queryByRole('button', { name: 'model choice' })).toBeNull()
+  expect(view.getByRole('textbox')).toBe(editor)
+  expect(editor.textContent).toBe('keep this draft')
+  expect(view.getByRole('button', { name: '发送消息' })).toBeTruthy()
+  fireEvent.click(view.getByRole('button', { name: 'close activity' }))
+  expect(view.getByRole('button', { name: 'model choice' })).toBeTruthy()
+})
 
-  it('bridges the identity from the session cwd basename only while the workspace list loads', () => {
-    const loading = bench({ workspacePhase: 'pending', sessionCwd: '/data/图纸工程' })
-    expect(loading.view.container.querySelector('[data-composer-context-workspace]')?.textContent)
-      .toBe('图纸工程')
-    cleanup()
-    // List settled without an owning workspace: a deleted workspace's name
-    // must not resurface through cwd.
-    const orphaned = bench({ workspacePhase: 'ready', sessionCwd: '/data/图纸工程' })
-    expect(orphaned.view.container.querySelector('[data-composer-context-workspace]')).toBeNull()
+it('places context usage below the composer and hides it until the activity closes', () => {
+  const { view } = bench({ draft: 'draft', contextPressure: { pressureTokens: 32_000, contextWindow: 128_000 },
+    activityEntry: owner => <>
+      <button onClick={() => { owner.onActiveChange(true) }}>microphone</button>
+      <button onClick={() => { owner.onActiveChange(false) }}>close activity</button>
+    </>,
   })
-
-  it('renders no identity line in the hero variant, without a session, or when the title is empty', () => {
-    const hero = bench({ variant: 'hero', workspace: { title: '路润工程', sessionIds: [SID] } })
-    expect(hero.view.container.querySelector('[data-composer-context-workspace]')).toBeNull()
-    cleanup()
-    const docked = bench({ workspace: { title: '路润工程', sessionIds: [SID] } })
-    docked.view.rerender(<InputBar {...docked.props} sessionId={undefined} />)
-    expect(docked.view.container.querySelector('[data-composer-context-workspace]')).toBeNull()
-  })
-
-  it('orders the layers: context group above the editor, controls below, rail inside the context group', () => {
-    const { view } = bench({
-      workspace: { title: '路润工程', sessionIds: [SID] },
-      attachmentsEntry: <i data-testid="rail" />,
-      leftItems: <i data-testid="left-control" />,
-    })
-    const context = view.container.querySelector('[data-composer-context]')!
-    const editor = view.container.querySelector('[data-composer-input]')!
-    // The launcher button sits in the tools group, one level inside the row.
-    const row = view.container
-      .querySelector<HTMLButtonElement>('button[aria-label="添加文件或调用指令"]')!
-      .parentElement!.parentElement!
-    expect(context.compareDocumentPosition(editor) & FOLLOWING).not.toBe(0)
-    expect(editor.compareDocumentPosition(row) & FOLLOWING).not.toBe(0)
-    // The selected-file rail and the workspace identity both live in the
-    // top context layer; the control row is a separate layer below.
-    expect(context.contains(view.getByTestId('rail'))).toBe(true)
-    expect(context.contains(view.container.querySelector('[data-composer-context-workspace]'))).toBe(true)
-    expect(row.contains(view.getByTestId('left-control'))).toBe(true)
-  })
-
-  it('keeps an empty context group childless so it consumes no card gap', () => {
-    const { view } = bench()
-    const context = view.container.querySelector('[data-composer-context]')!
-    expect(context.children.length).toBe(0)
-    // The editor scrollport follows the collapsed group directly, then the
-    // control row closes the card: the three-layer order holds even with an
-    // empty context layer.
-    const card = view.container.querySelector('[data-composer-card]')!
-    const editor = view.container.querySelector('[data-composer-input]')!
-    const seats = [...card.children]
-    const at = seats.indexOf(context)
-    expect(at).toBeGreaterThanOrEqual(0)
-    expect(seats[at + 1]?.querySelector('[data-composer-input]')).toBe(editor)
-  })
+  const meter = view.getByRole('button', { name: '上下文已用 25%' })
+  const microphone = view.getByRole('button', { name: 'microphone' })
+  expect(microphone.compareDocumentPosition(meter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  fireEvent.click(meter)
+  expect(view.getByRole('dialog', { name: '上下文已用' })).toBeTruthy()
+  fireEvent.click(microphone)
+  expect(view.queryByRole('dialog', { name: '上下文已用' })).toBeNull()
+  expect(view.queryByRole('button', { name: '上下文已用 25%' })).toBeNull()
+  expect(view.getByRole('button', { name: '发送消息' })).toBeTruthy()
+  fireEvent.click(view.getByRole('button', { name: 'close activity' }))
+  fireEvent.click(view.getByRole('button', { name: '上下文已用 25%' }))
+  expect(view.getByRole('dialog', { name: '上下文已用' })).toBeTruthy()
+  expect(view.getByRole('button', { name: '发送消息' })).toBeTruthy()
 })

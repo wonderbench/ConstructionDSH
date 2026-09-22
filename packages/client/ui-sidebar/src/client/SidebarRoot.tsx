@@ -15,17 +15,11 @@
  * scrollbar at all: the shell tracks the pointer and rebinds ui-theme's
  * scrollbar indirection away while it is elsewhere, so a list the user is not
  * pointing at carries no bar.
- *
- * Presentation mode: in the default `business` mode the panel rows whose ids
- * mark technical surfaces (TECHNICAL_PANEL_IDS) are not rendered; `expert`
- * mode shows every registered panel. The mode arrives through the theme
- * snapshot hook and is presentation-only — approvals, settings, and the mode
- * switch itself are never filtered.
  */
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  IconNewChatOutline16, IconPanelLeftOutline16, isDarwinDesktop, Tooltip,
+  FishLogo, IconNewChatOutlineMedium, IconNewChatOutlineRegular, IconPanelLeftOutlineRegular, isDarwinDesktop, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {
@@ -37,26 +31,22 @@ import css from './SidebarRoot.module.css'
 const COLLAPSE_SETTLE_MS = 150
 
 /**
- * Global panel ids leading to technical surfaces. In the default `business`
- * mode the shell hides these rows; `expert` shows every registered panel.
- * The marker is the stable panel id (the same id that addresses the `main`
- * keyed slot) so any package's entry opts in by id, without the shell
- * importing the registrant. Approvals, the settings seat, and the mode
- * switch itself are never filtered — the mode is presentation-only.
- * `terminal` has no main-panel entry in the shipped composition yet; the
- * marker applies the moment one registers.
- */
-const TECHNICAL_PANEL_IDS: ReadonlySet<SidebarPanelMetadata['id']> = new Set(
-  ['plugins', 'terminal'] as SidebarPanelMetadata['id'][],
-)
-
-/**
  * How long the column's scrollbars stay drawn after the pointer leaves it.
  * The bar is a pointer affordance here, and hiding it on the leave event
  * itself makes it blink out while the pointer is only crossing the column's
  * edge — on the way to the conversation, or around a portalled menu.
  */
 const SCROLLBAR_LINGER_MS = 2000
+
+/** Format complete-build metadata for the local brand badge. */
+function localBuildVersion(): string | undefined {
+  const version = process.env.DSH_CLIENT_VERSION
+  if (version === undefined) return undefined
+  const commit = process.env.DSH_CLIENT_COMMIT_HASH
+  return version
+    + (commit === undefined ? '' : `-${commit}`)
+    + (process.env.DSH_CLIENT_GIT_DIRTY === 'true' ? '-dirty' : '')
+}
 
 type PanelRowProps =
   Pick<SidebarPanelMetadata, 'id' | 'label'>
@@ -102,17 +92,11 @@ export function SidebarRoot({
   toggleSidebar,
   selectPanel,
   usePanels,
-  useUiMode,
   usePanelInfo,
   t,
   renderSlot,
 }: SidebarRootComponentProps) {
   const panels = usePanels(snapshot => snapshot)
-  const uiMode = useUiMode(snapshot => snapshot)
-  // Business mode hides technical panel entries (presentation-only); expert
-  // mode shows every registered panel. The settings seat below stays visible
-  // in both modes so the user can always switch back.
-  const visiblePanels = uiMode === 'expert' ? panels : panels.filter(({ id }) => !TECHNICAL_PANEL_IDS.has(id))
   // Wide content stays mounted while the collapse animates (fading via
   // .collapsed .wide), unmounts at settle, and remounts right away on expand.
   const [settled, setSettled] = useState(collapsed)
@@ -123,6 +107,10 @@ export function SidebarRoot({
   }, [collapsed])
   const windowsTitlebar = document.documentElement.hasAttribute('data-windows-titlebar')
   const wide = windowsTitlebar ? !collapsed : !collapsed || !settled
+  // The Windows caption menus occupy the strip to the right of these controls
+  // (that is what --dsh-windows-menu-start reserves), so a right-side bubble
+  // lands under their text. Below the caption is the only clear side.
+  const captionTooltipSide = windowsTitlebar ? 'bottom' : 'right'
 
   // Freeze the content at its expanded width while it fades out (collapsed
   // && wide): the sliding column then clips it instead of reflowing it. The
@@ -178,12 +166,14 @@ export function SidebarRoot({
     }
   }, [pointerInside])
 
+  const buildVersion = localBuildVersion()
+
   const darwinDesktop = isDarwinDesktop()
   // Rail resting state is the whale mark; hovering swaps in the panel icon
   // (the expand affordance, figma sidebar-hover flow). Expanded it is a plain
   // panel icon.
   const toggle = (
-    <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
+    <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500} side={captionTooltipSide}>
       <button
         type="button"
         className={clsx(css.iconButton, css.toggle)}
@@ -192,13 +182,11 @@ export function SidebarRoot({
       >
         {!wide && !windowsTitlebar && (
           <span className={css.railMark} aria-hidden="true">
-            {renderSlot('sidebar.brand.mark', { size: 24 }, {
-              fallback: <img className={css.brandLogoRail} src="/brand-logo1.png" alt="" />,
-            })}
+            {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
           </span>
         )}
         {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
-        <IconPanelLeftOutline16 className={css.panelIcon} size={wide || windowsTitlebar ? 16 : 18} />
+        <IconPanelLeftOutlineRegular className={css.panelIcon} size={wide || windowsTitlebar ? 16 : 18} />
         {!wide && renderSlot('sidebar.toggle.badge', {})}
       </button>
     </Tooltip>
@@ -222,46 +210,66 @@ export function SidebarRoot({
           traffic lights and keeps the toggle at the sidebar's top-right. */}
       {darwinDesktop && <div className={css.topStrip}>{toggle}</div>}
       <div className={css.logoRow}>
-        {/* Expanded, the brand doubles as a New Session shortcut; the
-            collapsed rail's logo is the expand toggle below instead. */}
-        {wide && (
-          <button
-            type="button"
-            className={clsx(css.brand, css.wide)}
-            aria-label={t('session.new.label')}
-            onClick={() => { startSession() }}
-          >
+        {/* Expanded, the brand doubles as a New Session shortcut — except on
+            macOS, where it stays part of the logo row's window-drag surface
+            (a button would subtract itself through the global no-drag rule);
+            the collapsed rail's logo is the expand toggle below instead. */}
+        {wide && (() => {
+          const identity = (
             <span className={css.brandIdentity} aria-hidden="true">
               <span className={css.brandMark}>
-                {renderSlot('sidebar.brand.mark', { size: 24 }, {
-                  fallback: <img className={css.brandLogoWide} src="/brand-logo2.png" alt="" />,
+                {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
+              </span>
+              <span className={css.brandName}>
+                {renderSlot('sidebar.brand.name', {}, {
+                  fallback: buildVersion === undefined
+                    ? <span className={css.fallbackBrandName}>{t('brand.localBuild')}</span>
+                    : (
+                      <span className={css.localBuildBrand}>
+                        <span className={css.localBuildTitle}>{t('brand.localBuild')}</span>
+                        <span className={css.buildVersion}>{buildVersion}</span>
+                      </span>
+                    ),
                 })}
               </span>
-              <span>
-                {renderSlot('sidebar.brand.name', {}, { fallback: null })}
-              </span>
             </span>
-          </button>
-        )}
+          )
+          return darwinDesktop
+            ? <span className={clsx(css.brand, css.wide)}>{identity}</span>
+            : (
+              <button
+                type="button"
+                className={clsx(css.brand, css.wide)}
+                aria-label={t('session.new.label')}
+                onClick={() => { startSession() }}
+              >
+                {identity}
+              </button>
+            )
+        })()}
         {!darwinDesktop && toggle}
       </div>
 
       {/* Expanded, the button carries its own label — tooltip only on the rail. */}
-      <Tooltip label={t('session.new.label')} delayMs={500} disabled={wide}>
+      <Tooltip label={t('session.new.label')} delayMs={500} disabled={wide} side={captionTooltipSide}>
         <button
           type="button"
           className={css.newSession}
           aria-label={t('session.new.label')}
           onClick={() => { startSession() }}
         >
-          <IconNewChatOutline16 size={wide ? 14 : windowsTitlebar ? 16 : 18} />
+          {/* The rail draws Regular: Medium's 1.3px stroke scaled to the rail's
+              larger glyph reads visibly heavier than the neighboring 1px icons. */}
+          {wide
+            ? <IconNewChatOutlineMedium size={14} />
+            : <IconNewChatOutlineRegular size={windowsTitlebar ? 16 : 18} />}
           {wide && <span className={clsx(css.newSessionLabel, css.wide)}>{t('session.new')}</span>}
         </button>
       </Tooltip>
 
-      {visiblePanels.length > 0 && (
+      {panels.length > 0 && (
         <nav className={css.panelList} aria-label={t('panels.label')}>
-          {visiblePanels.map(({ id, label }) => (
+          {panels.map(({ id, label }) => (
             <PanelRow
               key={id}
               id={id}

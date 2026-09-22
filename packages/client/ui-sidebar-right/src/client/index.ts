@@ -32,14 +32,12 @@ import type {} from './contract/slots.ts'
 import { GuideBody, type GuideInjected } from './tabs/guide/GuideBody.tsx'
 import { GuideTitle } from './tabs/guide/GuideTitle.tsx'
 import { ExpandButton } from './shell/ExpandButton.tsx'
-import { RestoreNotice, type RestoreNoticeInjected } from './shell/RestoreNotice.tsx'
 import { RightbarSeat, type SidebarRightInjected } from './shell/SidebarRight.tsx'
-import { RightbarRoot } from './shell/RightbarRoot.tsx'
+import { RightbarRoot, type RightbarRootInjected } from './shell/RightbarRoot.tsx'
+import { SidebarSessionViews } from './session-views.ts'
 import { createSidebarRightController, type SidebarRightController } from './service.ts'
 import { SidebarRightTabRegistry } from './tab-registry.ts'
 import { createSidebarRightStore } from './stores.ts'
-import { watchRestoredResources } from './restore-check.ts'
-import { RestoreNoticeSink } from './restore-notice.ts'
 import { en, zh } from './locales.ts'
 import { GUIDE_ID, guideDefinition } from './tabs/guide/definition.ts'
 import { guideTabInfoFactory, tabInfoFactory } from './tab-info.ts'
@@ -49,9 +47,6 @@ import { defaultSeed } from './contract/seed.ts'
 export type { RightbarSeatProps, SidebarRightInjected, SidebarRightPresentation } from './shell/SidebarRight.tsx'
 export type { GuideBodyProps, GuideInjected } from './tabs/guide/GuideBody.tsx'
 export type { ExpandButtonProps } from './shell/ExpandButton.tsx'
-export type { RestoreNoticeInjected } from './shell/RestoreNotice.tsx'
-export type { RestoreFailure, RestoreFailureReason } from './restore-check.ts'
-export type { RestoreNoticeEntry } from './restore-notice.ts'
 export type { SidebarRightState, SurfaceState } from './stores.ts'
 export type {
   ISidebarRight, SidebarRightBinding, SidebarRightOpenResourceOptions, SidebarRightOpenTabOptions,
@@ -80,7 +75,7 @@ export type { SidebarRightOpenTab } from './tab-inventory.ts'
 const NS = 'sidebarRight'
 
 /** Required browser services: the slot registry, the frame's panel actions, copy, and the resource model. */
-export const inject = ['slots', 'layout', 'locale', 'resources']
+export const inject = ['slots', 'layout', 'locale', 'resources', 'sessions', 'uiSession']
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -108,6 +103,14 @@ export function apply(ctx: ClientContext): void {
   // its own apply top level for the same reason.
   const t = ctx.locale.bind(NS)
   const tabs = new SidebarRightTabRegistry(ctx)
+  const views = new SidebarSessionViews(ctx.sessions)
+  ctx.effect(() => {
+    const current = ctx.uiSession.adapter.current
+    const sync = (): void => { views.select(current.getSnapshot().key as SessionId | undefined) }
+    const unsubscribe = current.subscribe(sync)
+    sync()
+    return () => { unsubscribe(); views.dispose() }
+  }, 'ui-sidebar-right: retained Session views')
   const { controller, adopt, forget } = createSidebarRightController(
     tabs,
     (address, signal) => { ctx.resources.pin(address, signal) },
@@ -128,40 +131,22 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => {
     const handle = createSidebarRightStore(() => defaultSeed(tabs))
-    const restoreNotices = new RestoreNoticeSink()
-    // The runtime mints one instance of this handle per session (the scope key
-    // is the session id) and caches it per key. Each is adopted as it is minted,
-    // so a tab's own action reaches its session's store while another session
-    // is on screen, and that store's commits sync the Tab domain themselves.
-    const adoptions: Array<() => void> = []
-    const restoreWatches: Array<() => void> = []
+    // Each Session Context generation owns one Store. Background tab actions
+    // use the latest adoption for that Session.
+    const adoptions = new Map<SessionId, () => void>()
     const store: typeof handle = {
       ...handle,
       create: (scopeKey) => {
         const instance = handle.create(scopeKey)
         if (scopeKey !== undefined) {
           const sessionId = scopeKey as SessionId
-          adoptions.push(adopt(sessionId, instance))
-          // Tabs present at creation came from persisted storage; the live
-          // surface earns its tabs only afterwards. Each watched resource
-          // settles once — confirmed, unverifiable, or gone — and a tab whose
-          // file is definitively gone is closed and explained in the overlay.
-          const restored = Object.values(instance.getSnapshot().bySession[scopeKey]?.layout.tabs ?? {})
-          if (restored.length > 0) {
-            restoreWatches.push(watchRestoredResources(restored,
-              address => ctx.resources.source(address),
-              ({ tab, reason }) => {
-                if (instance.getSnapshot().bySession[scopeKey]?.layout.tabs[tab.id] === undefined) return
-                restoreNotices.add({ id: tab.id, title: tab.title, reason })
-                controller.closeIn(sessionId, tab.id)
-              }))
-          }
-          return { ...instance, clearPersisted() {
-            instance.clearPersisted()
-            forget(sessionId)
-          } }
+          adoptions.get(sessionId)?.()
+          adoptions.set(sessionId, adopt(sessionId, instance))
         }
-        return instance
+        return { ...instance, clearPersisted() {
+          instance.clearPersisted()
+          if (scopeKey !== undefined) forget(scopeKey as SessionId)
+        } }
       },
     }
     const layout: ILayout = ctx.layout
@@ -180,6 +165,10 @@ export function apply(ctx: ClientContext): void {
       yield ctx.slots.register({
         name: 'rightbar',
         children: { 'rightbar.session': { kind: 'single', scope: 'session' } },
+        inject: (): RightbarRootInjected => ({
+          hooks: { views: views.source },
+          mountView: reference => views.mount(reference),
+        }),
       }, RightbarRoot)
       yield ctx.slots.register({
         name: 'rightbar.session',
@@ -210,17 +199,6 @@ export function apply(ctx: ClientContext): void {
       locale: NS,
       store,
     }, ExpandButton))
-    // Restore explanations ride the frame's overlay layer, one alert per tab
-    // that persisted storage could not bring back.
-    const disposeRestoreNotices = ctx.slots.inject('shell.overlay', () => ctx.slots.register({
-      name: 'shell.overlay',
-      id: 'sidebar-right-restore',
-      locale: NS,
-      inject: (): RestoreNoticeInjected => ({
-        hooks: { restoreNotices: restoreNotices.source },
-        dismissRestoreNotice: (id) => { restoreNotices.dismiss(id) },
-      }),
-    }, RestoreNotice))
     // Stage two for the guide: it declares the chain child it hosts and reads
     // the registry's entry boxes, which an ordinary type has no reason to do.
     const guideInjected: GuideInjected = {
@@ -246,12 +224,11 @@ export function apply(ctx: ClientContext): void {
     return () => {
       disposeGuideTitle()
       disposeGuide()
-      disposeRestoreNotices()
       disposeExpand()
       disposeSeat()
       for (const dispose of disposeTypes.reverse()) dispose()
-      for (const stop of restoreWatches) stop()
-      for (const release of adoptions) release()
+      for (const release of adoptions.values()) release()
+      adoptions.clear()
     }
   }, 'ui-sidebar-right: seats and shipped tab type')
 }

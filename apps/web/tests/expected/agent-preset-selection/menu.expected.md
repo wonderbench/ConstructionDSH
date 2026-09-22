@@ -1,8 +1,5 @@
 - menu:
-  - menuitem "Standard mode Full coding agent with file editing, shell, file and web search, skills, planning, goals, subagents, and workflows.":
-    - text: Standard mode Full coding agent with file editing, shell, file and web search, skills, planning, goals, subagents, and workflows.
-    - img
-  - 'menuitem "Drawing split mode Mechanical splitting of long drawing PDFs: inspect each file, split by page range / per page / bookmark, deliver the output files and index, then stop; no structured decomposition (MinerU) and no follow-up business work."'
-  - 'menuitem "Engineering mode The full coding agent plus the construction runtime: engineering file reading, drawing-PDF splitting, costing, scheduling, and report tools, with the cost, quality, safety, and schedule business skills."'
-  - menuitem "Narrow mode An empty composition with no tools, no skills, and no preset-scoped commands."
-  - menuitem "Refusing mode Resolves, then refuses to start."
+  - menuitem "Standard mode Work with code, files, and information. Suitable for most tasks, with search, editing, terminal commands, and other tools available as needed."
+  - menuitem "PTC mode Includes all Standard mode capabilities. Better suited to tasks that call tools in batches and then filter, organize, deduplicate, count, or summarize the results."
+  - menuitem "Minimal mode The agent works using only a terminal tool. Useful for testing and comparing its basic performance."
+  - menuitem "Creator mode Customize DSH through conversation. Let the agent write plugins that add features or UI, or combine tools and prompts to create your own mode."

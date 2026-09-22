@@ -4,15 +4,7 @@
  * through this entry's own inject, whose hooks compartment binds
  * useNotices/useLexicon; layout-phase inputs (variant and placeholder) ride
  * the owner props. Session facts
- * (running/removed/promptError) are self-selected via useSession, and the
- * top context layer reads workspace identity from the standing global seats
- * (useSessions/useWorkspaces).
- *
- * The card is the P3 three-layer shell, grouping only — context above
- * (workspace identity, owner accessory, selected-file rail), the request
- * input in the middle, execution controls below; control ownership,
- * ordering within the control row, and the submit state machine are
- * unchanged.
+ * (running/removed/promptError) are self-selected via useSession.
  *
  * The text surface is the shell-owned Lexical editor bound here through
  * ComposerContentEditable; chips render as decorator portals, and the
@@ -21,11 +13,11 @@
  * trigger instead of a parallel tree.
  */
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, KeyboardEvent, MouseEvent } from 'react'
 import clsx from 'clsx'
 import {
-  IconFolderOpen16, IconPlusOutline16, IconWarningOutline16, Toast, Tooltip,
+  IconPlusOutlineMedium, IconWarningOutlineRegular, Toast, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: the `plan` projection key merge (the TodoDock posture — the
 // composer reads a host-computed value; the domain owns the key).
@@ -44,14 +36,14 @@ import {
 } from '../input/editor/view-binding.ts'
 import { resolveSubmitMode } from '../input/submission-policy.ts'
 import { attachmentErrorText, imageSizeText } from '../image-labels.ts'
-import { workspaceLabel } from './EmptyHero.tsx'
 import { ContextMeter } from './ContextMeter.tsx'
+import { observeControlRow } from './control-row-layout.ts'
 import css from './InputBar.module.css'
 
 export type InputBarProps = ComposerBarProps
 
 export const InputBar = memo(function InputBar({
-  useSession, useSessions, useWorkspaces, useInput, inputActions, keyboard, addFiles, removeAttachment, resolveDraftAttachments,
+  useSession, useInput, inputActions, keyboard, addFiles, removeAttachment, resolveDraftAttachments,
   retryFileUpload,
   toggleCommandMenu, stop, t,
   renderSlot, useBusyEnter, useFileUploads, useNotices, useLexicon, useMenuLauncher,
@@ -64,25 +56,12 @@ export const InputBar = memo(function InputBar({
   const busyEnter = useBusyEnter(s => s)
   void useLexicon // hook seat stays bound by the inject compartment; text-ref decoration rides the shell's editor transforms
   const commandMenuOpen = useMenuLauncher(source => source === 'command')
+  const [activity, setActivity] = useState(false)
+  useEffect(() => { setActivity(false) }, [sessionId])
   const promptError = useSession(s => s.promptError) ?? null
   const running = useSession(s => s.running) ?? false
   const subagent = useSession(s => s.subagent) ?? null
   const removed = useSession(s => s.removed) ?? false
-  // Top context layer (P3): the docked card names the session's workspace from
-  // the standing global seats — the owning workspace's title wins; the
-  // session's cwd basename bridges only while the workspace list is still
-  // loading, so a deleted workspace's name never resurfaces through cwd once
-  // the list has settled (the same resolution the hero chip uses). The hero
-  // keeps its interactive chip row above the card instead, and the no-Session
-  // surface has no identity to name.
-  const sessionCwd = useSessions(s => (sessionId === undefined ? undefined : s.byId[sessionId]?.cwd))
-  const workspaces = useWorkspaces(s => s)
-  const workspaceTitle = variant !== 'composer' || sessionId === undefined
-    ? undefined
-    : workspaces.items.find(workspace => workspace.sessionIds.includes(sessionId))?.title
-      ?? (workspaces.phase !== 'ready' && sessionCwd !== undefined && sessionCwd !== ''
-        ? workspaceLabel(sessionCwd)
-        : undefined)
   // Plan mode swaps the composer placeholder (the projection is the folded
   // host value; owner-prop placeholders — hero, session-unavailable — win).
   const planActive = useProjection('plan', plan => plan !== undefined && (plan.pending ? !plan.active : plan.active))
@@ -139,6 +118,12 @@ export const InputBar = memo(function InputBar({
   useEffect(() => {
     if (notice?.level === 'error') showToast(notice.text)
   }, [notice, showToast])
+  const rowRef = useRef<HTMLDivElement | null>(null)
+  useLayoutEffect(() => {
+    const row = rowRef.current
+    if (row === null) return
+    return observeControlRow(row)
+  }, [])
   const cardRef = useRef<HTMLDivElement | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
@@ -222,7 +207,7 @@ export const InputBar = memo(function InputBar({
   // client-side size or count limit and upload as soon as they are picked.
   // The host enforces the same image limits at submit for callers that bypass
   // this composer.
-  const intakeFiles = useCallback((files: readonly File[]): void => {
+  const intakeFiles = useCallback((files: readonly File[], directories?: ReadonlySet<File>): void => {
     if (subagent !== null || addFiles === undefined || files.length === 0) return
     const rejected = ((): string | null => {
       if (imageLimits !== undefined) {
@@ -241,7 +226,7 @@ export const InputBar = memo(function InputBar({
           return t('image.totalTooLarge', { size: imageSizeText(imageLimits.maxMessageImageBytes) })
         }
       }
-      return addFiles(files)
+      return addFiles(files, directories)
     })()
     if (rejected !== null) showToast(rejected)
   }, [subagent, addFiles, attachments, imageLimits, showToast, t])
@@ -371,7 +356,7 @@ export const InputBar = memo(function InputBar({
         <Toast
           key={toast.seq}
           text={toast.text}
-          icon={<IconWarningOutline16 />}
+          icon={<IconWarningOutlineRegular />}
           anchor={cardRef.current}
           onDone={dismissToast}
         />
@@ -396,36 +381,24 @@ export const InputBar = memo(function InputBar({
         {sessionId !== undefined && (
           <div className={css.overlayAnchor}>{renderSlot('conversation.input.overlay', {})}</div>
         )}
-        {/* Layer 1 — current task context: project/workspace identity, owner
-            accessory chrome, and the selected-file rail, grouped above the
-            editor. Pure visual grouping: every control keeps its existing
-            owner, order, and behavior. */}
-        <div className={css.context} data-composer-context="">
-          {workspaceTitle !== undefined && (
-            <span className={css.workspace} data-composer-context-workspace="">
-              <IconFolderOpen16 size={14} />
-              {workspaceTitle}
-            </span>
-          )}
-          {accessory !== undefined && <div className={css.accessory}>{accessory}</div>}
-          {renderSlot('conversation.input.attachments', {
-            attachments,
-            canAcceptDrop,
-            onAddFiles: intakeFiles,
-            onRemoveAttachment: (id) => { removeAttachment?.(id) },
-            uploads,
-            onRetryFile: (id) => { retryFileUpload?.(id) },
-            dropLimits: imageLimits === undefined ? undefined : {
-              count: imageLimits.maxImagesPerMessage,
-              size: imageSizeText(imageLimits.maxImageBytes),
-            },
-          })}
-        </div>
-        {/* Layer 2 — the request input. One scrollport, one text surface: the
-            contenteditable grows with its content and .scroll — capped at 14
-            lines in CSS — is the only thing that scrolls. Chips are decorator
-            portals inside the same surface, so wrapping, caret geometry, and
-            scrolling are the browser's own. */}
+        {accessory !== undefined && <div className={css.accessory}>{accessory}</div>}
+        {renderSlot('conversation.input.attachments', {
+          attachments,
+          canAcceptDrop,
+          onAddFiles: intakeFiles,
+          onRemoveAttachment: (id) => { removeAttachment?.(id) },
+          uploads,
+          onRetryFile: (id) => { retryFileUpload?.(id) },
+          dropLimits: imageLimits === undefined ? undefined : {
+            count: imageLimits.maxImagesPerMessage,
+            size: imageSizeText(imageLimits.maxImageBytes),
+          },
+        })}
+        {/* One scrollport, one text surface: the contenteditable grows with
+            its content and .scroll — capped at 14 lines in CSS — is the only
+            thing that scrolls. Chips are decorator portals inside the same
+            surface, so wrapping, caret geometry, and scrolling are the
+            browser's own. */}
         <DraftEditor
           classNames={css}
           editor={editor}
@@ -441,11 +414,8 @@ export const InputBar = memo(function InputBar({
           hint={hint}
           showPlaceholder={draft === '' && attachments.length === 0 && !claimActive}
         />
-        {/* Layer 3 — execution controls: add-material and common capabilities
-            on the left; model, execution policy, and Send/Stop on the right.
-            Control ownership and the submit state machine are unchanged. */}
-        <div className={css.row}>
-          <div className={css.tools}>
+        <div ref={rowRef} className={css.row}>
+          <div className={css.tools} hidden={activity}>
             <Tooltip label={t('input.commands')} side="top" delayMs={500}>
               <button
                 type="button"
@@ -457,7 +427,7 @@ export const InputBar = memo(function InputBar({
                 onMouseDown={keepFocus}
                 onClick={onToggleCommandMenu}
               >
-                <IconPlusOutline16 size={14} />
+                <IconPlusOutlineMedium size={14} />
               </button>
             </Tooltip>
             <input
@@ -476,11 +446,16 @@ export const InputBar = memo(function InputBar({
               ? null
               : renderSlot('conversation.input.left', {})}
           </div>
-          <div className={css.trailing}>
-            {input === undefined || sessionId === undefined
-              ? null
-              : renderSlot('conversation.input.right', {})}
-            {sessionId === undefined ? null : renderSlot('conversation.input.model', { locked: modelSeatLocked })}
+          <div className={clsx(css.trailing, activity && css.trailingActive)}>
+            <div className={css.standardControls} hidden={activity}>
+              {input === undefined || sessionId === undefined
+                ? null
+                : renderSlot('conversation.input.right', {})}
+              {sessionId === undefined ? null : renderSlot('conversation.input.model', { locked: modelSeatLocked })}
+            </div>
+            {input === undefined || sessionId === undefined ? null : <div className={activity ? css.activityExpanded : css.activity}>
+              {renderSlot('conversation.input.activity', { locked, onActiveChange: setActivity })}
+            </div>}
             {interruptible && (
               <Tooltip label={t('input.stop')} side="top" delayMs={500} disabled={stop === undefined}>
                 <button
@@ -524,7 +499,7 @@ export const InputBar = memo(function InputBar({
         {variant === 'composer' && input !== undefined && sessionId !== undefined
           ? renderSlot('conversation.composer.dock', {})
           : null}
-        <ContextMeter useProjection={useProjection} t={t} />
+        {activity ? null : <ContextMeter useProjection={useProjection} t={t} />}
       </div>
     </div>
   )

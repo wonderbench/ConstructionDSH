@@ -1,5 +1,5 @@
 ---
-description: "Web background-job surface: the session-header action listing the jobs this session can see; for users and maintainers of the background-job experience."
+description: "The session-header background-job list: expandable streaming output panels, running/finished sections, and static rows for settled jobs without retained output."
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This package renders the background-job surface of the Web GUI: a session-header action whose popover lists the jobs this session can see, read from the `jobsBySession` mirror. The trigger appears only when at least one job exists, with a badge counting running and stopping jobs; settled rows stay visible and de-emphasized until the registry drops them. The open popover also aggregates the session's read-only status — pending confirmation, live goal, plan mode, and the direct-child subagent catalog — each section drawn only from its real source and hidden when absent, with no stop buttons.
+`dsh-client-ui-jobs` shows the session's background jobs in one header control, with lifecycle, elapsed time, progress, and terminal detail. Live jobs and settled jobs with retained output offer expandable output panels; collapsing stops the stream. Live rows lead with a ticking duration, followed by kind and status. Settled rows fold under a section heading; those without retained output, including subagents whose answers went to the model, stay static.
 
 ## Table of Contents
 
@@ -25,18 +25,17 @@ This package renders the background-job surface of the Web GUI: a session-header
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount this plugin alongside the runtime; the job action then appears in the session header whenever the session has at least one job. A click opens the popover: live rows first by start time, then settled rows by finish time, each showing the producer kind, label, status, and an elapsed duration that ticks once per second while live and freezes at completion. Above the rows the popover aggregates the session's read-only status, top to bottom:
+Load the plugin through the web-app manifest; it renders nothing until the session can see at least one job, so an ordinary conversation never grows a control for a capability it is not using.
 
-- **Pending confirmation** — the session's highest-precedence pending interaction (approval, question), rendered first and in the attention color so it stays prominent inside the aggregation.
-- **Current goal** — the goal projection's phase label and objective, shown only while the goal is live.
-- **Plan mode** — shown while the `plan` projection's effective target is plan mode, folding the pending selection exactly like the composer plan chip.
-- **Subagents** — the direct-child catalog mirror (`subagentsByParent`): each child's mode chip, label, and live activity, plus diagnostic rows for children whose durable record could not be read.
+### One row per job
 
-Every section hides when its source is absent rather than showing an empty or zeroed state. A tool call finishing is not presented as the business task succeeding; nothing here stops a job or answers an interaction — cancelling owes the `job_kill` runtime contract a separate program.
+The `job.list` stream `ctx.jobs` mirrors is the single roster: each `JobView` row carries lifecycle, duration, the live `progress` line or the terminal `detail`, and its retained byte count — a live job, or a settled one with retained output, is what makes a row expandable. There is no second roster to join.
 
-### Dismissal and limits
+Running job rows also carry a two-press stop control: the first press arms it, the confirming press within three seconds calls `ctx.jobs.kill`, and the row converges through the roster stream (`stopping`, then the settled section, whose detail carries `cancelled by the user`). The kill claims nothing in the model's notice ledger, so the owning agent still receives the standard completion notice — the model is told the user stopped its task rather than left to infer it ([decision](../../../.agents/notes/implemented/feature/2026-08-26-human-job-kill.md)). The settled section folds behind its count while live work exists and can be cleared client-side.
 
-Escape closes the list and returns focus to the trigger, as does a pointer press outside it. The list shows what one session can see through the wire view, so a job owned by another session never appears here; a process restart empties the list while the transcript keeps the `run_in_background` cards that started those jobs.
+### The expanded panel
+
+Expanding an observable row opens that job's output observation stream from `ctx.jobs` (installed by `dsh-api-job-controller`) into an embedded terminal panel. The panel copies the command (not the output), wraps commands and output lines in full, scrolls its output inside a fixed height instead of folding, and draws no run-state dot of its own — the row above carries the state. Retention gaps and stream interruptions render as notices above the panel.
 
 -----
 
@@ -46,7 +45,13 @@ Escape closes the list and returns focus to the trigger, as does a pointer press
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The package contributes one entry to `conversation.session.header.actions` (`JobListAction`), and the data arrives entirely through Session Controller mirrors and the framework's standard session seats — no RPC, and no state beyond popover visibility. Job rows read the `jobsBySession` list mirror folded from `session/jobs` frames; the pending-confirmation notice reads the standard `useSessionStatus` seat; plan mode reads the standard `useProjection('plan')` seat; subagent rows read the `subagentsByParent` catalog mirror. The goal line keeps the injected per-session goal projection face, subscribing only while the popover is open. The badge counts `running` plus `stopping` and is omitted at zero. Rows are ordered with live rows first by `startedAt` ascending, then settled rows by `finishedAt` descending, with a same-millisecond tie broken on start order; a settled row missing `finishedAt` reads as zero rather than as a negative figure, and a duration past an hour stays in hours. Settled rows stay visible because a failed job's `detail` is the only place its failure is legible. The behavior is specified by the [Web background-job display Agent Note](../../../.agents/notes/implemented/feature/2026-08-08-web-background-job-display.md).
+One slot entry in the header actions band (after the preset label, before the subagent catalog) renders the trigger and popover; the popover fits itself to the viewport by measuring its anchor. All data arrives through `ctx.jobs` — the component holds no transport state. The roster follows the mount: one `useEffect` keeps the session's `job.list` stream open while the control lives. Observation follows visibility: another `useEffect` opens the stream for the expanded row's job and closes it on collapse, unmount, or popover close.
+
+| File | Role |
+|---|---|
+| [`src/client/JobListAction.tsx`](src/client/JobListAction.tsx) | The job list: sections, durations, panels |
+| [`src/client/index.ts`](src/client/index.ts) | Slot registration and the dictionaries |
+| [`src/client/locales.ts`](src/client/locales.ts) | The `job` namespace copy (zh source of truth) |
 
 </details>
 
@@ -55,19 +60,16 @@ The package contributes one entry to `conversation.session.header.actions` (`Job
 <a id="further-exploration"></a>
 ## Further Exploration
 
-Read these pages when the job surface is not enough. They move from the browser list to the registry and the model-facing tool.
-
-- [dsh-tool-jobs](../../jobs/tool-jobs/README.md) — the model-facing jobs tool over the same registry.
-- [Session Controller](../../api/session-controller/README.md) — folds the `jobsBySession` mirror this package reads.
-- [ui-subagent](../ui-subagent/README.md) — the subagent catalog, where a running one-shot background subagent also appears.
-- [Web client architecture](../../../.agents/notes/implemented/architecture/2026-07-19-gui-web-client-architecture.md) — how browser plugin rows load and register slots.
+- [`dsh-api-job-controller`](../../api/job-controller/README.md) — the `job.list` and `job.follow` streams, the `job.kill` Remote, and the `ctx.jobs` service behind the rows, the panel, and the stop control.
+- [`dsh-jobs`](../../jobs/jobs/README.md) — the registry contract that owns the ring and projection semantics.
+- [`dsh-client-ui-primitives`](../ui-primitives/README.md) — the `TerminalBlock` surface the panel configures.
 
 -----
 
 <a id="model-experience"></a>
 ## Model Experience
 
-None, as this package renders host-computed registry state for a human and touches no prompt, message, schema, stream, or tool result.
+None, as this package renders host-observed state and live output for a human and touches no prompt, message, schema, stream, or tool result. The model's own view of the same work stays with [`dsh-tool-jobs`](../../jobs/tool-jobs/README.md).
 
 #### KV Cache effect
 
@@ -77,13 +79,9 @@ None; the package never assembles or sends provider requests.
 
 <a id="known-limitations-and-deferred-work"></a>
 
+These limits define current package constraints, not a task backlog.
 
-These limits define the current job list. They are current package constraints, not a general job-management comparison or a task backlog.
-
-- **Rows are read-only** — a job's streamed output and a human-initiated cancellation are separate phases. Cancellation additionally owes a model-facing decision the seam does not answer: `kill()` marks terminal delivery reported, so an interrupt written against the current contract would leave the model believing its job is still running.
-- **The list is not the registry's own set** — it shows what one session can see through the wire view, so a job owned by another session never appears here, and a process restart empties the list while the transcript keeps the `run_in_background` cards that started those jobs. An unowned job (one started without a live `Agent`) reaches every session's list, matching what `list(caller)` reports to every caller.
-- **Subagent rows activate when the catalog lands** — the popover only reads the `subagentsByParent` mirror; whichever consumer requested the listing (the header lineage dropdown, a sidebar chat) populates it. This package issues no RPC, so on a fresh session the subagent section stays hidden until that read has happened elsewhere.
-- **Workflow state and deliverables counts have no consumer-ready source** — workflow runs exist only as chat-node folds (`ui-workflow-run`), and presented deliverables have no per-session projection, so the aggregation omits both fields rather than deriving or faking them. They activate when a projection ships; the section structure places them after plan mode.
+- **Channel labels are not rendered** — stdout and stderr chunks concatenate into one stream; per-channel tinting is a presentation follow-up.
 
 <a id="dev-note"></a>
 ### Dev Note
@@ -95,4 +93,4 @@ None.
 
 </details>
 
-**Runtime invariant:** No companion is published. This package is a read-only projection of the `jobsBySession` mirror onto one header slot entry. It emits no Cordis events, owns no cross-plugin mutable state, and its single slot registration proves disposal through the HMR-safety spec.
+**Runtime invariant:** No companion is published. This package is a read-only projection of the `ctx.jobs` rosters and views onto one header slot entry. It emits no Cordis events, owns no cross-plugin mutable state, and its single slot registration proves disposal through the HMR-safety spec.

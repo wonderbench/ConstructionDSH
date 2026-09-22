@@ -13,8 +13,8 @@ function callName(node: ToolCallBlock): string {
 
 /** One atomic call dispatched through the Tool-owned keyed slot. */
 const ToolCall = memo(function ToolCall({
-  renderSlot, callId, toolName, block, openFile, cwd, home, inspectCall, loadImage, t, tTool, children,
-}: Pick<ToolTreeProps, 'renderSlot' | 'openFile' | 'cwd' | 'inspectCall' | 'loadImage' | 't' | 'tTool'> & {
+  renderSlot, callId, toolName, block, openFile, cwd, home, inspectCall, loadImage, useDisclosure, t, children,
+}: Pick<ToolTreeProps, 'renderSlot' | 'openFile' | 'cwd' | 'inspectCall' | 'loadImage' | 'useDisclosure' | 't'> & {
   callId: string
   toolName: string
   block: ToolCallBlock
@@ -29,8 +29,9 @@ const ToolCall = memo(function ToolCall({
     cwd,
     home,
     loadImage,
-    inspect: () => { inspectCall(callId) },
-  }), [callId, toolName, block, openFile, cwd, home, loadImage, inspectCall])
+    useDisclosure,
+    inspect: inspectCall === undefined ? undefined : () => { inspectCall(callId) },
+  }), [callId, toolName, block, openFile, cwd, home, loadImage, inspectCall, useDisclosure])
   const autoReviewDenied = useMemo(
     () => toolRowModel(toolName, block).autoReviewDenial !== null,
     [toolName, block],
@@ -42,10 +43,10 @@ const ToolCall = memo(function ToolCall({
       data-chat-call-id={callId}
     >
       {autoReviewDenied
-        ? <GenericToolCard {...owner} t={t} tTool={tTool} />
+        ? <GenericToolCard {...owner} t={t} />
         : renderSlot('tool.call.toolview', owner, {
           entryKey: toolName,
-          fallback: <GenericToolCard {...owner} t={t} tTool={tTool} />,
+          fallback: <GenericToolCard {...owner} t={t} />,
         })}
       {children}
     </div>
@@ -53,8 +54,8 @@ const ToolCall = memo(function ToolCall({
 })
 
 const ToolCallBranch = memo(function ToolCallBranch({
-  renderSlot, block, cwd, home, openFile, inspectCall, loadImage, t, tTool,
-}: Pick<ToolTreeProps, 'renderSlot' | 'cwd' | 'openFile' | 'inspectCall' | 'loadImage' | 't' | 'tTool'> & {
+  renderSlot, block, cwd, home, openFile, inspectCall, loadImage, useDisclosure, t,
+}: Pick<ToolTreeProps, 'renderSlot' | 'cwd' | 'openFile' | 'inspectCall' | 'loadImage' | 'useDisclosure' | 't'> & {
   block: ToolCallBlock
   home?: string | undefined
 }) {
@@ -68,9 +69,9 @@ const ToolCallBranch = memo(function ToolCallBranch({
       cwd={cwd}
       home={home}
       inspectCall={inspectCall}
+      useDisclosure={useDisclosure}
       loadImage={loadImage}
       t={t}
-      tTool={tTool}
     >
       {block.subCalls.length > 0 ? (
         <div className={css.subCalls} data-subcalls>
@@ -83,9 +84,9 @@ const ToolCallBranch = memo(function ToolCallBranch({
               home={home}
               openFile={openFile}
               inspectCall={inspectCall}
+              useDisclosure={useDisclosure}
               loadImage={loadImage}
               t={t}
-              tTool={tTool}
             />
           ))}
         </div>
@@ -101,7 +102,7 @@ const ToolCallBranch = memo(function ToolCallBranch({
  * @returns the Tool call tree.
  */
 export function ToolCallTree({
-  renderSlot, node, cwd, openFile, inspectCall, loadImage, useHostInfo, t, tTool,
+  renderSlot, node, cwd, openFile, inspectCall, loadImage, useDisclosure, useHostInfo, t,
 }: ToolTreeProps) {
   const home = useHostInfo(info => info.home)
   const block = node.data.root
@@ -113,9 +114,9 @@ export function ToolCallTree({
       home={home}
       openFile={openFile}
       inspectCall={inspectCall}
+      useDisclosure={useDisclosure}
       loadImage={loadImage}
       t={t}
-      tTool={tTool}
     />
   )
 }

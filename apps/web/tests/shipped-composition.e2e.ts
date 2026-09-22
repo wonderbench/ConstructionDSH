@@ -2,7 +2,7 @@
 // and asserts its catalog, defaults, Loader lifecycle, and one complete Auto
 // producer-to-tool path. Browser scenarios in this lane own visual behavior.
 import { randomUUID } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -15,11 +15,11 @@ import { canonicalPath, writableRoots } from '@deepseek-ai/dsh-sandbox'
 import { SESSION_FORMAT_VERSION, SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import { auditStartupEntries, composeEntries, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 // These imports carry the tools/sandboxPolicy/approval Context merges.
-import type {} from '@deepseek-ai/dsh-tools'
+import { RUN_CODE_NAME } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-permission-presets'
-import type {} from '@deepseek-ai/dsh-agent-presets'
+import type {} from '@deepseek-ai/dsh-agent-preset-registry'
 import type {} from '@deepseek-ai/dsh-commands'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-terminal'
@@ -30,9 +30,6 @@ import { REPO_ROOT } from './support.ts'
 const FILE_REFERENCE_PROMPT = fileURLToPath(new URL(
   './expected/web-runtime-context/file-reference-prompt.expected.md', import.meta.url,
 ))
-// Lane-owned preset compositions the shipped roster no longer carries: the
-// persistent-terminal `minimal` and the PTC presentation preset.
-const PRESET_FIXTURE_ROOT = fileURLToPath(new URL('./fixtures/presets', import.meta.url))
 const BASE_PATCH_PATH = join(REPO_ROOT, 'packages/bundle/base/cordis.patch.yml')
 const HEADLESS_PATCH_PATH = join(REPO_ROOT, 'packages/bundle/headless/cordis.patch.yml')
 const AUTO_CHILD_OVERLAY_PATH = join(REPO_ROOT, 'apps/web/tests/auto-review-child.overlay.yml')
@@ -47,6 +44,18 @@ const AUTO_CHILD_ADJUSTED = 'AUTO_CHILD_ADJUSTED'
 const AUTO_PARENT_ONE_SHOT = 'AUTO_PARENT_ONE_SHOT'
 const AUTO_PARENT_CONTINUABLE = 'AUTO_PARENT_CONTINUABLE'
 const AUTO_PARENT_ADJUST = 'AUTO_PARENT_ADJUST'
+
+/** Identify the one-shot Auto Review request and check its request-only outer input. */
+function isAutoReviewRequest(options: GenerateOptions): boolean {
+  if (options.system?.startsWith('REVIEW_POLICY\n') !== true) return false
+  expect(options.messages).toHaveLength(1)
+  const message = options.messages[0]
+  expect(message).toMatchObject({ role: 'user', content: [{ type: 'text' }] })
+  expect(message?.content).toHaveLength(1)
+  expect(message).not.toHaveProperty('id')
+  expect(message).not.toHaveProperty('source')
+  return true
+}
 
 type RpcResult<T> = { ok: true; value: T } | { ok: false; error: { code: string; message: string } }
 
@@ -97,14 +106,13 @@ class ShippedAutoAdapter extends LlmAdapter {
 
   override async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
     this.requests.push(options)
-    const source = options.messages[0]?.source
-    if (source?.kind === 'plugin' && source.plugin === 'dsh-experimental-auto-review') {
+    if (isAutoReviewRequest(options)) {
       yield* textChunks(JSON.stringify({
         risk: 'medium', decision: 'deny', reason: AUTO_RAW_REASON,
       }))
       return
     }
-    if (options.messages.some(message => message.content.some(block => block.type === 'tool-result'))) {
+    if (options.messages.some(message => message.role === 'tool')) {
       yield* textChunks(AUTO_FINAL_TEXT)
       return
     }
@@ -217,8 +225,7 @@ class ShippedChildAutoAdapter extends LlmAdapter {
 
   override async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
     this.requests.push(options)
-    const source = options.messages[0]?.source
-    const response = source?.kind === 'plugin' && source.plugin === 'dsh-experimental-auto-review'
+    const response = isAutoReviewRequest(options)
       ? this.reviewResponse(options)
       : this.mainResponse(options)
     yield* response
@@ -432,10 +439,9 @@ function toolOutcomes(events: readonly SessionEvent[]): Array<{ name: string; co
   }
   return events.flatMap((event) => {
     if (event.type !== 'tool/result') return []
-    const block = event.data.message.content.find(item => item.type === 'tool-result')
-    if (block === undefined) return []
-    const name = names.get(block.toolCallId)
-    if (name === undefined) throw new Error(`tool result ${block.toolCallId} has no matching call`)
+    const { toolCallId } = event.data.message
+    const name = names.get(toolCallId)
+    if (name === undefined) throw new Error(`tool result ${toolCallId} has no matching call`)
     return [{ name, ...event.data.error === undefined ? {} : { code: event.data.error.code } }]
   })
 }
@@ -516,7 +522,6 @@ afterEach(async () => {
 
 it('assembles the shipped Web transport, catalog, guidance, and defaults', async () => {
   scaffold = await launchWebScaffold({ deepSeekMissingCredential: true })
-  expect(existsSync(join(scaffold.harnessHome, 'profiles', 'node_modules'))).toBe(false)
   const ctx = scaffold.ctx
   expect(ctx.llm.listProviders().some(provider => provider.id === 'deepseek-messages')).toBe(false)
   expect(ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'deepseek-official', model: 'deepseek-flash' })
@@ -641,6 +646,24 @@ it('assembles the shipped Web transport, catalog, guidance, and defaults', async
     })
   } finally {
     await commandHandle.dispose()
+  }
+}, 120_000)
+
+it('ships PTC with run_code but without the general workflow SDK binding', async () => {
+  scaffold = await launchWebScaffold({ deepSeekMissingCredential: true })
+  const ctx = scaffold.ctx
+  const handle = await ctx.agents.create({
+    sessionId: SessionId('shipped-ptc-composition'),
+    setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'ptc').then(() => undefined),
+  })
+  try {
+    const assembly = await ctx.systemPrompt.assemble({ scope: handle.agent })
+    expect(assembly.tools.map(tool => tool.name)).toEqual([RUN_CODE_NAME])
+    const sdk = assembly.sections.find(section => section.name === 'tools:sdk')?.text ?? ''
+    expect(sdk).not.toContain('  ralph: {')
+    expect(sdk).not.toContain('  workflow: {')
+  } finally {
+    await handle.dispose()
   }
 }, 120_000)
 
@@ -778,7 +801,7 @@ it('routes one browser-authored Auto request through the same model before a rea
   expect(prompt).toBeDefined()
   const result = events.find((event): event is Extract<SessionEvent, { type: 'tool/result' }> => (
     event.type === 'tool/result'
-      && event.data.message.content.some(block => block.toolCallId === AUTO_CALL_ID)
+      && event.data.message.toolCallId === AUTO_CALL_ID
   ))
   expect(result?.data.error).toEqual({
     name: 'AutoReviewDeniedError',
@@ -1038,12 +1061,7 @@ it('rolls back a failed shipped Auto initialization before publishing or interce
 }, 120_000)
 
 it('withdraws Auto on shipped Loader unload and does not restore migrated live sessions', async () => {
-  // The persistent-terminal composition the test agent needs is the lane's
-  // own fixture preset: the shipped roster carries no such preset.
-  scaffold = await launchWebScaffold({
-    ...AUTO_REVIEW_FIXTURE,
-    agentPresets: { roots: [{ path: PRESET_FIXTURE_ROOT, trust: 'user' }], default: 'standard' },
-  })
+  scaffold = await launchWebScaffold(AUTO_REVIEW_FIXTURE)
   const ctx = scaffold.ctx
   const autoEntry = [...ctx.loader.entries()].find(entry => entry.options.id === 'auto-review')
   if (autoEntry === undefined) throw new Error('shipped Auto review Loader entry is missing')
@@ -1054,7 +1072,7 @@ it('withdraws Auto on shipped Loader unload and does not restore migrated live s
   })
   const terminals = ctx.agentPresets.serviceFor(handle.agent, 'terminals')
   try {
-    if (terminals === undefined) throw new Error('the fixture minimal preset has no terminal registry')
+    if (terminals === undefined) throw new Error('shipped minimal preset has no terminal registry')
     ctx.permissionPresets.set(handle.agent.session, 'danger-full-access')
     const terminal = await terminals.spawn(handle.agent, { type: 'shell', cwd: scaffold.workspaceCwd })
     ctx.permissionPresets.set(handle.agent.session, 'auto')

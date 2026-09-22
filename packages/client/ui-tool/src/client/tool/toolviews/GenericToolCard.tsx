@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react'
 import {
-  IconApiOutline14, IconBrowseOutline16, IconCodeOutline16, IconEditOutline16, IconSearchOutline16, IconSparkle16,
+  IconApiOutlineRegular, IconBrowseOutlineRegular, IconCodeOutlineRegular, IconEditOutlineRegular, IconSearchOutlineRegular,
+  IconSparkleRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallOwnerProps, ToolTreeProps } from '../../contract/slots.ts'
-import { readToolPresentation } from '../denoise-presentation.ts'
 import { readCardModel } from '../models/read-card-model.ts'
 import { diffCardModel } from '../models/diff-card-model.ts'
 import { searchCardModel } from '../models/search-card-model.ts'
@@ -16,23 +15,21 @@ import { ToolRow } from '../components/ToolRow.tsx'
 
 /** Variant leading icons (figma table); all glyphs render at 14 inside the 16px leading box. */
 const VARIANT_ICONS: Record<ToolRowVariant, ReactNode> = {
-  search: <IconSearchOutline16 size={14} />,
-  read: <IconBrowseOutline16 size={14} />,
-  bash: <IconApiOutline14 size={14} />,
-  write: <IconEditOutline16 size={14} />,
-  edit: <IconEditOutline16 size={14} />,
-  code: <IconCodeOutline16 size={14} />,
-  others: <IconSparkle16 size={14} />,
+  search: <IconSearchOutlineRegular size={14} />,
+  read: <IconBrowseOutlineRegular size={14} />,
+  bash: <IconApiOutlineRegular size={14} />,
+  write: <IconEditOutlineRegular size={14} />,
+  edit: <IconEditOutlineRegular size={14} />,
+  code: <IconCodeOutlineRegular size={14} />,
+  others: <IconSparkleRegular size={14} />,
 }
 
 /** Card props: the owner payload plus the render site's locale seat (plain prop). */
 export interface GenericToolCardProps extends ToolCallOwnerProps {
   t: ToolTreeProps['t']
-  /** Translator for the Tool-owned denoise-layer dictionary. */
-  tTool: TranslateNS<'tool'>
 }
 
-export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, t, tTool }: GenericToolCardProps) {
+export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, useDisclosure, t }: GenericToolCardProps) {
   const model = toolRowModel(toolName, block, cwd, home)
   const autoReview = model.autoReviewDenial === null
     ? null
@@ -43,20 +40,14 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
   const search = searchCardModel(block)
   const web = webCardModel(block)
   // A failing exit status is the terminal card's own error signal (the call
-  // itself settles isError:false), surfaced as the row's red state dot.
+  // itself settles isError:false), surfaced through the row's error summary.
   const state = model.state === 'ok' && terminal !== null && terminalFailed(terminal)
     ? 'error'
     : model.state
   const singleFile = model.filePath !== undefined
-  // Denoise layering: while the flag is on, the generic row's raw argument
-  // JSON and flattened output move under the technical-details disclosure
-  // (expanded by default in expert mode); the flag off never passes `technical`.
-  const presentation = readToolPresentation()
-  const technical = presentation.denoise && (model.bodyRaw !== null || model.output !== null)
-    ? { t: tTool, defaultOpen: presentation.expert }
-    : undefined
   return (
     <ToolRow
+      useDisclosure={useDisclosure}
       t={t}
       variant={model.variant}
       toolName={toolName}
@@ -78,7 +69,6 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
       filePath={model.filePath}
       onOpenFile={singleFile ? openFile : undefined}
       inspect={inspect}
-      technical={technical}
     />
   )
 }
