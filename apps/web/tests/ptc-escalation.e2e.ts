@@ -16,6 +16,9 @@ import { connectFreshWorkspace, newEnglishPage, saveFailureShot } from './suppor
 const SNAPSHOT_DIR = fileURLToPath(new URL('../../../snapshots/web/ptc-escalation-approved', import.meta.url))
 const FIXTURE = join(SNAPSHOT_DIR, 'session.v3.jsonl')
 const UI_EXPECTED = join(SNAPSHOT_DIR, 'approval.expected.md')
+// The shipped roster carries no PTC preset: this lane composes its own from
+// the fixture root, with the same composition the shipped one had.
+const PRESET_FIXTURE_ROOT = fileURLToPath(new URL('./fixtures/presets', import.meta.url))
 const MODE = webSnapshotMode()
 const PROMPT = 'Use run_code with timeoutMs 120000 and direct Node filesystem access to create approved.txt in the working directory containing exactly "approved\\n". '
   + 'Use await import("node:fs/promises") and writeFile; do not call nested tools. First attempt the write under the current read-only sandbox without escalation. '
@@ -32,7 +35,7 @@ describe('web e2e: PTC program sandbox escalation', () => {
 
   beforeAll(async () => {
     scaffold = await launchWebScaffold({
-      agentPresets: { roots: [], default: 'ptc' },
+      agentPresets: { roots: [{ path: PRESET_FIXTURE_ROOT, trust: 'user' }], default: 'ptc' },
       compareReplaySession: true,
       ...(MODE === 'record' ? {} : { replayFixture: FIXTURE, paceMs: 15 }),
     })

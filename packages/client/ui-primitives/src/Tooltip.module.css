@@ -10,8 +10,8 @@
   border-radius: 8px;
   background: var(--dsw-alias-tooltip-bg);
   color: var(--dsw-static-neutral-bluish-00);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   white-space: pre-line;
   /* Unbreakable tokens (URLs, paths) must not push past max-width. */
   overflow-wrap: break-word;

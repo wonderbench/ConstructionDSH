@@ -17,6 +17,9 @@ import { connectFreshWorkspace, newEnglishPage } from './support.ts'
 
 const DIR = fileURLToPath(new URL('../../../snapshots/web/present', import.meta.url))
 const FIXTURE = join(DIR, 'session.v3.jsonl')
+// The shipped roster carries no PTC preset: this lane composes its own from
+// the fixture root, with the same composition the shipped one had.
+const PRESET_FIXTURE_ROOT = fileURLToPath(new URL('./fixtures/presets', import.meta.url))
 const MODE = webSnapshotMode()
 const PROMPT = 'Use one run_code program to do the following in order. Call present for missing.txt and catch its error without creating that file. '
   + 'Use bash to run exactly `printf "DELIVERED_REPORT\\n" > report.txt; printf "DELIVERED_NOTE\\n" > 说明.txt`. '
@@ -54,7 +57,7 @@ fs.appendFileSync(${JSON.stringify(openLog)}, JSON.stringify({ path, action, con
     await mkdir(DIR, { recursive: true })
     scaffold = await launchWebScaffold({
       extraOverlayPath: fileURLToPath(new URL('./present.overlay.yml', import.meta.url)),
-      agentPresets: { roots: [], default: 'ptc' }, compareReplaySession: true,
+      agentPresets: { roots: [{ path: PRESET_FIXTURE_ROOT, trust: 'user' }], default: 'ptc' }, compareReplaySession: true,
       ...(MODE === 'record' ? {} : { replayFixture: FIXTURE }),
     })
     disposeApproval = scaffold.ctx.on('approval/request', () => Promise.resolve('allowed-once'), { prepend: true })

@@ -40,6 +40,8 @@
     - tooltip "Save queued message"
     - button "Cancel editing":
       - img
+- img
+- text: workspace
 - textbox "Cmd/Ctrl+Enter steers all queued messages"
 - button "Add files or run commands":
   - img

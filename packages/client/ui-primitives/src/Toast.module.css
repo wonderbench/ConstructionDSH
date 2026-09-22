@@ -25,8 +25,8 @@
   border-radius: 14px;
   background: var(--dsw-alias-button-contrast-fill);
   color: var(--dsw-alias-label-primary-inverted);
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   box-shadow: var(--dsw-shadow-lv3);
   transform: translateX(-50%);
   animation:

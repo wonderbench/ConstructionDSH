@@ -21,8 +21,8 @@
   align-items: flex-start;
   gap: 10px;
   color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
 }
 
 .warning p {
@@ -41,8 +41,8 @@
   gap: 10px;
   margin-top: 20px;
   color: var(--dsw-alias-label-primary);
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   cursor: pointer;
 }
 

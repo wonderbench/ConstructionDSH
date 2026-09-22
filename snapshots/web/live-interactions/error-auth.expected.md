@@ -24,6 +24,8 @@
 - status:
   - text: This turn failedAPI key is invalid
   - code: AUTH
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

@@ -34,8 +34,8 @@
   padding: 12px 16px;
   background: var(--dsw-alias-state-warn-tertiary);
   color: var(--dsw-alias-state-warn-primary);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
 }
 
 .dot {
@@ -58,8 +58,8 @@
 .feedback {
   min-height: 16px;
   color: var(--dsw-alias-state-error-primary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .actions {
@@ -91,8 +91,8 @@
   overflow: hidden;
   margin: 8px 0 0;
   color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  line-height: 24px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
 }
 
 .discuss {

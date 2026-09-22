@@ -15,6 +15,8 @@
   - img
   - img
   - text: "goal No goal is currently set. Usage: /goal [<objective>|clear|edit <objective>|pause|resume]"
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

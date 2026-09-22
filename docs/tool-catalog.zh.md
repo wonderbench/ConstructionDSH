@@ -19,6 +19,7 @@
 
 | 工具包 | 模型可见名称 | 依赖 | 写入／影响 | 随产品发布的别名 | 部署说明 |
 | --- | --- | --- | --- | --- | --- |
+| `@deepseek-ai/dsh-construction-runtime` | `construction_cost_calculate`、`construction_cost_compare`、`construction_cost_export`、`construction_files_inspect`、`construction_files_read`、`construction_files_search`、`construction_pdf_split`、`construction_report_export`、`construction_schedule_calculate`、`construction_schedule_present` | `ctx.tools`、`ctx.fs`、`ctx.systemPrompt`、`ctx.skills`（可选；存在时绑定业务任务） | `tool/call`、`tool/result` | - | 三个文件工具始终可用；业务工具（cost、schedule、report）在有匹配的业务 Skill 加载前拒绝调用，加载后会铸造取代前一任务的任务绑定。结构化图纸分解返回显式的 unsupported 状态；可选的 `ctx.skills` 注册表通过 `ctx.get` 读取，因此没有它套件也能挂载并注册文件工具。 |
 | `@deepseek-ai/dsh-plugin-manager` | `plugin_manager` | `ctx.tools`, `ctx.pluginManager`, `ctx.sandboxPolicy` | `tool/call`, `tool/result`, `user/message` | - | - |
 | `@deepseek-ai/dsh-mcp-resources` | `list_mcp_resource_templates`, `list_mcp_resources`, `read_mcp_resource` | `ctx.tools`, `ctx.mcpResources` | `tool/call`, `tool/result` | - | - |
 | `@deepseek-ai/dsh-experimental-browser-use-stagehand-native` | `stagehand_act`、`stagehand_extract`、`stagehand_navigate`、`stagehand_observe`、`stagehand_screenshot`、`stagehand_tabs` | `ctx.browserUse`、`ctx.agents`、`ctx.tools`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | - |
@@ -48,6 +49,848 @@
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`、`owning Agent session` | `tool/call`、`todo/write`、`tool/result` | - | todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为检查清单。`allowParallelInProgress` 是没有默认值的必填项，因此本目录明确选择 `true`，对应描述允许同时存在多个 `in_progress` 项。选择 `false` 的部署会获得同一工具，但描述会要求只能有 1 个活动任务。 |
 | `@deepseek-ai/dsh-tool-workflow` | `workflow` | `ctx.tools`、`ctx.workflowEngine`、`ctx.systemPrompt`、`a calling Agent (exec.agent parents the script children)` | `tool/call`、`tool/result` | - | - |
 | `@deepseek-ai/dsh-tool-web` | `web_fetch`、`web_search` | `ctx.tools`、`ctx.web`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | web_search 和 web_fetch 将提供方选择置于 ctx.web 之后，使模型可见 schema 在更换后端时保持稳定。 |
+
+<a id="deepseek-aidsh-construction-runtime"></a>
+
+## `@deepseek-ai/dsh-construction-runtime`
+
+### `construction_cost_calculate`
+
+从显式条目计算 unit_rate、tender、variation 或 settlement 工作流的确定性计价结果：资源消耗乘以单价、显式的取费基数与费率，以及每笔金额的追溯表达式。空白项报告为 unresolved，绝不当作零。需要一个活动的 cost 任务。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "Cost input: variant, items with resources and fees, and baseline items for tender/settlement.",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "BOQ item code; kept as text."
+              },
+              "description": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "quantity": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Item quantity; null or blank when unknown (never treated as zero)."
+              },
+              "resources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "labor",
+                        "material",
+                        "equipment"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "consumption": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Consumption per BOQ unit; blank when unknown."
+                    },
+                    "unit_price": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Unit price; blank when unknown."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "name",
+                    "consumption",
+                    "unit_price"
+                  ]
+                }
+              },
+              "fees": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "base": {
+                      "type": "string",
+                      "const": "resources"
+                    },
+                    "rate": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Rate as a decimal fraction, for example 0.1 for ten percent."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "base",
+                    "rate"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "code",
+              "quantity"
+            ]
+          }
+        },
+        "baseline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "BOQ item code; kept as text."
+              },
+              "description": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "quantity": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Item quantity; null or blank when unknown (never treated as zero)."
+              },
+              "resources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "labor",
+                        "material",
+                        "equipment"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "consumption": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Consumption per BOQ unit; blank when unknown."
+                    },
+                    "unit_price": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Unit price; blank when unknown."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "name",
+                    "consumption",
+                    "unit_price"
+                  ]
+                }
+              },
+              "fees": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "base": {
+                      "type": "string",
+                      "const": "resources"
+                    },
+                    "rate": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Rate as a decimal fraction, for example 0.1 for ten percent."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "base",
+                    "rate"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "code",
+              "quantity"
+            ]
+          }
+        }
+      },
+      "required": [
+        "variant",
+        "items"
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active cost task binding id."
+    }
+  },
+  "required": [
+    "input"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_cost_compare`
+
+按清单项编码对比两份冻结的计价结果，返回差价表，包含匹配、价差、量差与单侧行，以及需要复核人员确认的行。需要一个活动的 cost 任务。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "The frozen CostResult to compare.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {}
+        },
+        "totals": {},
+        "differences": {
+          "type": "array",
+          "items": {}
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "description": "The frozen CostResult to compare against.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {}
+        },
+        "totals": {},
+        "differences": {
+          "type": "array",
+          "items": {}
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active cost task binding id."
+    }
+  },
+  "required": [
+    "result",
+    "baseline"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_cost_export`
+
+把冻结的计价结果导出为 construction 产物目录下的 Markdown 报告文件。报告逐字携带冻结金额、取费行、表达式与未解决项。需要一个活动的 cost 任务。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "The frozen CostResult to export.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {}
+        },
+        "totals": {},
+        "differences": {
+          "type": "array",
+          "items": {}
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active cost task binding id."
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_files_inspect`
+
+检查工作区中的 Word（.docx）、Excel（.xlsx）或 PDF 文件：结构、页数/工作表数、合并单元格、隐藏内容、修订、批注、加密与公式缓存状态，并给出显式的覆盖警告。只读。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the file to inspect."
+    }
+  },
+  "required": [
+    "file"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_files_read`
+
+读取工作区中 Word、Excel 或 PDF 文件的内容：正文块、标题、含合并单元格的表格、带公式与缓存值的单元格，或逐页文本。每个报告块都携带来源引用。只读。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the file to read."
+    },
+    "max_chars": {
+      "type": "integer",
+      "description": "Maximum content characters to return; content is truncated with a partial coverage warning."
+    }
+  },
+  "required": [
+    "file"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_files_search`
+
+在工作区中的 Word、Excel 或 PDF 文件内搜索查询字符串，返回每个匹配及其来源引用（页码、工作表与单元格，或段落/表格位置）。只读。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the file to search."
+    },
+    "query": {
+      "type": "string",
+      "description": "Text to search for; matching is case-insensitive."
+    }
+  },
+  "required": [
+    "file",
+    "query"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_pdf_split`
+
+把工作区 PDF 按显式的一基页码范围、每页一个文件或顶层书签边界拆分为新的 PDF。原始页面原样复制；每个输出映射到其原始页码，并在 construction 产物目录下写入 index.json。结构化分解请求返回显式的 unsupported 状态。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the PDF to split."
+    },
+    "by": {
+      "type": "string",
+      "description": "Split mode: explicit ranges, one output per page, or top-level bookmark boundaries.",
+      "enum": [
+        "range",
+        "per_page",
+        "bookmark"
+      ]
+    },
+    "ranges": {
+      "type": "array",
+      "description": "One-based inclusive ranges {from, to}; required when by is range.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "integer"
+          },
+          "to": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      }
+    },
+    "mode": {
+      "type": "string",
+      "description": "Structured decomposition modes such as structure or mineru are unsupported and return an explicit status."
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active task binding id, when a business task is running."
+    }
+  },
+  "required": [
+    "file",
+    "by"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_report_export`
+
+从一个冻结结果（cost、schedule 或 document 摘要）及其未解决项导出 Markdown 报告。章节按当前业务任务类型过滤。document 结果携带 DocumentSummaryResult：{ schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }。报告写入 construction 产物目录并返回其路径。需要任意一个活动的业务任务。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "cost",
+            "schedule",
+            "document"
+          ]
+        },
+        "data": {
+          "description": "The frozen result value from the matching calculate/read tool."
+        }
+      },
+      "required": [
+        "kind",
+        "data"
+      ]
+    },
+    "sections": {
+      "type": "array",
+      "description": "Requested sections; sections not permitted for the active task type are omitted.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active business task binding id."
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_schedule_calculate`
+
+根据任务、整数工作日时长、带非负时距的完成到开始关系和单个项目工作日历计算 CPM 进度。日期采用含起点/排终点的工作日边界；显示的完成日期是完成边界之前的最后一个工作日。仅在逻辑完整时才声称存在关键路径；不支持的关系会被报告，绝不改写。需要一个活动的 schedule 任务。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "Schedule input: scenario, calendar, tasks, and links.",
+      "additionalProperties": false,
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "description": "Scenario identifier; revisions should use a new id."
+        },
+        "project_start": {
+          "type": "string",
+          "description": "ISO date anchoring the calculation when no constraint or locked start exists."
+        },
+        "weekly_rest_days": {
+          "type": "array",
+          "description": "Weekday numbers (0 Sunday to 6 Saturday); defaults to [6, 0].",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "holidays": {
+          "type": "array",
+          "description": "Holiday ISO dates excluded from working time.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique task id."
+              },
+              "name": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "integer",
+                "description": "Whole-working-day duration; 0 or omitted for a milestone."
+              },
+              "locked_start": {
+                "type": "string",
+                "description": "ISO date; locks completed work against rescheduling."
+              },
+              "locked_finish": {
+                "type": "string",
+                "description": "ISO date; locks completed work against rescheduling."
+              },
+              "start_no_earlier_than": {
+                "type": "string",
+                "description": "ISO date start constraint."
+              },
+              "finish_no_later_than": {
+                "type": "string",
+                "description": "ISO date finish constraint (display basis)."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "lag": {
+                "type": "integer",
+                "description": "Finish-to-start lag in whole working days; must be nonnegative."
+              },
+              "relation": {
+                "type": "string",
+                "description": "Only FS is supported; other relations are reported, never rewritten."
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        }
+      },
+      "required": [
+        "tasks"
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active schedule task binding id."
+    }
+  },
+  "required": [
+    "input"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_schedule_present`
+
+持久化一份冻结的进度结果以便 Gantt 图渲染，并返回结果标识符与场景元数据。再次呈现相同结果会返回同一标识符。需要一个活动的 schedule 任务。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "The frozen ScheduleResult from construction_schedule_calculate.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "scenario_id": {
+          "type": "string"
+        },
+        "calendar": {},
+        "tasks": {
+          "type": "array",
+          "items": {}
+        },
+        "links": {
+          "type": "array",
+          "items": {}
+        },
+        "critical_path": {},
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active schedule task binding id."
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+三个文件工具始终可用；业务工具（cost、schedule、report）在有匹配的业务 Skill 加载之前拒绝调用，加载后会铸造一个取代前一任务的任务绑定。结构化分解返回显式的 unsupported 状态；可选的 `ctx.skills` 注册表通过 `ctx.get` 读取，因此没有它套件也能挂载并注册其文件工具。
 
 <a id="deepseek-aidsh-plugin-manager"></a>
 

@@ -315,6 +315,9 @@ describe('loadProfile', () => {
     expect(PROFILE_TEMPLATES.acp).toEqual({
       bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-acp-app'],
     })
+    expect(PROFILE_TEMPLATES.construction).toEqual({
+      bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-construction'],
+    })
     expect(PROFILE_TEMPLATES.sdk).toEqual({
       bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app'],
     })

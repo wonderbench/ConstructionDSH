@@ -41,6 +41,6 @@
 .failure {
   padding-left: 4px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
 }

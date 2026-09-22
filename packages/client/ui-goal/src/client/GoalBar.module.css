@@ -37,12 +37,12 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
-/* Matches the Todo/Queue panel titles (13/24 medium, primary) so the three
-   composer-stack cards read as one family. */
+/* Matches the Todo/Queue panel titles (base role, medium, primary) so the
+   three composer-stack cards read as one family. */
 .label {
   flex: none;
-  font-size: 13px;
-  line-height: 24px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   color: var(--dsw-alias-label-primary);
 }
@@ -51,8 +51,8 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-primary-dimmed);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -63,8 +63,8 @@
   min-width: 0;
   overflow: hidden;
   color: var(--dsw-alias-state-error-primary);
-  font-size: 12px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -79,8 +79,8 @@
   border: 0.5px solid var(--dsw-alias-border-l4);
   border-radius: 6px;
   background: var(--dsw-alias-bg-base);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-primary);
   outline: none;
 }

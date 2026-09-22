@@ -16,6 +16,8 @@ it('offers approval for blocked install scripts and installs once they are allow
   let scaffold: WebScaffold | undefined
   try {
     scaffold = await launchWebScaffold({ profile: { packages: [] }, extraOverlayPath: overlay })
+    // The sidebar's Plugins entry is expert-mode-only; business default hides it.
+    await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
     const browser = await chromium.launch()
     try {
       const profile = join(scaffold.harnessHome, 'profiles', 'scaffold')

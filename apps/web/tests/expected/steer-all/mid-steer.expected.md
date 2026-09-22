@@ -32,6 +32,8 @@
 - text: "Interjection: include the word ORANGE in your final reply."
 - button "Copy":
   - img
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

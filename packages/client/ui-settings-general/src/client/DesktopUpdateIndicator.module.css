@@ -15,8 +15,8 @@
   color: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
   background: color-mix(in srgb, var(--dsw-alias-brand-primary-new-colorprimary-new-color) 8%, transparent);
   font: inherit;
-  font-size: 12px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-base);
   white-space: nowrap;
   cursor: pointer;
 }

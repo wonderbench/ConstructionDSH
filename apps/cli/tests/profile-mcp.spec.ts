@@ -24,7 +24,14 @@ describe('shipped MCP resource composition', () => {
       expect(rows.filter(row => row.name === resourcePackage)).toEqual([
         { id: 'mcp-resources', name: resourcePackage },
       ])
-      expect(rows.filter(row => row.name === '@deepseek-ai/dsh-mcp-client')).toEqual([])
+      // The construction profile ships one documented MCP client: the env-driven
+      // standards RAG server whose placeholder command never blocks the profile.
+      const clients = rows.filter(row => row.name === '@deepseek-ai/dsh-mcp-client')
+      if (name === 'construction') {
+        expect(clients.map(row => row.id)).toEqual(['standards-rag'])
+      } else {
+        expect(clients).toEqual([])
+      }
       expect(warnings).toEqual([])
 
       const owners = profile.layers.filter((layer) => {

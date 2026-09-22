@@ -10,7 +10,7 @@ Sessions without configured MCP servers need neither resource schemas nor MCP gu
 
 ## Decision
 
-Every shipped profile mounts `mcp-resources` once: base-backed profiles, including Desktop, inherit its row from `dsh-base`; standalone `sdk-minimal` owns its row. Users configure only their `mcp-client` entries. No MCP server is enabled by default.
+Every shipped profile mounts `mcp-resources` once: base-backed profiles, including Desktop, inherit its row from `dsh-base`; standalone `sdk-minimal` owns its row. Users configure only their `mcp-client` entries. No MCP server is enabled by default; an opt-in profile bundle may ship a fail-soft MCP client row, and the construction profile's env-gated `standards` RAG client is the first.
 
 The resource service uses configured provider registrations in the caller's scope, including MCP clients mounted by another provider. An empty visible registry contributes no resource prompt, native tool schemas, PTC declarations, or PTC bindings. The first provider in a scope enables its shared tools; removal of the last removes those local registrations while preserving inherited providers and tools. The resource service owns the shared tool effects independently of any server plugin.
 

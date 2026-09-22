@@ -15,8 +15,8 @@
 
 .status,
 .failure {
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -67,7 +67,7 @@
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-primary);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
 }
 
 .search input::placeholder {
@@ -87,14 +87,14 @@
 }
 
 .catalogHeading h3 {
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 600;
 }
 
 .catalogHeading span {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
   font-variant-numeric: tabular-nums;
 }
@@ -167,8 +167,8 @@
 .cardTitle {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 600;
 }
 
@@ -177,8 +177,8 @@
   width: 100%;
   color: var(--dsw-alias-label-tertiary);
   font-family: var(--ds-font-family-code);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .cardTrailing {
@@ -246,8 +246,8 @@
 }
 
 .groupTitle {
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-weight: 400;
   color: var(--dsw-alias-label-primary);
 }
@@ -258,8 +258,8 @@
   gap: 4px 8px;
   margin: -6px 0 0 20px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -281,8 +281,8 @@
   background: var(--dsw-alias-bg-module-platform);
   color: var(--dsw-alias-label-primary);
   font: inherit;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   cursor: pointer;
 }
 
@@ -319,8 +319,8 @@
   padding: 8px 10px;
   background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 8%, transparent);
   color: var(--dsw-alias-state-error-primary);
-  font-size: 12.5px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   overflow-wrap: anywhere;
   white-space: pre-line;
 }
@@ -332,8 +332,8 @@
   gap: 4px 8px;
   margin: 0;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12.5px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .jumpLink {
@@ -342,7 +342,7 @@
   background: transparent;
   color: var(--dsw-alias-state-business-primary);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dsw-ui-font-secondary);
   cursor: pointer;
 }
 
@@ -378,8 +378,8 @@
   overflow-wrap: anywhere;
   color: var(--dsw-alias-label-primary);
   font-family: var(--ds-font-family-code);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .details {
@@ -395,8 +395,8 @@
 
 .details dt {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 17px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .details dd {
@@ -404,7 +404,7 @@
   margin: 0;
   overflow-wrap: anywhere;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   line-height: 17px;
 }
 

@@ -23,6 +23,8 @@
   - text: Context injection @deepseek-ai/dsh-system-prompt
 - paragraph: partial
 - status: Deep diving...
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

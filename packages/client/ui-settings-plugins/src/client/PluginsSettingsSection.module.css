@@ -16,7 +16,7 @@
 
 .intro {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -35,8 +35,8 @@
   background: transparent;
   color: var(--dsw-alias-label-tertiary);
   font: inherit;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   cursor: pointer;
 }
 
@@ -80,7 +80,7 @@
 
 .empty {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   color: var(--dsw-alias-label-tertiary);
 }
 

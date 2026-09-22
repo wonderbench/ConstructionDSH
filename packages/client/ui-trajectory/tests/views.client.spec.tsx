@@ -272,6 +272,8 @@ async function bench(snapshot = historySnapshot(NODES)) {
   const targetSources: ConversationTargetSources = {
     chat: createSnapshotStore<ChatSnapshot | undefined>(undefined),
     trajectory: trajectoryStore,
+    // Every augmented view target needs a store; the Gantt tab contributes one.
+    constructionGantt: createSnapshotStore<ConversationViewSnapshotMap['constructionGantt'] | undefined>(undefined),
   }
   const binding: ConversationBinding = {
     snapshot: conversationStore,

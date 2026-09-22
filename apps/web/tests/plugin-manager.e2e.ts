@@ -30,6 +30,9 @@ describe('web e2e: plugin manager', () => {
     scaffold = await launchWebScaffold({
       profile: { packages: [{ dir: join(FIXTURE_PLUGINS, 'fixture-bundle') }] },
     })
+    // Business mode hides the sidebar's Plugins entry; every scenario here
+    // drives that page, so pin the presentation mode before the first render.
+    await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
     browser = await chromium.launch()
     page = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: ZH_BROWSER_LOCALE })
     tripwire = watchConsole(page)
@@ -212,6 +215,8 @@ describe('web e2e: startup-applied plugin management', () => {
     const scaffold = await launchWebScaffold({
       profile: { hmr: false, packages: [{ dir: join(FIXTURE_PLUGINS, 'fixture-bundle') }] },
     })
+    // The sidebar's Plugins entry is expert-mode-only; business default hides it.
+    await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
     let browser: Browser | undefined
     try {
       browser = await chromium.launch()

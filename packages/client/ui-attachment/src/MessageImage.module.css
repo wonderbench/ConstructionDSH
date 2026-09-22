@@ -46,8 +46,8 @@
 .loading,
 .error {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .error {

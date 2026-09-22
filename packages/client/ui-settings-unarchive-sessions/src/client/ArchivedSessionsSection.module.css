@@ -9,8 +9,8 @@
 
 .status {
   margin: 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -70,14 +70,14 @@
 
 .title {
   overflow: hidden;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .meta {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
 }

@@ -31,8 +31,8 @@
   overflow: hidden;
   color: var(--dsw-alias-label-primary);
   font-family: inherit;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
 }
 
 .trigger:hover {
@@ -142,8 +142,8 @@
   background: transparent;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-weight: 400;
   color: var(--dsw-alias-label-primary);
   text-align: left;

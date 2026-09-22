@@ -6,12 +6,21 @@
 
 /* v8 ignore file -- built-bin acceptance exercises this self-executing dispatch. */
 
+import { register } from 'node:module'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { loadLayeredEnv, StartupError } from '@deepseek-ai/dsh-app-boot'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { parseDshArgs } from './args.ts'
 import { reportStartupFailure } from './startup-diagnostics.ts'
+
+// Source launches run one module plane: `../source-plane.mjs` redirects any
+// `packages/**/lib` resolution to its existing `src` counterpart, so loader
+// plugin entries and tsx paths-projected imports share module identities.
+// The built bin (`lib/bin.js`) never registers it and keeps the artifact plane.
+if (import.meta.main && import.meta.url.endsWith('.ts')) {
+  register('../source-plane.mjs', import.meta.url)
+}
 
 // Both the source tree (apps/cli/src) and the bundled bin (apps/cli/lib) sit
 // one directory under apps/cli, so the checked-in manifest resolves with the

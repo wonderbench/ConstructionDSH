@@ -106,8 +106,8 @@
   border-radius: 10px;
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-primary);
   text-align: left;
 }
@@ -145,8 +145,8 @@
   gap: 6px;
   padding: 3px 7px;
   border-radius: 5px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .compactList .itemIcon {
@@ -160,8 +160,8 @@
 
 .compactList .label {
   padding: 4px 7px;
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .item:disabled {
@@ -224,8 +224,8 @@
 /* Heading row: non-interactive small grey text, padding aligned with items. */
 .label {
   padding: 8px 10px;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 

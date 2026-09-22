@@ -201,8 +201,8 @@
   background: transparent;
   opacity: 0;
   pointer-events: none;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-primary);
   transition: opacity 120ms var(--ds-ease-in-out);
 }
@@ -371,8 +371,8 @@
 .searchStatus,
 .searchWarning {
   padding: 10px 12px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -446,7 +446,7 @@
   background: transparent;
   cursor: pointer;
   text-align: left;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -462,7 +462,7 @@
 .empty {
   padding: 16px 12px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
 }
 
 /* Rename dialog form (same figma dialog family as the create modals). */
@@ -475,9 +475,9 @@
   border-radius: 22px;
   outline: none;
   background: transparent;
-  font-size: 14px;
+  font-size: var(--dsw-ui-font-strong);
   font-weight: 400;
-  line-height: 22px;
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-primary);
 }
 
@@ -487,8 +487,8 @@
 
 .renameError {
   margin-top: 8px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-state-error-primary);
 }
 
@@ -497,8 +497,8 @@
 }
 
 .deleteStatus {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-secondary);
 }
 

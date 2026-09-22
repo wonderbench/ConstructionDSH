@@ -39,8 +39,8 @@
 
 .copied {
   color: #FFFFFF;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   text-align: center;
 }
 

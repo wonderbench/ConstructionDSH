@@ -47,6 +47,11 @@ interface CommandDefinition {
    * that payload in the session log.
    */
   readonly recordInput?: boolean
+  /**
+   * Composer-menu section advertising this command's discovery row to
+   * capable clients. Absent keeps the client's legacy placement.
+   */
+  readonly section?: CommandSection
   /** Execute against the receiving agent without sending the command to the model. */
   readonly handler: (invocation: CommandInvocation) => CommandResult | Promise<CommandResult>
 }
@@ -107,8 +112,12 @@ interface CommandDescriptor {
   readonly description: string
   /** Optional free-form input hint advertised to capable clients. */
   readonly input?: CommandInputDescriptor
+  /** Composer-menu section for this row; absent keeps the client's legacy placement. */
+  readonly section?: CommandSection
 }
 ```
+
+`section` is one of `'add' | 'functions' | 'commands'`: capable composer menus group declared rows under their section heading, while an undeclared command keeps the client's legacy placement. It is presentation metadata for discovery UI and never enters a model request.
 
 ```ts type-equiv
 /** Syntactically valid slash command before registry resolution. */

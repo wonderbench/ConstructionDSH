@@ -114,8 +114,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   color: var(--dsw-alias-label-tertiary);
   cursor: pointer;
@@ -176,8 +176,8 @@
   border: none;
   outline: none;
   background: transparent;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-primary);
 }
 
@@ -265,8 +265,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   color: var(--dsw-alias-label-primary);
 }
@@ -283,8 +283,8 @@
    * visible. Reserve its widest localized footprint so wrapped text cannot
    * run underneath it on a narrow card. */
   padding-right: 120px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .status {
@@ -337,8 +337,8 @@
   border: none;
   background: transparent;
   padding: 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
@@ -390,8 +390,8 @@
 
 .createIn {
   margin: 0;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-primary);
 }
 
@@ -404,8 +404,8 @@
   border-radius: 22px;
   outline: none;
   background: transparent;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-primary);
 }
 

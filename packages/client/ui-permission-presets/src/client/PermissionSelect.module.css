@@ -12,8 +12,8 @@
   outline: none;
   background: transparent;
   color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   cursor: pointer;
 }
@@ -70,8 +70,8 @@
   align-self: flex-start;
   margin-top: -1px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 8px;
-  line-height: 10px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   font-weight: 600;
   letter-spacing: 0.2px;
 }

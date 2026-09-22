@@ -40,6 +40,8 @@
   - img
   - text: 用时 {{duration}}
 - text: {{clock}}
+- img
+- text: workspace
 - textbox "发消息或创建任务, / 调用指令, @ 文件或对话"
 - button "添加文件或调用指令":
   - img

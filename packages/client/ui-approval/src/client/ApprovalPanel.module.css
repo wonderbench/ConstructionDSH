@@ -24,8 +24,8 @@
   padding: 10px 16px;
   background: var(--dsw-alias-state-warn-tertiary);
   color: var(--dsw-alias-state-warn-primary);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
 }
 
 .dot {
@@ -56,8 +56,8 @@
 .command {
   color: var(--dsw-alias-label-tertiary);
   font-family: var(--ds-font-family-code);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   word-break: break-all;
 }
 

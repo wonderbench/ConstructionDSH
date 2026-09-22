@@ -33,8 +33,8 @@
 
 .pageIntro {
   margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-secondary);
 }
 
@@ -49,8 +49,8 @@
 .failure p,
 .empty {
   margin: 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -65,8 +65,8 @@
   margin: 0;
   padding: 8px 12px;
   border-radius: 10px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, var(--dsw-alias-state-business-primary)) 12%, transparent);
   color: var(--dsw-alias-label-primary);
 }
@@ -85,13 +85,13 @@
 
 .groupTitle {
   margin: 0;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-weight: 500;
 }
 
 .count {
-  font-size: 14px;
+  font-size: var(--dsw-ui-font-strong);
   color: var(--dsw-alias-label-caption);
   font-variant-numeric: tabular-nums;
 }
@@ -205,8 +205,8 @@
 }
 
 .cardTitle {
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -255,8 +255,8 @@
 }
 
 .cardDesc {
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-tertiary);
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -354,8 +354,8 @@
 
 .reason {
   margin: 0;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-state-error-primary);
   overflow-wrap: anywhere;
   /* The Host's captured tail, when no output streamed, keeps its lines. */
@@ -392,8 +392,8 @@
 /* Where pnpm installs: the profile directory the first run names. */
 .installLocation {
   margin: 0;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
   overflow-wrap: anywhere;
 }
@@ -402,7 +402,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
 }
 
 .installField input[type='text'] {
@@ -412,7 +412,7 @@
   border-radius: 10px;
   background: var(--dsw-alias-bg-layer-3);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   color: var(--dsw-alias-label-primary);
 }
 
@@ -430,7 +430,7 @@
   border: 0;
   background: none;
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
 }
@@ -460,8 +460,8 @@
 .guideIntro,
 .guideHint {
   margin: 0;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -474,8 +474,8 @@
   padding: 8px 10px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--dsw-alias-state-warning-primary, var(--dsw-alias-state-business-primary)) 12%, transparent);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-state-warning-primary, var(--dsw-alias-state-business-primary));
 }
 
@@ -489,8 +489,8 @@
   padding: 8px 10px;
   border-radius: 8px;
   background: var(--dsw-alias-bg-layer-3);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-secondary);
 }
 
@@ -517,7 +517,7 @@
   border-radius: 999px;
   corner-shape: round;
   background: var(--dsw-alias-bg-layer-3);
-  font-size: 11px;
+  font-size: var(--dsw-ui-font-caption);
   line-height: 20px;
   text-align: center;
   color: var(--dsw-alias-label-tertiary);
@@ -532,13 +532,13 @@
 }
 
 .guideTitle {
-  font-size: 12.5px;
+  font-size: var(--dsw-ui-font-secondary);
   font-weight: 600;
   color: var(--dsw-alias-label-primary);
 }
 
 .guideExample {
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-label-secondary);
   overflow-wrap: anywhere;
 }
@@ -554,8 +554,8 @@
 /* What the check refused, under the field. */
 .inputError {
   margin: -4px 0 0;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-state-error-primary);
 }
 
@@ -662,8 +662,8 @@
 
 .wizardSub {
   margin: 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-secondary);
   overflow-wrap: anywhere;
 }
@@ -690,8 +690,8 @@
 .subjectDesc,
 .subjectMeta {
   margin: 0;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-secondary);
   overflow-wrap: anywhere;
 }
@@ -711,7 +711,7 @@
   border: 0;
   background: none;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
 }
@@ -774,8 +774,8 @@
   margin: 0;
   padding: 8px 12px;
   border-radius: 10px;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 10%, transparent);
   color: var(--dsw-alias-label-primary);
 }
@@ -797,22 +797,22 @@
 
 .approvalTitle {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   font-weight: 600;
   color: var(--dsw-alias-label-primary);
 }
 
 .approvalText {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-secondary);
 }
 
 .approvalCaution {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   font-weight: 600;
   color: var(--dsw-alias-state-warning-primary, var(--dsw-alias-state-business-primary));
 }
@@ -832,7 +832,7 @@
   border-radius: 6px;
   background: var(--dsw-alias-bg-layer-3);
   font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-label-primary);
 }
 
@@ -849,8 +849,8 @@
 .dependents {
   margin: 8px 0 0;
   padding-left: 18px;
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-secondary);
 }
 
@@ -873,7 +873,7 @@
   background: none;
   color: var(--dsw-alias-label-tertiary);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dsw-ui-font-secondary);
   cursor: pointer;
 }
 
@@ -923,16 +923,16 @@
 .detailDesc {
   margin: 0;
   color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
 }
 
 /* The package name under the title: the exact spec that installs the package
    elsewhere, where a title of its own or a shortened name hides it. */
 .detailName {
   margin: 0;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-caption);
   overflow-wrap: anywhere;
 }
@@ -967,14 +967,14 @@
 
 .sectionTitle {
   margin: 0;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-weight: 500;
 }
 
 .sectionCount {
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-secondary);
 }
 
@@ -1030,8 +1030,8 @@
 }
 
 .rowId {
-  font-size: 13.5px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   color: var(--dsw-alias-label-primary);
   overflow-wrap: anywhere;
@@ -1043,8 +1043,8 @@
 
 .rowModule {
   font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 11.5px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   color: var(--dsw-alias-label-tertiary);
   overflow-wrap: anywhere;
 }
@@ -1082,8 +1082,8 @@
   flex: none;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-secondary);
   white-space: nowrap;
 }
@@ -1096,8 +1096,8 @@
 
 .rowFailure {
   margin: 4px 0 0 56px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-state-error-primary);
   overflow-wrap: anywhere;
 }

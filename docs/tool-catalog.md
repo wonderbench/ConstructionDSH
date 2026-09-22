@@ -15,6 +15,7 @@ This table connects model-visible tool names to the plugin package and service s
 
 | Tool package | Model-visible names | Requires | Writes / affects | Shipped aliases | Deployment note |
 | --- | --- | --- | --- | --- | --- |
+| `@deepseek-ai/dsh-construction-runtime` | `construction_cost_calculate`, `construction_cost_compare`, `construction_cost_export`, `construction_files_inspect`, `construction_files_read`, `construction_files_search`, `construction_pdf_split`, `construction_report_export`, `construction_schedule_calculate`, `construction_schedule_present` | `ctx.tools`, `ctx.fs`, `ctx.systemPrompt`, `ctx.skills (optional; binds business tasks when present)` | `tool/call`, `tool/result` | - | The three file tools always run; the business tools (cost, schedule, report) deny calls until a matching business skill is loaded, and loading one mints a task binding that supersedes the previous task. Structured drawing decomposition returns an explicit unsupported status; the optional `ctx.skills` registry is read through `ctx.get`, so the suite mounts and its file tools register without it. |
 | `@deepseek-ai/dsh-plugin-manager` | `plugin_manager` | `ctx.tools`, `ctx.pluginManager`, `ctx.sandboxPolicy` | `tool/call`, `tool/result`, `user/message` | - | - |
 | `@deepseek-ai/dsh-mcp-resources` | `list_mcp_resource_templates`, `list_mcp_resources`, `read_mcp_resource` | `ctx.tools`, `ctx.mcpResources` | `tool/call`, `tool/result` | - | - |
 | `@deepseek-ai/dsh-experimental-browser-use-stagehand-native` | `stagehand_act`, `stagehand_extract`, `stagehand_navigate`, `stagehand_observe`, `stagehand_screenshot`, `stagehand_tabs` | `ctx.browserUse`, `ctx.agents`, `ctx.tools`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | - |
@@ -44,6 +45,848 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`, `owning Agent session` | `tool/call`, `todo/write`, `tool/result` | - | todo_write is session-owned state; UIs render the latest todo/write event as a checklist. `allowParallelInProgress` is required with no default, so the catalog states its choice: `true`, whose description invites several `in_progress` items. A deployment choosing `false` receives the same tool with a description asking for exactly one active task. |
 | `@deepseek-ai/dsh-tool-workflow` | `workflow` | `ctx.tools`, `ctx.workflowEngine`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents the script children)` | `tool/call`, `tool/result` | - | - |
 | `@deepseek-ai/dsh-tool-web` | `web_fetch`, `web_search` | `ctx.tools`, `ctx.web`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | web_search and web_fetch keep provider selection behind ctx.web so model-visible schemas stay stable across backend swaps. |
+
+<a id="deepseek-aidsh-construction-runtime"></a>
+
+## `@deepseek-ai/dsh-construction-runtime`
+
+### `construction_cost_calculate`
+
+Calculate a deterministic cost result for the unit_rate, tender, variation, or settlement workflow from explicit items: resource consumption times unit prices, explicit fee bases and rates, and trace expressions for every amount. Blanks are reported as unresolved items, never treated as zero. Requires an active cost task.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "Cost input: variant, items with resources and fees, and baseline items for tender/settlement.",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "BOQ item code; kept as text."
+              },
+              "description": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "quantity": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Item quantity; null or blank when unknown (never treated as zero)."
+              },
+              "resources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "labor",
+                        "material",
+                        "equipment"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "consumption": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Consumption per BOQ unit; blank when unknown."
+                    },
+                    "unit_price": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Unit price; blank when unknown."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "name",
+                    "consumption",
+                    "unit_price"
+                  ]
+                }
+              },
+              "fees": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "base": {
+                      "type": "string",
+                      "const": "resources"
+                    },
+                    "rate": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Rate as a decimal fraction, for example 0.1 for ten percent."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "base",
+                    "rate"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "code",
+              "quantity"
+            ]
+          }
+        },
+        "baseline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "BOQ item code; kept as text."
+              },
+              "description": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "quantity": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Item quantity; null or blank when unknown (never treated as zero)."
+              },
+              "resources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "labor",
+                        "material",
+                        "equipment"
+                      ]
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "consumption": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Consumption per BOQ unit; blank when unknown."
+                    },
+                    "unit_price": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Unit price; blank when unknown."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "name",
+                    "consumption",
+                    "unit_price"
+                  ]
+                }
+              },
+              "fees": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "base": {
+                      "type": "string",
+                      "const": "resources"
+                    },
+                    "rate": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Rate as a decimal fraction, for example 0.1 for ten percent."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "base",
+                    "rate"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "code",
+              "quantity"
+            ]
+          }
+        }
+      },
+      "required": [
+        "variant",
+        "items"
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active cost task binding id."
+    }
+  },
+  "required": [
+    "input"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_cost_compare`
+
+Compare two frozen cost results by item code and return a difference table with matched, price, quantity, and one-sided rows plus the rows a reviewer must confirm. Requires an active cost task.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "The frozen CostResult to compare.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {}
+        },
+        "totals": {},
+        "differences": {
+          "type": "array",
+          "items": {}
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "description": "The frozen CostResult to compare against.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {}
+        },
+        "totals": {},
+        "differences": {
+          "type": "array",
+          "items": {}
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active cost task binding id."
+    }
+  },
+  "required": [
+    "result",
+    "baseline"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_cost_export`
+
+Export a frozen cost result as a markdown report file under the construction artifacts directory. The report carries the frozen amounts, fee lines, expressions, and unresolved items verbatim. Requires an active cost task.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "The frozen CostResult to export.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "unit_rate",
+            "tender",
+            "variation",
+            "settlement"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "precision": {
+          "type": "integer"
+        },
+        "items": {
+          "type": "array",
+          "items": {}
+        },
+        "totals": {},
+        "differences": {
+          "type": "array",
+          "items": {}
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active cost task binding id."
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_files_inspect`
+
+Inspect a Word (.docx), Excel (.xlsx), or PDF file in the workspace: structure, page/sheet counts, merges, hidden content, tracked changes, comments, encryption, and formula-cache state, with explicit coverage warnings. Read-only.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the file to inspect."
+    }
+  },
+  "required": [
+    "file"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_files_read`
+
+Read the content of a Word, Excel, or PDF file in the workspace: body blocks, headings, tables with merged cells, cells with formulas and cached values, or per-page text. Every reported block carries a source reference. Read-only.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the file to read."
+    },
+    "max_chars": {
+      "type": "integer",
+      "description": "Maximum content characters to return; content is truncated with a partial coverage warning."
+    }
+  },
+  "required": [
+    "file"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_files_search`
+
+Search for a query string inside a Word, Excel, or PDF file in the workspace and return each match with its source reference (page, sheet and cell, or paragraph/table location). Read-only.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the file to search."
+    },
+    "query": {
+      "type": "string",
+      "description": "Text to search for; matching is case-insensitive."
+    }
+  },
+  "required": [
+    "file",
+    "query"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_pdf_split`
+
+Split a workspace PDF into new PDFs by explicit one-based page ranges, one file per page, or top-level bookmark boundaries. Original pages are copied unchanged; each output maps to its original page numbers and an index.json is written under the construction artifacts directory. Structured decomposition requests return an explicit unsupported status.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string",
+      "description": "Workspace-relative path of the PDF to split."
+    },
+    "by": {
+      "type": "string",
+      "description": "Split mode: explicit ranges, one output per page, or top-level bookmark boundaries.",
+      "enum": [
+        "range",
+        "per_page",
+        "bookmark"
+      ]
+    },
+    "ranges": {
+      "type": "array",
+      "description": "One-based inclusive ranges {from, to}; required when by is range.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "integer"
+          },
+          "to": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      }
+    },
+    "mode": {
+      "type": "string",
+      "description": "Structured decomposition modes such as structure or mineru are unsupported and return an explicit status."
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active task binding id, when a business task is running."
+    }
+  },
+  "required": [
+    "file",
+    "by"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_report_export`
+
+Export a markdown report from one frozen result (cost, schedule, or document summary) plus its unresolved items. Sections are filtered by the active business task type. A document result carries a DocumentSummaryResult: { schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }. Writes the report under the construction artifacts directory and returns its path. Requires any active business task.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "cost",
+            "schedule",
+            "document"
+          ]
+        },
+        "data": {
+          "description": "The frozen result value from the matching calculate/read tool."
+        }
+      },
+      "required": [
+        "kind",
+        "data"
+      ]
+    },
+    "sections": {
+      "type": "array",
+      "description": "Requested sections; sections not permitted for the active task type are omitted.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active business task binding id."
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_schedule_calculate`
+
+Calculate a CPM schedule from tasks, whole-working-day durations, finish-to-start links with nonnegative lags, and one project working calendar. Dates use inclusive-start/exclusive-finish working-day boundaries; the displayed finish is the last working date before the finish boundary. A critical path is claimed only when the logic is complete; unsupported relations are reported, never rewritten. Requires an active schedule task.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "Schedule input: scenario, calendar, tasks, and links.",
+      "additionalProperties": false,
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "description": "Scenario identifier; revisions should use a new id."
+        },
+        "project_start": {
+          "type": "string",
+          "description": "ISO date anchoring the calculation when no constraint or locked start exists."
+        },
+        "weekly_rest_days": {
+          "type": "array",
+          "description": "Weekday numbers (0 Sunday to 6 Saturday); defaults to [6, 0].",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "holidays": {
+          "type": "array",
+          "description": "Holiday ISO dates excluded from working time.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique task id."
+              },
+              "name": {
+                "type": "string"
+              },
+              "duration": {
+                "type": "integer",
+                "description": "Whole-working-day duration; 0 or omitted for a milestone."
+              },
+              "locked_start": {
+                "type": "string",
+                "description": "ISO date; locks completed work against rescheduling."
+              },
+              "locked_finish": {
+                "type": "string",
+                "description": "ISO date; locks completed work against rescheduling."
+              },
+              "start_no_earlier_than": {
+                "type": "string",
+                "description": "ISO date start constraint."
+              },
+              "finish_no_later_than": {
+                "type": "string",
+                "description": "ISO date finish constraint (display basis)."
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "lag": {
+                "type": "integer",
+                "description": "Finish-to-start lag in whole working days; must be nonnegative."
+              },
+              "relation": {
+                "type": "string",
+                "description": "Only FS is supported; other relations are reported, never rewritten."
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          }
+        }
+      },
+      "required": [
+        "tasks"
+      ]
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active schedule task binding id."
+    }
+  },
+  "required": [
+    "input"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+### `construction_schedule_present`
+
+Persist a frozen schedule result so the Gantt chart can render it, and return the result identifier with scenario metadata. Re-presenting an identical result returns the same identifier. Requires an active schedule task.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "object",
+      "description": "The frozen ScheduleResult from construction_schedule_calculate.",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "calculator_version": {
+          "type": "string"
+        },
+        "scenario_id": {
+          "type": "string"
+        },
+        "calendar": {},
+        "tasks": {
+          "type": "array",
+          "items": {}
+        },
+        "links": {
+          "type": "array",
+          "items": {}
+        },
+        "critical_path": {},
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "task_id": {
+      "type": "string",
+      "description": "Active schedule task binding id."
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/construction/construction-runtime/src/index.ts)
+
+The three file tools always run; the business tools (cost, schedule, report) deny calls until a matching business skill is loaded, and loading one mints a task binding that supersedes the previous task. Structured drawing decomposition returns an explicit unsupported status; the optional `ctx.skills` registry is read through `ctx.get`, so the suite mounts and its file tools register without it.
 
 <a id="deepseek-aidsh-plugin-manager"></a>
 

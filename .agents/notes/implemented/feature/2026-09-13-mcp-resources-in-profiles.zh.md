@@ -10,7 +10,7 @@ Status: implemented
 
 ## 决策
 
-每个随附 profile 统一挂载 `mcp-resources` 一次：包括 Desktop 在内的基于 base 的 profile 从 `dsh-base` 继承该行；独立的 `sdk-minimal` 拥有自己的行。用户只需配置 `mcp-client` 条目。默认不启用任何 MCP 服务器。
+每个随附 profile 统一挂载 `mcp-resources` 一次：包括 Desktop 在内的基于 base 的 profile 从 `dsh-base` 继承该行；独立的 `sdk-minimal` 拥有自己的行。用户只需配置 `mcp-client` 条目。默认不启用任何 MCP 服务器；选择加入的 profile bundle 可以随附故障容错的 MCP client 行，construction profile 的 env 门控 `standards` RAG client 是第一个。
 
 资源服务使用调用方作用域中的已配置提供方注册，包括由其他提供方挂载的 MCP 客户端。可见注册表为空时，不贡献资源提示词、native 工具 schema、PTC 声明或 PTC 绑定。作用域中的首个提供方启用共享工具；移除最后一个提供方时移除这些本地注册，同时保留继承的提供方与工具。资源服务独立于任何服务器插件拥有共享工具 effect。
 

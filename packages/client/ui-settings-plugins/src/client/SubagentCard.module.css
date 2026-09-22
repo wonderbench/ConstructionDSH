@@ -5,7 +5,7 @@
 
 .heading {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   font-weight: 600;
   line-height: 1.5;
   color: var(--dsw-alias-label-primary);

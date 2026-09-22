@@ -47,6 +47,11 @@ interface CommandDefinition {
    * that payload in the session log.
    */
   readonly recordInput?: boolean
+  /**
+   * Composer-menu section advertising this command's discovery row to
+   * capable clients. Absent keeps the client's legacy placement.
+   */
+  readonly section?: CommandSection
   /** Execute against the receiving agent without sending the command to the model. */
   readonly handler: (invocation: CommandInvocation) => CommandResult | Promise<CommandResult>
 }
@@ -107,8 +112,12 @@ interface CommandDescriptor {
   readonly description: string
   /** Optional free-form input hint advertised to capable clients. */
   readonly input?: CommandInputDescriptor
+  /** Composer-menu section for this row; absent keeps the client's legacy placement. */
+  readonly section?: CommandSection
 }
 ```
+
+`section` 取值为 `'add' | 'functions' | 'commands'` 之一：兼容的 Composer 菜单会把声明的行归到对应分组标题之下，未声明的命令保持客户端的既有排位。它只是面向发现 UI 的展示元数据，绝不进入模型请求。
 
 ```ts type-equiv
 /** Syntactically valid slash command before registry resolution. */

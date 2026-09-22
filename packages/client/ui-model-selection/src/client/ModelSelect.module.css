@@ -23,8 +23,8 @@
   outline: none;
   background: transparent;
   color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   cursor: pointer;
 }
@@ -132,8 +132,8 @@
 .empty {
   padding: 10px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
 }
 
 .error,
@@ -147,8 +147,8 @@
   border-radius: 8px;
   background: var(--dsw-alias-interactive-bg-hover-danger);
   color: var(--dsw-alias-state-error-primary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .warning {
@@ -183,8 +183,8 @@
   padding: 5px 8px 3px;
   background: var(--dsw-specific-menu);
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   font-weight: 500;
 }
 
@@ -232,8 +232,8 @@
 .modelName {
   overflow: hidden;
   color: inherit;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -262,8 +262,8 @@
   border-radius: 10px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   cursor: pointer;
   text-align: left;
 }

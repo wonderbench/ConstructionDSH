@@ -21,8 +21,8 @@
   border-radius: 6px;
   background: transparent;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   cursor: pointer;
 }
 
@@ -57,8 +57,8 @@
 
 .separator {
   color: var(--dsw-alias-label-caption);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
 }
 
 .activitySlot {
@@ -132,8 +132,8 @@
   border-radius: 8px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   text-align: left;
   cursor: pointer;
   outline: none;
@@ -228,8 +228,8 @@
 .summary,
 .metrics {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .metrics {
@@ -320,8 +320,8 @@
 .error {
   padding: 10px 12px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .error {

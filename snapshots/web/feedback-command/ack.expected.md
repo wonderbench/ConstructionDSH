@@ -37,6 +37,8 @@
   - img
   - img
   - text: "feedback Feedback recorded for session session-{{uuid}} Anonymous user: {{uuid}}."
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

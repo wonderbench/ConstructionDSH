@@ -80,8 +80,8 @@
 .description {
   margin: 0;
   padding: 0 24px;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   font-weight: 400;
   color: var(--dsw-alias-label-primary);
 }

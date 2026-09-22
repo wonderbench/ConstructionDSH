@@ -1,4 +1,6 @@
 - alert: This session is already in use, possibly by another running DSH instance (such as dsh web or the desktop app). Quit other running DSH instances and try again.
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions":
   - paragraph: Queue submission to retry
 - button "Add files or run commands":

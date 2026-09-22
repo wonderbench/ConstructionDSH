@@ -43,6 +43,8 @@
   - img
   - text: Ran for {{duration}}
 - text: {{clock}}
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

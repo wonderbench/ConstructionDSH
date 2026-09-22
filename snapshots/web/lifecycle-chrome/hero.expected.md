@@ -4,8 +4,6 @@
 - button "New session":
   - img
   - text: New Session
-- navigation "Global panels":
-  - button "Plugins"
 - text: Workspaces
 - button "Search sessions":
   - img
@@ -25,7 +23,7 @@
 - banner:
   - button "Open right sidebar":
     - img
-- text: Into the Unknown Preview
+- text: Lurun Project Management Agent V1.0
 - button "Choose workspace":
   - img
   - text: workspace

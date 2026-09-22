@@ -9,8 +9,8 @@
   max-width: 180px;
   overflow: hidden;
   color: var(--dsw-alias-state-error-primary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

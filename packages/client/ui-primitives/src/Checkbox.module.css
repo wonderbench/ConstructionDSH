@@ -2,8 +2,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-primary);
   cursor: pointer;
 }

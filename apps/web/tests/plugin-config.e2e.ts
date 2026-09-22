@@ -35,6 +35,8 @@ describe('web e2e: plugin configuration pages', () => {
     scaffold = await launchWebScaffold({
       profile: { packages: [{ dir: join(FIXTURE_PLUGINS, 'fixture-live-client') }] },
     })
+    // The sidebar's Plugins entry is expert-mode-only; business default hides it.
+    await scaffold.ctx.settings.update('ui-theme', { uiMode: 'expert' })
     browser = await chromium.launch()
     // Chinese browser: the pages assert the localized copy the client derives
     // from it, as the rest of the settings surface does.
@@ -204,7 +206,7 @@ describe('web e2e: plugin configuration pages', () => {
     const timeout = panel.getByLabel('命令超时（毫秒）')
     await timeout.waitFor({ timeout: 10_000 })
     // The composed default this deployment ships, before any user layer.
-    expect(await timeout.inputValue()).toBe('60000')
+    expect(await timeout.inputValue()).toBe('120000')
     await timeout.fill('12000')
     await timeout.blur()
 
@@ -269,14 +271,14 @@ describe('web e2e: plugin configuration pages', () => {
     // The reset stages the composed default; the document still carries the
     // override until the save lands.
     await panel.getByRole('button', { name: '恢复默认' }).click()
-    await expect.poll(() => timeout.inputValue(), { timeout: 5_000 }).toBe('60000')
+    await expect.poll(() => timeout.inputValue(), { timeout: 5_000 }).toBe('120000')
     expect(await settingsDocument()).toContain('timeoutMs: 12000')
 
     await panel.getByRole('button', { name: '保存', exact: true }).click()
 
     await expect.poll(async () => (await settingsDocument()).includes('timeoutMs'), { timeout: 10_000 })
       .toBe(false)
-    expect(await timeout.inputValue()).toBe('60000')
+    expect(await timeout.inputValue()).toBe('120000')
     expect(await panel.getByText('已覆盖').count()).toBe(0)
     expect(tripwire.pageErrors).toEqual([])
   }, 60_000)

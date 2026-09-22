@@ -81,8 +81,8 @@
   /* Eyebrow-to-title gap widened from the figma 2px (user-tuned). */
   margin-bottom: 5px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .title {
@@ -113,8 +113,8 @@
 .progress {
   padding: 0 4px;
   color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  line-height: 24px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   white-space: nowrap;
   /* Narrow the plain spaces around the slash without touching glyph tracking. */
@@ -215,9 +215,9 @@
   border-radius: 6px;
   background: var(--dsw-alias-bg-overlay);
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   font-weight: 500;
-  line-height: 18px;
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 /* Multi-select box (figma 1055:41594, user-tuned down to 14×14): a radius-4
@@ -271,8 +271,8 @@
 }
 
 .optionLabel {
-  font-size: 14px;
-  line-height: 24px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
 }
 
@@ -281,15 +281,15 @@
   border-radius: 6px;
   background: var(--dsw-specific-sidebar-nav-item-active-accent);
   color: var(--dsw-alias-button-info-fill);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   font-weight: 600;
 }
 
 .description {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 14px;
-  line-height: 24px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 400;
 }
 
@@ -414,8 +414,8 @@
   flex: 1;
   min-height: 16px;
   color: var(--dsw-alias-state-error-primary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   text-align: right;
 }
 

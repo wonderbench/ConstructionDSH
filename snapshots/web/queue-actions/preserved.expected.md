@@ -52,6 +52,8 @@
       - img
     - button "Steer queued message" [disabled]:
       - img
+- img
+- text: workspace
 - textbox "Message or run a task, / commands, @ files or sessions"
 - button "Add files or run commands":
   - img

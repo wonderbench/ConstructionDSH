@@ -61,8 +61,8 @@
   border-radius: 10px;
   background: transparent;
   cursor: pointer;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   color: var(--dsw-alias-label-primary);
   text-align: left;
 }
@@ -78,9 +78,9 @@
   min-height: 26px;
   padding: 6px 10px 2px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   font-weight: 500;
-  line-height: 18px;
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .sectionTitle:not(:first-child) {
@@ -144,8 +144,8 @@
 .drillHintText {
   display: none;
   color: var(--dsw-alias-label-caption);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   white-space: nowrap;
 }
 
@@ -156,8 +156,8 @@
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-caption);
   font-family: inherit;
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .item.active .drillHintText,
@@ -187,8 +187,8 @@
  * padding aligned with items (mirrors ui-primitives Menu .label). */
 .groupTitle {
   padding: 8px 10px;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -247,8 +247,8 @@
   color: var(--dsw-alias-label-tertiary);
   cursor: pointer;
   font-family: inherit;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
