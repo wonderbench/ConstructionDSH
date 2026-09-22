@@ -4,11 +4,12 @@ import { cleanup, fireEvent, render } from '@testing-library/react'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import type { RunningToolCall, ToolResultNode } from '@deepseek-ai/dsh-client-ui-chat/client'
+import { useDisclosure } from '@deepseek-ai/dsh-client-ui-chat/src/client/chat/use-disclosure.ts'
 import { zh as conversationZh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 import { toolEn, toolZh } from '../src/client/locale.ts'
 import { readToolPresentation } from '../src/client/tool/denoise-presentation.ts'
 import { TechnicalDetails } from '../src/client/tool/components/TechnicalDetails.tsx'
-import { ToolRow, type ToolRowProps } from '../src/client/tool/components/ToolRow.tsx'
+import { ToolRow } from '../src/client/tool/components/ToolRow.tsx'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
 import { BashRow, type BashRowProps } from '../src/client/tool/toolviews/bash-sample.tsx'
 
@@ -29,7 +30,7 @@ const result = (over?: Partial<ToolResultNode>): ToolResultNode => ({
 function cardProps(toolName: string, block: RunningToolCall | ToolResultNode): GenericToolCardProps {
   return {
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    useDisclosure: (() => ({ expanded: false, toggle: () => {} })) as GenericToolCardProps['useDisclosure'],
+    useDisclosure,
     callId: 'c1', toolName, block, openFile: vi.fn(), t, tTool,
   }
 }
@@ -39,7 +40,7 @@ function bashProps(block: RunningToolCall | ToolResultNode): BashRowProps {
     callId: 'c1', toolName: 'bash', block, sessionId: 's1',
     useSessions: (() => undefined) as BashRowProps['useSessions'],
     openFile: vi.fn(), loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
-    t, tTool,
+    useDisclosure, t, tTool,
   } as unknown as BashRowProps
 }
 
@@ -104,7 +105,7 @@ describe('TechnicalDetails', () => {
 describe('ToolRow technical layer', () => {
   const rowProps = {
     t,
-    useDisclosure: (() => ({ expanded: false, toggle: () => {} })) as ToolRowProps['useDisclosure'],
+    useDisclosure,
     variant: 'others' as const,
     icon: <i data-testid="tool-icon" />,
     title: '工具调用',

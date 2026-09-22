@@ -86,9 +86,10 @@ export function resultEvent(callId: string, seq: number, text: string, isError =
     time: 1_700_000_000_000 + seq,
     type: 'tool/result',
     data: {
+      ...(isError ? { error: { name: 'ToolFailed', code: 'failed' } } : {}),
       message: {
         role: 'user',
-        content: [{ type: 'tool-result', toolCallId: callId, content: [{ type: 'text', text }], ...(isError ? { isError: true } : {}) }],
+        content: [{ type: 'text', text }],
         source: { kind: 'tool', callId },
       },
     },

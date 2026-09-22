@@ -105,7 +105,7 @@ describe('scheduleResultDefinition lifecycle', () => {
     expect(next.outcome).toEqual({ kind: 'failure', reason: 'malformed' })
   })
 
-  it('folds an isError result block into an error failure', () => {
+  it('folds a flagged result error into an error failure', () => {
     const next = scheduleResultDefinition.update(liveContext(state('c1')), updateMatch(resultEvent('c1', 2, makeResultText(), true)))
     expect(next.outcome).toEqual({ kind: 'failure', reason: 'error' })
   })
@@ -119,9 +119,7 @@ describe('scheduleResultDefinition lifecycle', () => {
 
   it('folds a non-text result block into a malformed failure', () => {
     const imageOnly = resultEvent('c1', 2, makeResultText())
-    ;(imageOnly.data as { message: { content: Record<string, unknown>[] } }).message.content[0] = {
-      type: 'tool-result', toolCallId: 'c1', content: [{ type: 'image' }],
-    }
+    ;(imageOnly.data as { message: { content: Record<string, unknown>[] } }).message.content[0] = { type: 'image' }
     expect(scheduleResultDefinition.update(liveContext(state('c1')), updateMatch(imageOnly)).outcome)
       .toEqual({ kind: 'failure', reason: 'malformed' })
   })

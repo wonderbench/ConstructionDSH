@@ -107,8 +107,8 @@ it('keeps a broken card focusable for diagnostics and refuses to select it', () 
 })
 it.each([
   ['standard', en.presetStandardName, 'How it works', 'Fix a bug'],
-  ['ptc', en.presetPtcName, 'How tools are called', 'Check a set of configuration files'],
-  ['minimal', en.presetMinimalName, 'What is included', 'Compare performance on a small bug fix'],
+  ['drawing-split', en.presetDrawingSplitName, 'How splitting works', 'Split a multi-drawing PDF'],
+  ['engineering', en.presetEngineeringName, 'What it adds', 'Price a bill of quantities'],
   ['cordis', en.presetCordisName, 'What you can create', 'Add a UI'],
 ])('opens both help sections for %s without changing the default', (id, name, heading, exampleTitle) => {
   const actions = view({ rows: [{ id, isDefault: false }] })

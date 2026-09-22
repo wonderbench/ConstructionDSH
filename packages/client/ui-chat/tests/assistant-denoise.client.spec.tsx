@@ -6,6 +6,7 @@ import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts
 import { zh } from '../src/client/locale.ts'
 import type { ChatNodeViewProps } from '../src/client/contract/slots.ts'
 import { AssistantNodeView } from '../src/client/chat/AssistantNodeView.tsx'
+import { useDisclosure } from '../src/client/chat/use-disclosure.ts'
 import { nonProseBlocks, proseFold } from '../src/client/chat/assistant-denoise.ts'
 import { readDenoisePresentation } from '../src/client/chat/denoise-presentation.ts'
 import type { AssistantBlock } from '../src/client/contract/snapshot.ts'
@@ -62,6 +63,7 @@ function makeProps(blocks: readonly AssistantBlock[], status: 'settled' | 'runni
     openFile: () => {},
     renderMessageImages: (() => null) as ChatNodeViewProps<'assistant-step'>['renderMessageImages'],
     fileMentions: () => undefined,
+    useDisclosure,
     usePresentation: useDetailedPresentation,
     t,
   } as unknown as Parameters<typeof AssistantNodeView>[0]
