@@ -14,7 +14,7 @@
 
 .intro {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -43,14 +43,14 @@
 }
 
 .pickerPreferenceTitle {
-  font-size: 14px;
+  font-size: var(--dsw-ui-font-strong);
   font-weight: 600;
   line-height: 1.5;
 }
 
 .pickerPreferenceDescription {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   line-height: 1.5;
   color: var(--dsw-alias-label-tertiary);
 }
@@ -71,7 +71,7 @@
 
 .groupHead {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   font-weight: 600;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -136,8 +136,8 @@
   border-radius: 999px;
   corner-shape: round;
   padding: 1px 8px;
-  font-size: 11px;
-  line-height: 17px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   white-space: nowrap;
   font-weight: 500;
   background: var(--dsw-alias-state-error-primary);
@@ -160,7 +160,7 @@
   border-radius: 6px;
   background: var(--dsw-alias-label-primary);
   color: var(--dsw-alias-bg-layer-3);
-  font-size: 11px;
+  font-size: var(--dsw-ui-font-caption);
   font-weight: 400;
   line-height: 1.5;
   text-align: left;
@@ -258,7 +258,7 @@
    flex-stretched box leaves the clamp height and the box height disagreeing,
    so `.cardId` takes the free space with an auto margin instead. */
 .cardDesc {
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   line-height: 1.55;
   color: var(--dsw-alias-label-secondary);
   min-height: 42px;
@@ -273,7 +273,7 @@
 .cardId {
   margin-top: auto;
   font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 11px;
+  font-size: var(--dsw-ui-font-caption);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -325,8 +325,8 @@
   border-radius: 6px;
   background: var(--dsw-alias-label-primary);
   color: var(--dsw-alias-bg-layer-3);
-  font-size: 11px;
-  line-height: 17px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
@@ -348,7 +348,7 @@
 .revealedPath {
   margin: 0;
   padding: 6px 16px 10px;
-  font-size: 11px;
+  font-size: var(--dsw-ui-font-caption);
   color: var(--dsw-alias-label-tertiary);
   display: flex;
   gap: 6px;
@@ -373,7 +373,7 @@
   background: none;
   color: var(--dsw-alias-label-secondary);
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--dsw-ui-font-secondary);
   cursor: pointer;
 }
 
@@ -394,7 +394,7 @@
 }
 
 .fieldLabel {
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   font-weight: 500;
   color: var(--dsw-alias-label-secondary);
 }
@@ -405,7 +405,7 @@
   border: 0.5px solid var(--dsw-alias-border-l4);
   border-radius: 10px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-primary);
 }
@@ -440,7 +440,7 @@
   background: var(--dsw-alias-bg-layer-2);
   color: var(--dsw-alias-label-secondary);
   font-family: var(--dsw-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 12.5px;
+  font-size: var(--dsw-ui-font-secondary);
   line-height: 1.5;
   white-space: pre;
   tab-size: 2;
@@ -450,7 +450,7 @@
 
 .error {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-state-error-primary);
 }
 
@@ -481,8 +481,8 @@
   border: 1px dashed var(--dsw-alias-border-l3);
   border-radius: 20px;
   font: inherit;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-strong);
   background: transparent;
   color: var(--dsw-alias-label-primary);
   cursor: pointer;

@@ -38,6 +38,8 @@ const SEED_ID = 'agent-preset-selection-web-e2e'
 const SKILL_NAME = 'preset-catalog-demo'
 /** The preset whose rows resolve and then refuse to start. */
 const REFUSING_ID = 'zz-refusing'
+/** The lane-owned empty composition the selection tests switch down to. */
+const NARROW_ID = 'zz-narrow'
 
 /**
  * Seed a preset discovery reports healthy and the mount refuses.
@@ -58,11 +60,28 @@ async function seedRefusingPreset(root: string): Promise<void> {
 }
 
 /**
+ * Seed the narrowest usable preset: an empty composition.
+ *
+ * Every row resolves — there are none — so health clears it and the chip
+ * offers it like any other. It mounts no skill discovery, no compaction
+ * group, and no preset-scoped commands, which is what makes the slash
+ * catalog under it a statement about the composition the switch installed.
+ * @param root - the lane's writable preset root.
+ */
+async function seedNarrowPreset(root: string): Promise<void> {
+  const directory = join(root, NARROW_ID)
+  await mkdir(directory, { recursive: true })
+  await writeFile(join(directory, 'agent.cordis.yml'), '[]\n')
+  await writeFile(join(directory, 'preset.yml'),
+    'name: Narrow mode\ndescription: An empty composition with no tools, no skills, and no preset-scoped commands.\n')
+}
+
+/**
  * Seed one project skill under the connected workspace.
  *
  * Local skill discovery is a PRESET row, so this file is visible through
- * `standard` and invisible through `minimal` — which makes the '/' menu's
- * skill group a statement about the session's composition.
+ * `standard` and invisible through the empty `zz-narrow` preset — which makes
+ * the '/' menu's skill group a statement about the session's composition.
  * @param workspaceCwd - the scaffold's temp project parent.
  */
 async function seedWorkspaceSkill(workspaceCwd: string): Promise<void> {
@@ -136,7 +155,7 @@ async function seedSubagent(scaffold: WebScaffold, parentId: SessionId): Promise
     parentSession: parentId,
     origin: 'subagent',
     delegationDepth: 1,
-    agentPreset: 'minimal',
+    agentPreset: NARROW_ID,
   }
   const handle = await scaffold.ctx.sessionPersistence.create(header)
   await handle.append([
@@ -177,7 +196,7 @@ async function seedSubagent(scaffold: WebScaffold, parentId: SessionId): Promise
 /**
  * The preset the host reports for the blank session the workspace connect
  * produced. Addressed by id rather than by scanning the serialized list: the
- * seeded session records `minimal` too, so a substring match over the whole
+ * seeded session records `zz-narrow` too, so a substring match over the whole
  * list answers before the switch has landed.
  * @param scaffold - authenticated Web Host scaffold.
  * @returns the live session's preset, or undefined before it is listed.
@@ -221,17 +240,19 @@ describe('web e2e: agent-preset selection', () => {
   let presetRoot: string
 
   beforeAll(async () => {
-    // The shipped presets, plus one lane-owned preset that mounts and refuses:
-    // the chip's own failure path needs a preset the roster offers.
+    // The shipped presets, plus the lane-owned presets the scenario needs:
+    // one that mounts and refuses (the chip's own failure path), and the
+    // empty composition the selection tests switch down to.
     presetRoot = await realpath(await mkdtemp(join(tmpdir(), 'dsh-web-e2e-refusing-')))
     await seedRefusingPreset(presetRoot)
+    await seedNarrowPreset(presetRoot)
     scaffold = await launchWebScaffold({
       agentPresets: { roots: [{ path: presetRoot, trust: 'user' }], default: 'standard' },
     })
     // A resumed session runs what it was created with; seeding one that
-    // records `minimal` is what makes the header label a claim about the
+    // records `zz-narrow` is what makes the header label a claim about the
     // session rather than an echo of the current default.
-    const seededId = await seedSession(scaffold, seedLog(), SEED_ID, 'minimal')
+    const seededId = await seedSession(scaffold, seedLog(), SEED_ID, NARROW_ID)
     await seedSubagent(scaffold, seededId)
     await seedWorkspaceSkill(scaffold.workspaceCwd)
     browser = await chromium.launch()
@@ -274,28 +295,33 @@ describe('web e2e: agent-preset selection', () => {
     const snapshot = await captureStableAria(page, '[role="menu"]', scaffold.workspaceCwd)
 
     await compareOrRefreshGolden(MENU_EXPECTED, snapshot, MODE)
-    // Every shipped preset, each with the sentence saying what it composes —
-    // the id alone never said what a preset does.
-    expect(snapshot).toContain('Minimal mode')
-    expect(snapshot).toContain('Creator mode')
+    // Every picker-visible preset, each with the sentence saying what it
+    // composes — the id alone never said what a preset does.
+    expect(snapshot).toContain('Standard mode')
+    expect(snapshot).toContain('Drawing split mode')
+    expect(snapshot).toContain('Engineering mode')
+    expect(snapshot).toContain('Narrow mode')
+    // The authoring preset opts out of the picker: still on the settings
+    // roster, never in this menu.
+    expect(snapshot).not.toContain('Creator mode')
     await page.keyboard.press('Escape')
   })
 
   it('applies the staged pick to the blank session, and the host honors it', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-agent-preset-stage'))
     await page.getByRole('button', { name: 'Standard mode' }).click()
-    await page.getByRole('menuitem', { name: /Minimal mode/ }).click()
+    await page.getByRole('menuitem', { name: /Narrow mode/ }).click()
 
     // The chip stages; the blank session the workspace connect produced is
     // what the stage lands on. The host's own answer is what comes back.
-    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe('minimal')
+    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe(NARROW_ID)
     const roster = await scaffold.ctx.agentPresets.remoteExportList()
     expect(roster.presets.find(preset => preset.isDefault)?.id).toBe('standard')
   })
 
   it('says why a switch was refused instead of letting the chip revert in silence', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-agent-preset-refused'))
-    await page.getByRole('button', { name: 'Minimal mode' }).click()
+    await page.getByRole('button', { name: 'Narrow mode' }).click()
     await page.getByRole('menuitem', { name: /Refusing mode/ }).click()
 
     // Health cleared every row, so nothing on the settings page says this
@@ -304,37 +330,37 @@ describe('web e2e: agent-preset selection', () => {
     const banner = page.getByRole('alert').filter({ hasText: 'Refusing mode' })
     await banner.waitFor({ timeout: 15_000 })
     expect(await banner.textContent()).toContain('this row refuses to start')
-    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe('minimal')
-    await page.getByRole('button', { name: 'Minimal mode' }).waitFor({ timeout: 10_000 })
+    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe(NARROW_ID)
+    await page.getByRole('button', { name: 'Narrow mode' }).waitFor({ timeout: 10_000 })
   }, 60_000)
 
   it('re-reads the slash catalog through the composition the switch installed', async () => {
-    // Continues 'applies the staged pick': the chip has already applied `minimal` to
+    // Continues 'applies the staged pick': the chip has already applied `zz-narrow` to
     // the blank session, and this one reads the menu that switch left behind.
     onTestFailed(() => saveFailureShot(page, 'web-e2e-agent-preset-slash-catalog'))
     const composer = page.locator('[data-composer-input][contenteditable="true"]').last()
 
-    // `minimal` mounts neither the compaction group nor plan mode nor local
+    // `zz-narrow` mounts neither the compaction group nor plan mode nor local
     // skill discovery, so the catalog the composer warmed under the
     // deployment default must not survive the switch.
     await writeComposerDraft(page, composer, '/')
     await expect.poll(() => menuOptions(page), { timeout: 15_000 })
       .not.toEqual(expect.arrayContaining([expect.stringContaining(SKILL_NAME)]))
     // Rows read as `Title Description`; the title is the capitalized command name.
-    const onMinimal = (await menuOptions(page)).map(option => option.toLowerCase())
-    expect(onMinimal.some(option => option.startsWith('compact'))).toBe(false)
-    expect(onMinimal.some(option => option.startsWith('plan'))).toBe(false)
+    const onNarrow = (await menuOptions(page)).map(option => option.toLowerCase())
+    expect(onNarrow.some(option => option.startsWith('compact'))).toBe(false)
+    expect(onNarrow.some(option => option.startsWith('plan'))).toBe(false)
     // Preset-scoped commands follow the switch; the client's own model command
     // remains outside every preset.
-    expect(onMinimal.some(option => option.startsWith('goal'))).toBe(false)
-    expect(onMinimal.some(option => option.startsWith('model'))).toBe(true)
+    expect(onNarrow.some(option => option.startsWith('goal'))).toBe(false)
+    expect(onNarrow.some(option => option.startsWith('model'))).toBe(true)
     await writeComposerDraft(page, composer, '')
 
     // Switching back up reaches the host at all — the chip compares the pick
     // against its list row, so a row that never reprojected the first switch
     // answers "already standard" and sends nothing — and restores the catalog
     // instead of leaving the session reading the narrower composition.
-    await page.getByRole('button', { name: 'Minimal mode' }).click()
+    await page.getByRole('button', { name: 'Narrow mode' }).click()
     await page.getByRole('menuitem', { name: /^Standard mode/ }).first().click()
     await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe('standard')
 
@@ -355,9 +381,9 @@ describe('web e2e: agent-preset selection', () => {
     await page.getByRole('button', { name: 'Settings', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Settings' })
     await dialog.getByRole('button', { name: 'Agent presets' }).click()
-    await dialog.getByRole('button', { name: 'Set as default: Minimal mode' }).click()
-    await dialog.getByRole('button', { name: 'New task default: Minimal mode' }).waitFor({ timeout: 10_000 })
-    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe('minimal')
+    await dialog.getByRole('button', { name: 'Set as default: Narrow mode' }).click()
+    await dialog.getByRole('button', { name: 'New task default: Narrow mode' }).waitFor({ timeout: 10_000 })
+    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe(NARROW_ID)
     const toggle = dialog.getByRole('switch', { name: 'Allow switching Agent modes' })
     await toggle.click()
     await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('false')
@@ -375,10 +401,10 @@ describe('web e2e: agent-preset selection', () => {
     const reopenedToggle = reopened.getByRole('switch', { name: 'Allow switching Agent modes' })
     await reopenedToggle.click()
     await expect.poll(() => reopenedToggle.getAttribute('aria-checked')).toBe('true')
-    await reopened.getByRole('button', { name: 'New task default: Minimal mode' }).waitFor({ timeout: 10_000 })
+    await reopened.getByRole('button', { name: 'New task default: Narrow mode' }).waitFor({ timeout: 10_000 })
     await reopened.getByRole('button', { name: 'Close' }).last().click()
-    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe('minimal')
-    await page.getByRole('button', { name: 'Minimal mode' }).waitFor({ timeout: 10_000 })
+    await expect.poll(() => livePreset(scaffold), { timeout: 15_000 }).toBe(NARROW_ID)
+    await page.getByRole('button', { name: 'Narrow mode' }).waitFor({ timeout: 10_000 })
   })
 
   it('labels a resumed session with the preset it was created under', async () => {
@@ -392,13 +418,13 @@ describe('web e2e: agent-preset selection', () => {
     const snapshot = await captureStableAria(page, '[class*="titleRow"]', scaffold.workspaceCwd)
 
     await compareOrRefreshGolden(HEADER_EXPECTED, snapshot, MODE)
-    expect(snapshot).toContain('Minimal mode')
+    expect(snapshot).toContain('Narrow mode')
     expect(snapshot).toContain('button "1 subagent"')
-    expect(snapshot.indexOf('button "1 subagent"')).toBeLessThan(snapshot.indexOf('Minimal mode'))
-    expect(snapshot.indexOf('Minimal mode')).toBeLessThan(snapshot.indexOf('button "More actions"'))
+    expect(snapshot.indexOf('button "1 subagent"')).toBeLessThan(snapshot.indexOf('Narrow mode'))
+    expect(snapshot.indexOf('Narrow mode')).toBeLessThan(snapshot.indexOf('button "More actions"'))
     // Static chrome, not a control: the header can only report a composition
     // the host would refuse to change.
-    expect(snapshot).not.toContain('button "Minimal mode"')
+    expect(snapshot).not.toContain('button "Narrow mode"')
   })
 
   it('drove every surface without a page error or a stream warning', () => {

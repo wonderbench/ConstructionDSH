@@ -38,6 +38,69 @@ const CLAUDE_CODE_PACKAGE_DIR = join(REPO_ROOT, 'packages/subagent/subagent-clau
 /** The installation anchor whose dependency surface the preset module fallback mirrors. */
 const INSTALL_ANCHOR = join(REPO_ROOT, 'apps/cli/package.json')
 const MINIMAL_PROMPT = 'You are a helpful software engineer assistant.'
+/**
+ * The narrow single-tool composition the shipped roster no longer carries.
+ * Lanes that need it seed it as their own preset under this exact content, so
+ * the assertions about its exact prompt, shell, and catalog stay unchanged.
+ */
+const MINIMAL_COMPOSITION = `# The narrow agent preset: a fixed-prompt, single-tool composition.
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    prefix: You are a helpful software engineer assistant.
+    complete: true
+    includeRuntimeContext: false
+
+- id: persistent-shell
+  name: cordis:group
+  group: true
+  isolate:
+    terminals: true
+  config:
+    - id: pty
+      name: '@deepseek-ai/dsh-terminal'
+
+    - id: terminal-bash
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 300000
+
+    - id: persistent-bash
+      name: '@deepseek-ai/dsh-tool-bash-persistent'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a bash shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * Network access depends on the task environment. Prefer configured mirrors/proxies when they are available.
+          * State is persistent across command calls and discussions with the user.
+          * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
+          * Please avoid commands that may produce a very large amount of output.
+          * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
+
+    - id: terminal-pwsh
+      name: '@deepseek-ai/dsh-terminal-bash'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        shellDialect: pwsh
+        timeoutMs: 300000
+
+    - id: persistent-pwsh
+      name: '@deepseek-ai/dsh-tool-pwsh-persistent'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a PowerShell shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * State is persistent across command calls and discussions with the user.
+          * Use native Windows paths (C:\\...) and $env:NAME variables; this is PowerShell, not bash.
+          * Please avoid commands that may produce a very large amount of output.
+          * Please run long lived commands in the background, e.g. 'Start-Job' or start a server with Start-Process.
+`
 const MINIMAL_BASH_DESCRIPTION = `Run commands in a bash shell
 * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
 * Network access depends on the task environment. Prefer configured mirrors/proxies when they are available.
@@ -49,7 +112,7 @@ const MINIMAL_BASH_DESCRIPTION = `Run commands in a bash shell
 /**
  * Boot the shipped Web composition, minus the rows that would bind a port,
  * touch the network, or write outside the test. Everything that decides an
- * agent's capabilities is the real thing, including both shipped presets.
+ * agent's capabilities is the real thing, including every shipped preset.
  */
 async function bootWeb(
   settingsFile: string,
@@ -198,11 +261,30 @@ function enablePresetTool(composition: string, id: string): string {
   return composition.slice(0, disabled) + composition.slice(disabled + '      disabled: true\n'.length)
 }
 
+/** Seed the narrow single-tool preset the shipped roster no longer carries. */
+async function seedMinimalPreset(root: string): Promise<void> {
+  const directory = join(root, 'minimal')
+  await mkdir(directory, { recursive: true })
+  await writeFile(join(directory, 'agent.cordis.yml'), MINIMAL_COMPOSITION)
+  await writeFile(join(directory, 'preset.yml'), 'name: 极简模式\ndescription: 仅提供持久 shell 的单工具编码 Agent。\n')
+}
+
 let ctx: Context
+let narrowRoot: string
 beforeAll(async () => {
   const settingsFile = join(await mkdtemp(join(tmpdir(), 'dsh-web-presets-')), 'settings.yaml')
   await writeFile(settingsFile, '{}\n')
-  ctx = await bootWeb(settingsFile)
+  narrowRoot = await mkdtemp(join(tmpdir(), 'dsh-web-presets-narrow-'))
+  await seedMinimalPreset(narrowRoot)
+  ctx = await bootWeb(settingsFile, [{
+    id: 'agent-presets',
+    config: {
+      default: 'standard',
+      // The shipped root is the plugin's own, prepended before this.
+      roots: [{ path: narrowRoot, trust: 'user' }],
+      includeUserRoot: false,
+    },
+  }])
 }, 120_000)
 
 describe('the shipped Web composition', () => {
@@ -240,11 +322,12 @@ describe('the shipped Web composition', () => {
     }
   })
 
-  it('supplies both shipped presets, and only those, from the system root', async () => {
+  it('supplies the shipped presets, and only those, from the system root', async () => {
     const listed = await ctx.agentPresets.list()
 
-    expect(listed.map(preset => preset.id).sort()).toEqual(['cordis', 'minimal', 'ptc', 'standard'])
-    expect(listed.every(preset => preset.trust === 'system')).toBe(true)
+    expect(listed.filter(preset => preset.trust === 'system').map(preset => preset.id).sort())
+      .toEqual(['cordis', 'drawing-split', 'engineering', 'standard'])
+    expect(listed.find(preset => preset.id === 'minimal')?.trust).toBe('user')
     expect(ctx.agentPresets.defaultId).toBe('standard')
   })
 
@@ -305,7 +388,7 @@ describe('the shipped Web composition', () => {
     }
   })
 
-  it('composes the exact RL prompt and persistent shell from `minimal`', async () => {
+  it('composes the exact RL prompt and persistent shell from the narrow preset', async () => {
     const handle = await ctx.agents.create({
       sessionId: SessionId('preset-minimal'),
       setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'minimal').then(() => undefined),
@@ -376,39 +459,6 @@ describe('the shipped Web composition', () => {
       expect((await ctx.skills.list()).map(skill => skill.name)).not.toContain('editing-cordis-compositions')
     } finally {
       await handle.dispose()
-    }
-  })
-
-  it('presents `ptc` as PTC mode without disturbing a native session beside it', async () => {
-    const coded = await ctx.agents.create({
-      sessionId: SessionId('preset-ptc'),
-      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'ptc').then(() => undefined),
-    })
-    const native = await ctx.agents.create({
-      sessionId: SessionId('preset-ptc-native'),
-      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
-    })
-    try {
-      // One tool reaches the MODEL: the transport. The registry's catalog for
-      // this agent is unchanged — PTC mode collapses the presentation, not
-      // the capabilities — so the assembly is what carries the claim.
-      const assembly = await ctx.systemPrompt.assemble({ scope: coded.agent })
-      expect(assembly.tools.map(tool => tool.name)).toEqual(['run_code'])
-      expect(toolNames(ctx, coded.agent)).not.toContain('str_replace_editor')
-      expect(ctx.commands.find(coded.agent, 'goal')).toBeDefined()
-      const sdk = assembly.sections.find(section => section.name === 'tools:sdk')?.text ?? ''
-      expect(sdk).not.toContain('str_replace_editor')
-      expect(sdk).toContain('web_search')
-
-      // The presentation is this agent's alone: the deployment default is
-      // native, and the session composed from `standard` still sees it.
-      const nativeAssembly = await ctx.systemPrompt.assemble({ scope: native.agent })
-      expect(nativeAssembly.tools.map(tool => tool.name)).toContain('bash')
-      expect(nativeAssembly.tools.map(tool => tool.name)).not.toContain('run_code')
-      expect(nativeAssembly.sections.some(section => section.name === 'tools:sdk')).toBe(false)
-    } finally {
-      await native.dispose()
-      await coded.dispose()
     }
   })
 
@@ -824,6 +874,8 @@ describe('authoring a preset on the shipped composition', () => {
     userRoot = join(await mkdtemp(join(tmpdir(), 'dsh-preset-authoring-')), 'profiles')
     const settingsFile = join(await mkdtemp(join(tmpdir(), 'dsh-preset-authoring-settings-')), 'settings.yaml')
     await writeFile(settingsFile, '{}\n')
+    const narrowDir = join(await mkdtemp(join(tmpdir(), 'dsh-preset-authoring-narrow-')), 'presets')
+    await seedMinimalPreset(narrowDir)
     authorCtx = await bootWeb(settingsFile, [{
       id: 'agent-presets',
       config: {
@@ -831,7 +883,7 @@ describe('authoring a preset on the shipped composition', () => {
         // The root does not exist yet: a deployment whose user has authored
         // nothing is the normal first-run state. The shipped root is the
         // plugin's own, prepended before this.
-        roots: [{ path: userRoot, trust: 'user' }],
+        roots: [{ path: userRoot, trust: 'user' }, { path: narrowDir, trust: 'user' }],
         includeUserRoot: false,
       },
     }])
@@ -848,7 +900,7 @@ describe('authoring a preset on the shipped composition', () => {
     await expect(authorCtx.agentPresets.copy('minimal', id)).rejects.toThrow()
   })
 
-  it('copies a shipped preset a session then really composes from', async () => {
+  it('copies a preset a session then really composes from', async () => {
     await authorCtx.agentPresets.copy('minimal', 'my-agent', '我的模式')
 
     // Round-trips through the roster as a `user` row carrying the given name
@@ -867,7 +919,7 @@ describe('authoring a preset on the shipped composition', () => {
       setup: agentCtx => authorCtx.agentPresets.mount(agentCtx, 'my-agent').then(() => undefined),
     })
     try {
-      // The same tools the shipped `minimal` composes, from a directory copied
+      // The same tools the source `minimal` composes, from a directory copied
       // through the service into a root outside the installed harness.
       expect(toolNames(authorCtx, handle.agent)).toEqual(['bash'])
     } finally {
@@ -951,10 +1003,9 @@ describe('a composition that configures its own preset roots', () => {
     // A workspace-shared root beside the deployment: one preset of its own,
     // plus a directory that claims a shipped id.
     teamRoot = join(home, 'team-presets')
-    const minimalComposition = await readFile(join(SHIPPED_PRESET_ROOT, 'minimal', 'agent.cordis.yml'), 'utf8')
-    for (const id of ['team-spec', 'minimal']) {
+    for (const id of ['team-spec', 'standard']) {
       await mkdir(join(teamRoot, id), { recursive: true })
-      await writeFile(join(teamRoot, id, 'agent.cordis.yml'), minimalComposition)
+      await writeFile(join(teamRoot, id, 'agent.cordis.yml'), MINIMAL_COMPOSITION)
     }
     // The user layer of the reported regression: a profile's cordis.patch.yml
     // configuring a shared preset root. The plugin must EXTEND it with its
@@ -980,11 +1031,12 @@ describe('a composition that configures its own preset roots', () => {
     ])
 
     const listed = await rootsCtx.agentPresets.list()
-    expect(listed.map(preset => preset.id).sort()).toEqual(['cordis', 'minimal', 'ptc', 'standard', 'team-spec'])
+    expect(listed.map(preset => preset.id).sort())
+      .toEqual(['cordis', 'drawing-split', 'engineering', 'standard', 'team-spec'])
     expect(listed.every(preset => preset.broken === undefined)).toBe(true)
     // The shipped root comes first: a configured directory claiming a shipped
     // id is shadowed, never the other way around.
-    expect(listed.find(preset => preset.id === 'minimal')?.trust).toBe('system')
+    expect(listed.find(preset => preset.id === 'standard')?.trust).toBe('system')
     expect(listed.find(preset => preset.id === 'team-spec')?.trust).toBe('user')
   })
 

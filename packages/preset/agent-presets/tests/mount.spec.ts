@@ -14,6 +14,7 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime from '@deepseek-ai/dsh-tools'
 import AgentRegistry, { assembleContextFor, type Agent } from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
+import CommandRuntime from '@deepseek-ai/dsh-commands'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AgentPresets, {
   COMPOSITION_FILE, inactiveRows, leakedServices, livePresetMounts, mountPreset, serviceForAgent,
@@ -167,6 +168,44 @@ describe('composing an agent from a preset', () => {
     expect(ctx.agents.get(SessionId('sess-gone'))).toBeUndefined()
     expect(toolNames(ctx, survivor)).toEqual(['beta'])
     expect(toolNames(ctx)).toEqual([])
+  })
+
+  it('lists a preset\'s composer commands only for agents joined to that preset', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-preset-commands-'))
+    roots.push(root)
+    const presetDir = join(root, 'commander')
+    const plugin = join(FIXTURES, 'plugins', 'command-contribute.js')
+    await mkdir(presetDir)
+    await writeFile(join(presetDir, COMPOSITION_FILE), [
+      '- id: cmd',
+      `  name: ${plugin}`,
+      '  config:',
+      '    command: commander-cmd',
+      `    definitionId: ${JSON.stringify('@fixture/commander/cmd')}`,
+    ].join('\n'))
+    const scoped = await harness({
+      default: 'commander',
+      roots: [{ path: root, trust: 'user' }, ...ROOTS],
+      includeShippedRoot: false,
+      includeUserRoot: false,
+    })
+    await scoped.plugin(CommandRuntime)
+
+    const joined = await agentOn(scoped, 'sess-commander', 'commander')
+    const other = await agentOn(scoped, 'sess-other', 'standard')
+    const bare = (await scoped.agents.create({ sessionId: SessionId('sess-command-bare') })).agent
+
+    // The row registered inside the preset's standing composition lives in
+    // that scope's command layer: exactly the agents whose scope chain
+    // includes the standing mount see it — the engineering-only construction
+    // menu rows rely on this same scoping.
+    expect(scoped.commands.list(joined)).toContainEqual({
+      definitionId: '@fixture/commander/cmd',
+      name: 'commander-cmd',
+      description: 'fixture command commander-cmd',
+    })
+    expect(scoped.commands.list(other).map(descriptor => descriptor.name)).not.toContain('commander-cmd')
+    expect(scoped.commands.list(bare).map(descriptor => descriptor.name)).not.toContain('commander-cmd')
   })
 })
 

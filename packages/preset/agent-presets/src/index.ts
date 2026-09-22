@@ -295,6 +295,7 @@ export class AgentPresets extends TypertRemoteService {
         isDefault: preset.id === policy.defaultId,
         ...preset.name === undefined ? {} : { name: preset.name },
         ...preset.description === undefined ? {} : { description: preset.description },
+        ...preset.picker === undefined ? {} : { picker: preset.picker },
         ...preset.broken === undefined ? {} : { broken: preset.broken },
       })),
       authorable: this.authorable,

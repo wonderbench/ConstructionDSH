@@ -1,4 +1,4 @@
-/** Cold V2 restoration mounts the shipped PTC preset and publishes only a V3 successor. */
+/** Cold V2 restoration mounts the preset the log records and publishes only a V3 successor. */
 
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -16,7 +16,7 @@ import { launchWebScaffold, webSnapshotMode } from './scaffold.ts'
 const fixturePath = fileURLToPath(new URL('../../../snapshots/web/preset-migration/session.v2.jsonl', import.meta.url))
 
 describe.skipIf(webSnapshotMode() === 'record')('historical preset restoration through the Web Host', () => {
-  it.each([false, true])('resumes code as PTC (selection events=%s)', async (withSelections) => {
+  it.each([false, true])('resumes the recorded preset (selection events=%s)', async (withSelections) => {
     const scaffold = await launchWebScaffold()
     try {
       const id = SessionId('preset-migration')
@@ -34,7 +34,7 @@ describe.skipIf(webSnapshotMode() === 'record')('historical preset restoration t
 
       const reader = await scaffold.ctx.sessionPersistence.open(id, 'read')
       try {
-        expect(reader.header.agentPreset).toBe('ptc')
+        expect(reader.header.agentPreset).toBe('standard')
         await reader.read()
       } finally {
         await reader.close()
@@ -43,21 +43,18 @@ describe.skipIf(webSnapshotMode() === 'record')('historical preset restoration t
 
       const resolved = await scaffold.ctx.sessionController.resolveAgent(id)
       if ('error' in resolved) throw resolved.error
-      expect(scaffold.ctx.agentPresets.composedPreset(resolved.agent.ctx)).toBe('ptc')
-      expect(resolved.agent.session.header.agentPreset).toBe('ptc')
+      expect(scaffold.ctx.agentPresets.composedPreset(resolved.agent.ctx)).toBe('standard')
+      expect(resolved.agent.session.header.agentPreset).toBe('standard')
       expect(resolved.agent.session.snapshotEvents()
         .filter(event => event.type === 'agent-preset/selected')
-        .map(event => event.data.agentPreset)).toEqual(withSelections ? ['ptc', 'standard', 'ptc'] : [])
+        .map(event => event.data.agentPreset)).toEqual(withSelections ? ['standard', 'drawing-split', 'standard'] : [])
 
       const publishedBytes = await readFile(successor)
       const published = Buffer.concat(scanZstdFrames(publishedBytes).frames
         .map(({ start, end }) => zstdDecompressSync(publishedBytes.subarray(start, end)))).toString('utf8')
       const expected = [
-        { ...header, version: 3, agentPreset: 'ptc' },
-        ...rows.map(row => row['type'] === 'agent-preset/selected'
-          && (row['data'] as { agentPreset: string }).agentPreset === 'code'
-          ? { ...row, data: { agentPreset: 'ptc' } }
-          : row),
+        { ...header, version: 3 },
+        ...rows,
         // Agent activation closes its restored prefix with a fresh seed marker.
         { type: 'session/end-seed', seq: rows.length, time: 0, data: {} },
       ].map(row => JSON.stringify(row)).join('\n') + '\n'

@@ -10,8 +10,8 @@
 /** Dictionary keys carrying one shipped preset's display copy. */
 export type BuiltInPresetCopyKey =
   | 'presetStandardName' | 'presetStandardDescription'
-  | 'presetPtcName' | 'presetPtcDescription'
-  | 'presetMinimalName' | 'presetMinimalDescription'
+  | 'presetDrawingSplitName' | 'presetDrawingSplitDescription'
+  | 'presetEngineeringName' | 'presetEngineeringDescription'
   | 'presetCordisName' | 'presetCordisDescription'
 
 /** Preset roster fields needed to resolve display copy. */
@@ -41,8 +41,8 @@ interface PresetLocaleKeys {
 
 const BUILT_IN_PRESET_KEYS: Readonly<Partial<Record<string, PresetLocaleKeys>>> = {
   standard: { name: 'presetStandardName', description: 'presetStandardDescription' },
-  ptc: { name: 'presetPtcName', description: 'presetPtcDescription' },
-  minimal: { name: 'presetMinimalName', description: 'presetMinimalDescription' },
+  'drawing-split': { name: 'presetDrawingSplitName', description: 'presetDrawingSplitDescription' },
+  engineering: { name: 'presetEngineeringName', description: 'presetEngineeringDescription' },
   cordis: { name: 'presetCordisName', description: 'presetCordisDescription' },
 }
 

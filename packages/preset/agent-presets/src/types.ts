@@ -19,6 +19,12 @@ export interface AgentPresetRow {
   readonly name?: string
   /** One sentence on what this preset is for. */
   readonly description?: string
+  /**
+   * Whether new-session pickers offer this preset; absent means visible. The
+   * settings roster reports every preset regardless — the field narrows the
+   * homepage picker only.
+   */
+  readonly picker?: boolean
   /** Why this preset cannot compose a session; absent when it can. */
   readonly broken?: string
 }

@@ -32,6 +32,12 @@ export interface AgentPreset {
   /** Declared position within its group; absent sorts after those that declare one. */
   readonly order?: number
   /**
+   * Whether new-session pickers offer this preset; absent means visible. The
+   * settings roster always renders every preset — the field hides a preset
+   * from the homepage picker only, never from management.
+   */
+  readonly picker?: boolean
+  /**
    * Why this preset cannot compose a session, absent when it can. A broken
    * preset stays on the roster — hiding it would leave its directory blocking
    * the id with nothing to see or delete — but every mounting path refuses it

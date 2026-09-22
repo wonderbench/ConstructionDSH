@@ -27,8 +27,8 @@
   border-radius: 16px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -126,14 +126,14 @@
 }
 
 .itemName {
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-primary);
 }
 
 .itemDesc {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   color: var(--dsw-alias-label-caption);
   white-space: normal;
 }

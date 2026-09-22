@@ -11,9 +11,12 @@
  * comes from the root a preset was discovered under, so neither is writable
  * here — otherwise a locally authored preset could claim to be a shipped one.
  *
- * Every read failure degrades to no metadata. A preset whose display text is
- * missing, malformed, or unreadable still mounts: presentation is not a
- * capability, and a broken name must never become an agent that cannot start.
+ * Every read failure degrades to no metadata, EXCEPT a `picker` field that is
+ * present but not a boolean: that is a hand-edit a silent default would hide
+ * behind the very surface the field controls, so it fails loud. A preset
+ * whose display text is missing, malformed, or unreadable still mounts:
+ * presentation is not a capability, and a broken name must never become an
+ * agent that cannot start.
  * @module @deepseek-ai/dsh-agent-presets/metadata
  */
 
@@ -36,6 +39,14 @@ export interface PresetMetadata {
    * can read in capability order while authored ones stay alphabetical.
    */
   readonly order?: number
+  /**
+   * Whether new-session pickers offer this preset; absent means visible.
+   * A preset can stay off the homepage picker yet remain fully usable from
+   * the settings page — the self-referential authoring preset hides itself
+   * this way so a new session is never staged into editing the runtime by
+   * accident.
+   */
+  readonly picker?: boolean
 }
 
 /** A non-empty trimmed string, or undefined for anything else. */
@@ -77,10 +88,14 @@ export async function readPresetMetadata(directory: string): Promise<PresetMetad
   const order = typeof record.order === 'number' && Number.isFinite(record.order)
     ? record.order
     : undefined
+  if (record.picker !== undefined && typeof record.picker !== 'boolean') {
+    throw new Error(`agent-presets: ${METADATA_FILE} field "picker" must be a boolean when present`)
+  }
   return {
     ...name === undefined ? {} : { name },
     ...description === undefined ? {} : { description },
     ...order === undefined ? {} : { order },
+    ...record.picker === undefined ? {} : { picker: record.picker },
   }
 }
 
@@ -95,11 +110,14 @@ export async function readPresetMetadata(directory: string): Promise<PresetMetad
 export function renderPresetMetadata(metadata: PresetMetadata): string | undefined {
   const name = text(metadata.name)
   const description = text(metadata.description)
-  const { order } = metadata
-  if (name === undefined && description === undefined && order === undefined) return undefined
+  const { order, picker } = metadata
+  if (name === undefined && description === undefined && order === undefined && picker === undefined) {
+    return undefined
+  }
   return yaml.dump({
     ...name === undefined ? {} : { name },
     ...description === undefined ? {} : { description },
     ...order === undefined ? {} : { order },
+    ...picker === undefined ? {} : { picker },
   }, { lineWidth: -1 })
 }

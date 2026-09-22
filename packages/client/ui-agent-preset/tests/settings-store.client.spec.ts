@@ -28,7 +28,7 @@ interface Recorded { ns: string; ops: unknown }
 
 /** A roster Remote answering a fixed set of rows, or refusing. */
 function fakeRoster(
-  presets: { id: string; trust: 'system' | 'user'; isDefault: boolean }[],
+  presets: { id: string; trust: 'system' | 'user'; isDefault: boolean; picker?: boolean }[],
   options: {
     failList?: string
     failListCode?: RemoteErrorCode
@@ -60,7 +60,7 @@ function fakeRoster(
 
 /** A context whose roster and settings write outcome the test controls. */
 function fakeApi(
-  presets: { id: string; trust: 'system' | 'user'; isDefault: boolean }[],
+  presets: { id: string; trust: 'system' | 'user'; isDefault: boolean; picker?: boolean }[],
   options: {
     writes?: Recorded[]
     failWrite?: string
@@ -210,7 +210,7 @@ describe('the agent-preset roster store', () => {
 describe('the new-session chip controller', () => {
   /** A chip over a current session the test can move. */
   function chip(
-    presets: { id: string; trust: 'system' | 'user'; isDefault: boolean }[],
+    presets: { id: string; trust: 'system' | 'user'; isDefault: boolean; picker?: boolean }[],
     current: SeatSession | undefined | (() => SeatSession | undefined),
     options: {
       writes?: Recorded[]
@@ -313,6 +313,20 @@ describe('the new-session chip controller', () => {
 
     expect(controller.store.getSnapshot().options).toEqual([
       { id: 'standard', trust: 'system', name: '标准模式', description: '完整的编码 agent。' },
+    ])
+  })
+
+  it('carries a picker opt-out into the menu rows', async () => {
+    const controller = chip([
+      { id: 'standard', trust: 'system', isDefault: true },
+      { id: 'cordis', trust: 'system', isDefault: false, picker: false },
+    ], undefined)
+
+    await controller.load()
+
+    expect(controller.store.getSnapshot().options).toEqual([
+      { id: 'standard', trust: 'system' },
+      { id: 'cordis', trust: 'system', picker: false },
     ])
   })
 

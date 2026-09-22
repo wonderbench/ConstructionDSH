@@ -15,7 +15,7 @@ import { canonicalPath, writableRoots } from '@deepseek-ai/dsh-sandbox'
 import { SESSION_FORMAT_VERSION, SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import { auditStartupEntries, composeEntries, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 // These imports carry the tools/sandboxPolicy/approval Context merges.
-import { RUN_CODE_NAME } from '@deepseek-ai/dsh-tools'
+import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type {} from '@deepseek-ai/dsh-user-approval'
 import type {} from '@deepseek-ai/dsh-permission-presets'
@@ -30,6 +30,9 @@ import { REPO_ROOT } from './support.ts'
 const FILE_REFERENCE_PROMPT = fileURLToPath(new URL(
   './expected/web-runtime-context/file-reference-prompt.expected.md', import.meta.url,
 ))
+// Lane-owned preset compositions the shipped roster no longer carries: the
+// persistent-terminal `minimal` and the PTC presentation preset.
+const PRESET_FIXTURE_ROOT = fileURLToPath(new URL('./fixtures/presets', import.meta.url))
 const BASE_PATCH_PATH = join(REPO_ROOT, 'packages/bundle/base/cordis.patch.yml')
 const HEADLESS_PATCH_PATH = join(REPO_ROOT, 'packages/bundle/headless/cordis.patch.yml')
 const AUTO_CHILD_OVERLAY_PATH = join(REPO_ROOT, 'apps/web/tests/auto-review-child.overlay.yml')
@@ -641,25 +644,6 @@ it('assembles the shipped Web transport, catalog, guidance, and defaults', async
   }
 }, 120_000)
 
-it('ships PTC with run_code but without the general workflow SDK binding under dual resolution', async () => {
-  scaffold = await launchWebScaffold({ deepSeekMissingCredential: true, profileResolutionMode: 'dual' })
-  expect(existsSync(join(scaffold.harnessHome, 'profiles', 'node_modules'))).toBe(true)
-  const ctx = scaffold.ctx
-  const handle = await ctx.agents.create({
-    sessionId: SessionId('shipped-ptc-composition'),
-    setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'ptc').then(() => undefined),
-  })
-  try {
-    const assembly = await ctx.systemPrompt.assemble({ scope: handle.agent })
-    expect(assembly.tools.map(tool => tool.name)).toEqual([RUN_CODE_NAME])
-    const sdk = assembly.sections.find(section => section.name === 'tools:sdk')?.text ?? ''
-    expect(sdk).not.toContain('  ralph: {')
-    expect(sdk).not.toContain('  workflow: {')
-  } finally {
-    await handle.dispose()
-  }
-}, 120_000)
-
 it('lets a preset producer reach the background-job registry', async () => {
   scaffold = await launchWebScaffold()
   const ctx = scaffold.ctx
@@ -1054,7 +1038,12 @@ it('rolls back a failed shipped Auto initialization before publishing or interce
 }, 120_000)
 
 it('withdraws Auto on shipped Loader unload and does not restore migrated live sessions', async () => {
-  scaffold = await launchWebScaffold(AUTO_REVIEW_FIXTURE)
+  // The persistent-terminal composition the test agent needs is the lane's
+  // own fixture preset: the shipped roster carries no such preset.
+  scaffold = await launchWebScaffold({
+    ...AUTO_REVIEW_FIXTURE,
+    agentPresets: { roots: [{ path: PRESET_FIXTURE_ROOT, trust: 'user' }], default: 'standard' },
+  })
   const ctx = scaffold.ctx
   const autoEntry = [...ctx.loader.entries()].find(entry => entry.options.id === 'auto-review')
   if (autoEntry === undefined) throw new Error('shipped Auto review Loader entry is missing')
@@ -1065,7 +1054,7 @@ it('withdraws Auto on shipped Loader unload and does not restore migrated live s
   })
   const terminals = ctx.agentPresets.serviceFor(handle.agent, 'terminals')
   try {
-    if (terminals === undefined) throw new Error('shipped minimal preset has no terminal registry')
+    if (terminals === undefined) throw new Error('the fixture minimal preset has no terminal registry')
     ctx.permissionPresets.set(handle.agent.session, 'danger-full-access')
     const terminal = await terminals.spawn(handle.agent, { type: 'shell', cwd: scaffold.workspaceCwd })
     ctx.permissionPresets.set(handle.agent.session, 'auto')

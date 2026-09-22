@@ -112,6 +112,11 @@ export function AgentPresetSeat({
   const chosen = state.options.find(option => option.id === state.current)
   const chosenText = chosen === undefined ? undefined : presetDisplayText(chosen, t)
   const label = chosenText?.name ?? state.current
+  // The menu is where the opt-out lands: a preset the roster marks
+  // `picker: false` (the self-referential authoring preset hides itself this
+  // way) never appears as a pick, while the label above keeps displaying it
+  // for a session that already runs it.
+  const menuOptions = state.options.filter(option => option.picker !== false)
   const ready = state.options.length > 0 && state.current !== ''
 
   // The introduce cue: the pick was staged from another screen (the settings
@@ -163,7 +168,7 @@ export function AgentPresetSeat({
       <Menu
         open={open}
         onClose={() => { setOpen(false) }}
-        items={state.options.map((option) => {
+        items={menuOptions.map((option) => {
           const text = presetDisplayText(option, t)
           return {
             id: option.id,

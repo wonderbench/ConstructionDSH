@@ -1,9 +1,11 @@
 /**
- * Display metadata is presentation, never capability: every way of getting it
- * wrong degrades to "this preset has no display text" rather than to a
- * preset that cannot be discovered or mounted. It also cannot carry identity
- * — `id` is the directory and `trust` is the root, so neither is readable
- * from the file a user can write.
+ * Display metadata is presentation, never capability: nearly every way of
+ * getting it wrong degrades to "this preset has no display text" rather than
+ * to a preset that cannot be discovered or mounted. The one exception is a
+ * `picker` field that is present but not a boolean: a silent default there
+ * would hide a hand-edit behind the very surface the field controls. It also
+ * cannot carry identity — `id` is the directory and `trust` is the root, so
+ * neither is readable from the file a user can write.
  */
 
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
@@ -80,6 +82,26 @@ describe('reading display metadata', () => {
     expect(await readPresetMetadata(dir)).toEqual({ name: '标准模式', order: 1 })
   })
 
+  it('reads a declared picker opt-out', async () => {
+    const dir = await presetDir('name: 创造模式\npicker: false\n')
+
+    expect(await readPresetMetadata(dir)).toEqual({ name: '创造模式', picker: false })
+  })
+
+  it('treats an absent picker as visible', async () => {
+    expect(await readPresetMetadata(await presetDir('name: 标准模式\n'))).toEqual({ name: '标准模式' })
+  })
+
+  it.each([
+    ['a string', 'picker: "no"\n'],
+    ['a number', 'picker: 0\n'],
+    ['a map', 'picker:\n  hidden: true\n'],
+  ])('fails loud on a picker that is %s', async (_label, content) => {
+    // The one metadata mistake that is not silent: every consumer agrees the
+    // preset is visible, so a wrongly-typed field must not pick a side.
+    await expect(readPresetMetadata(await presetDir(content))).rejects.toThrow(/"picker" must be a boolean/)
+  })
+
   it('ignores an order that is not a finite number', async () => {
     expect(await readPresetMetadata(await presetDir('order: first\n'))).toEqual({})
     expect(await readPresetMetadata(await presetDir('order: .inf\n'))).toEqual({})
@@ -104,6 +126,10 @@ describe('rendering display metadata', () => {
 
   it('stores a declared order', () => {
     expect(renderPresetMetadata({ name: '标准模式', order: 1 })).toBe('name: 标准模式\norder: 1\n')
+  })
+
+  it('stores a declared picker opt-out', () => {
+    expect(renderPresetMetadata({ name: '创造模式', picker: false })).toBe('name: 创造模式\npicker: false\n')
   })
 
   it('omits an absent field rather than writing it blank', () => {

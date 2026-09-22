@@ -43,10 +43,16 @@
     - img
   - button "减小字号":
     - img
-  - text: px 对话显示 控制已完成轮次的过程内容
+  - text: px 输出降噪 Beta 实验功能：默认收起模型的说明性内容，只保留结论与成果
+  - switch "切换输出降噪"
+  - text: 对话显示 控制已完成轮次的过程内容
   - button "紧凑":
     - text: 紧凑
     - img
+  - text: 界面模式 仅影响界面呈现，不改变功能与权限；审批与确认在任何模式下都完整显示
+  - group "界面模式":
+    - button "业务" [pressed]
+    - button "专家"
   - text: 繁忙时的发送行为 智能体运行时 Enter 键和发送按钮的行为；Cmd/Ctrl+Enter 使用另一行为
   - button "排队发送":
     - text: 排队发送

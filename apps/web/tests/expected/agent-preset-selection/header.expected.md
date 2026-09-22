@@ -5,7 +5,7 @@
     - text: 1 subagent
     - img
 - img
-- text: Minimal mode
+- text: Narrow mode
 - button "More actions":
   - img
 - button "Open right sidebar":

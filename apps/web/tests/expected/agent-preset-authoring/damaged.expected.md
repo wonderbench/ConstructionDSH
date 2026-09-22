@@ -23,7 +23,7 @@
   - heading "Agent 预设" [level=2]
   - paragraph: 预设即一个会话的 Agent 所运行的插件组装 —— 它的工具、提示词与能力。复制一份既有预设改成自己的，或用「创造模式」让 Agent 帮你创建。
   - text: 允许切换agent模式 beta
-  - paragraph: 开启后，新任务可选择标准、PTC、创造、极简及自定义模式；关闭后统一使用默认模式（默认为标准模式，可自定义）。仅影响新任务。
+  - paragraph: 开启后，新任务可选择标准、图纸拆解、工程专业及自定义模式；关闭后统一使用默认模式（默认为标准模式，可自定义）。仅影响新任务。
   - switch "允许切换agent模式" [checked]
   - heading "内置" [level=3]
   - list:
@@ -38,23 +38,23 @@
         - img
         - text: 复制
     - listitem:
-      - 'button "设为默认: PTC 模式"':
-        - text: PTC 模式 内置 功能完整的编码 Agent，但默认不提供 workflow 工具；其他工具通过 PTC 模式 SDK 呈现，让模型用一个 TypeScript 程序组合多步操作。
-        - code: ptc
-      - 'button "查看: PTC 模式"':
+      - 'button "设为默认: 图纸拆解模式"':
+        - text: 图纸拆解模式 内置 多份长图纸 PDF 的机械拆分：逐份检查、按页范围/逐页/书签复制拆分、交付文件与索引后即停止；不做结构化拆解（MinerU），不自动跟进后续业务。
+        - code: drawing-split
+      - 'button "查看: 图纸拆解模式"':
         - img
         - text: 查看
-      - 'button "复制: PTC 模式"':
+      - 'button "复制: 图纸拆解模式"':
         - img
         - text: 复制
     - listitem:
-      - 'button "设为默认: 极简模式"':
-        - text: 极简模式 内置 仅提供持久 shell 的单工具编码 Agent。
-        - code: minimal
-      - 'button "查看: 极简模式"':
+      - 'button "设为默认: 工程专业模式"':
+        - text: 工程专业模式 内置 完整编码 Agent 能力之外挂载工程运行时：工程文件读取、图纸 PDF 拆分、造价、进度与报告工具，并内置造价、质量、安全、进度四个行业 Skills。
+        - code: engineering
+      - 'button "查看: 工程专业模式"':
         - img
         - text: 查看
-      - 'button "复制: 极简模式"':
+      - 'button "复制: 工程专业模式"':
         - img
         - text: 复制
     - listitem:

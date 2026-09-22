@@ -2,7 +2,7 @@
   - menuitem "Standard mode Full coding agent with file editing, shell, file and web search, skills, planning, goals, subagents, and workflows.":
     - text: Standard mode Full coding agent with file editing, shell, file and web search, skills, planning, goals, subagents, and workflows.
     - img
-  - menuitem "PTC mode Full coding agent without the workflow tool; other tools are exposed through the PTC mode SDK so the model can combine multi-step operations in one TypeScript program."
-  - menuitem "Minimal mode Single-tool coding agent with a persistent shell."
-  - menuitem "Creator mode Built for creating custom agent presets, with all Standard mode capabilities plus runtime inspection, persistent plugin management, and preset-authoring guidance."
+  - 'menuitem "Drawing split mode Mechanical splitting of long drawing PDFs: inspect each file, split by page range / per page / bookmark, deliver the output files and index, then stop; no structured decomposition (MinerU) and no follow-up business work."'
+  - 'menuitem "Engineering mode The full coding agent plus the construction runtime: engineering file reading, drawing-PDF splitting, costing, scheduling, and report tools, with the cost, quality, safety, and schedule business skills."'
+  - menuitem "Narrow mode An empty composition with no tools, no skills, and no preset-scoped commands."
   - menuitem "Refusing mode Resolves, then refuses to start."

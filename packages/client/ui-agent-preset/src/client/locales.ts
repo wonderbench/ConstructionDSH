@@ -5,8 +5,8 @@ export type AgentPresetSettingsKey =
   | 'error' | 'userTrust' | 'seatHint' | 'headerHint'
   | 'nav' | 'sectionIntro' | 'builtIn' | 'setDefault' | 'view'
   | 'presetStandardName' | 'presetStandardDescription'
-  | 'presetPtcName' | 'presetPtcDescription'
-  | 'presetMinimalName' | 'presetMinimalDescription'
+  | 'presetDrawingSplitName' | 'presetDrawingSplitDescription'
+  | 'presetEngineeringName' | 'presetEngineeringDescription'
   | 'presetCordisName' | 'presetCordisDescription'
   | 'duplicate' | 'duplicateUnavailable' | 'delete' | 'presetId' | 'presetIdPlaceholder' | 'copyOf'
   | 'displayName' | 'displayNamePlaceholder'
@@ -36,12 +36,12 @@ export const en: Record<AgentPresetSettingsKey, string> = {
   presetStandardName: 'Standard mode',
   presetStandardDescription:
     'Full coding agent with file editing, shell, file and web search, skills, planning, goals, subagents, and workflows.',
-  presetPtcName: 'PTC mode',
-  presetPtcDescription:
-    'Full coding agent without the workflow tool; other tools are exposed through the PTC mode SDK so the model can combine multi-step operations in one TypeScript program.',
-  presetMinimalName: 'Minimal mode',
-  presetMinimalDescription:
-    'Single-tool coding agent with a persistent shell.',
+  presetDrawingSplitName: 'Drawing split mode',
+  presetDrawingSplitDescription:
+    'Mechanical splitting of long drawing PDFs: inspect each file, split by page range / per page / bookmark, deliver the output files and index, then stop; no structured decomposition (MinerU) and no follow-up business work.',
+  presetEngineeringName: 'Engineering mode',
+  presetEngineeringDescription:
+    'The full coding agent plus the construction runtime: engineering file reading, drawing-PDF splitting, costing, scheduling, and report tools, with the cost, quality, safety, and schedule business skills.',
   presetCordisName: 'Creator mode',
   presetCordisDescription:
     'Built for creating custom agent presets, with all Standard mode capabilities plus runtime inspection, persistent plugin management, and preset-authoring guidance.',
@@ -86,7 +86,7 @@ export const en: Record<AgentPresetSettingsKey, string> = {
   showPicker: 'Allow switching Agent modes',
   showPickerBeta: 'Beta',
   showPickerDescription:
-    'When enabled, new tasks can choose Standard, PTC, Creator, Minimal, and custom modes. When disabled, all new tasks use the default mode (Standard by default; configurable). Only affects new tasks.',
+    'When enabled, new tasks can choose Standard, Drawing split, Engineering, and custom modes. When disabled, all new tasks use the default mode (Standard by default; configurable). Only affects new tasks.',
   enablePickerToSetDefault: 'Turn on Agent mode selection to choose a default',
   enablePickerToCreate: 'Turn on Agent mode selection to start Creator mode',
 }
@@ -104,10 +104,10 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   view: '查看',
   presetStandardName: '标准模式',
   presetStandardDescription: '功能完整的编码 Agent，支持文件编辑、Shell、文件与网页检索、Skills、计划、目标、子代理和工作流。',
-  presetPtcName: 'PTC 模式',
-  presetPtcDescription: '功能完整的编码 Agent，但默认不提供 workflow 工具；其他工具通过 PTC 模式 SDK 呈现，让模型用一个 TypeScript 程序组合多步操作。',
-  presetMinimalName: '极简模式',
-  presetMinimalDescription: '仅提供持久 shell 的单工具编码 Agent。',
+  presetDrawingSplitName: '图纸拆解模式',
+  presetDrawingSplitDescription: '多份长图纸 PDF 的机械拆分：逐份检查、按页范围/逐页/书签复制拆分、交付文件与索引后即停止；不做结构化拆解（MinerU），不自动跟进后续业务。',
+  presetEngineeringName: '工程专业模式',
+  presetEngineeringDescription: '完整编码 Agent 能力之外挂载工程运行时：工程文件读取、图纸 PDF 拆分、造价、进度与报告工具，并内置造价、质量、安全、进度四个行业 Skills。',
   presetCordisName: '创造模式',
   presetCordisDescription: '用于创建自定义 Agent preset：具备标准模式的全部能力，并提供运行时检查、持久化插件管理和 preset 创作指导。',
   duplicate: '复制',
@@ -147,7 +147,7 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   deleting: '正在删除…',
   showPicker: '允许切换agent模式',
   showPickerBeta: 'beta',
-  showPickerDescription: '开启后，新任务可选择标准、PTC、创造、极简及自定义模式；关闭后统一使用默认模式（默认为标准模式，可自定义）。仅影响新任务。',
+  showPickerDescription: '开启后，新任务可选择标准、图纸拆解、工程专业及自定义模式；关闭后统一使用默认模式（默认为标准模式，可自定义）。仅影响新任务。',
   enablePickerToSetDefault: '请先开启 Agent 模式选择，再设置默认模式',
   enablePickerToCreate: '请先开启 Agent 模式选择，再启动创造模式',
 }

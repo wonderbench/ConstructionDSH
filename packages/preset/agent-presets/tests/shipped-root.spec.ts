@@ -89,7 +89,8 @@ describe('the shipped preset root', () => {
     const ctx = await roster({ includeUserRoot: false })
 
     const listed = await ctx.agentPresets.list()
-    expect(listed.map(preset => preset.id).sort()).toEqual(['cordis', 'minimal', 'ptc', 'standard'])
+    expect(listed.map(preset => preset.id).sort())
+      .toEqual(['cordis', 'drawing-split', 'engineering', 'standard'])
     expect(listed.every(preset => preset.trust === 'system')).toBe(true)
     // Not `broken === undefined`: health asks whether each row's package is
     // installed above the base, and the shipped rows name packages the
@@ -110,10 +111,10 @@ describe('the shipped preset root', () => {
     ])
     expect(ctx.agentPresets.roots[0]).toEqual({ path: SHIPPED_PRESET_ROOT, trust: 'system' })
     // Prepended, so a configured directory claiming a shipped id is shadowed:
-    // the fixture root also carries `minimal`, and the roster serves the
+    // the fixture root also carries `standard`, and the roster serves the
     // shipped one.
-    const minimal = (await ctx.agentPresets.list()).find(preset => preset.id === 'minimal')
-    expect(minimal?.path.startsWith(SHIPPED_PRESET_ROOT)).toBe(true)
+    const standard = (await ctx.agentPresets.list()).find(preset => preset.id === 'standard')
+    expect(standard?.path.startsWith(SHIPPED_PRESET_ROOT)).toBe(true)
   })
 
   it('mounts a roster without the shipped set when includeShippedRoot is false', async () => {
@@ -129,7 +130,7 @@ describe('the shipped preset root', () => {
   })
 
   it('enables web_fetch in each tool-bearing Web app preset', async () => {
-    for (const id of ['cordis', 'ptc', 'standard']) {
+    for (const id of ['cordis', 'engineering', 'standard']) {
       const entries = await shippedEntries(id)
       const toolWeb: unknown = entries.find((entry: unknown) =>
         typeof entry === 'object' && entry !== null && 'id' in entry && entry.id === 'tool-web')
@@ -141,22 +142,76 @@ describe('the shipped preset root', () => {
     }
   })
 
-  it('omits the general workflow tool and its unused engine only from PTC', async () => {
-    const ptc = await shippedEntries('ptc')
-    expect(findEntry(ptc, 'tool-workflow')?.disabled).toBe(true)
-    expect(findEntry(ptc, 'workflow-ptc')?.disabled).toBe(true)
-
-    for (const id of ['standard', 'cordis']) {
+  it('keeps the general workflow tool and its engine in every shipped preset that carries them', async () => {
+    for (const id of ['cordis', 'engineering', 'standard']) {
       const entries = await shippedEntries(id)
       expect(findEntry(entries, 'tool-workflow')?.disabled, id).not.toBe(true)
       expect(findEntry(entries, 'workflow-ptc')?.disabled, id).not.toBe(true)
     }
   })
 
+  it('ships drawing-split with the drawing-only construction runtime and no business Skills', async () => {
+    const entries = await shippedEntries('drawing-split')
+
+    // The drawing tools come from the construction runtime mounted with only
+    // its drawing surface; the business surface — the four bundled business
+    // Skills, the composer commands, and the task tools — is the engineering
+    // preset's alone, so the row disables it and no skill-catalog rows are
+    // needed here (a business-off runtime registers no skill provider).
+    const runtime = findEntry(entries, 'construction-runtime')
+    expect(runtime?.disabled).not.toBe(true)
+    expect(runtime?.config).toEqual({ business: false })
+    expect(findEntry(entries, 'skill-filesystem')).toBeUndefined()
+    expect(findEntry(entries, 'tool-skill')).toBeUndefined()
+
+    // The workflow is deliberately narrow: no arbitrary shell, no web
+    // retrieval, no delegation, and no plan mode.
+    for (const id of ['tool-bash', 'tool-pwsh', 'tool-web', 'tool-subagent', 'tool-workflow', 'plan-mode']) {
+      expect(findEntry(entries, id), id).toBeUndefined()
+    }
+
+    // Multi-file progress, ambiguity questions, explicit delivery, and the
+    // compaction group the long splits need.
+    for (const id of ['tool-todo', 'tool-ask-user', 'present', 'compaction-basic', 'command-compact', 'tool-result-pruner']) {
+      expect(findEntry(entries, id), id).toBeDefined()
+    }
+  })
+
+  it('ships engineering as the standard composition plus the construction runtime', async () => {
+    const entries = await shippedEntries('engineering')
+
+    // The construction runtime is the addition: file inspection,
+    // construction_pdf_split, deterministic costing, CPM scheduling, report
+    // export, and the four bundled business Skills. Its row must resolve (the
+    // bare-roster health assertion above checks that) and carry no config —
+    // every tunable keeps the plugin default.
+    const runtime = findEntry(entries, 'construction-runtime')
+    expect(runtime?.disabled).not.toBe(true)
+    expect(runtime?.config).toBeUndefined()
+
+    // Everything else is the `standard` composition: the full tool catalog,
+    // local skill discovery, the loader, and the workflow engine.
+    for (const id of ['persona', 'tool-bash', 'tool-fs', 'tool-jobs', 'skill-filesystem', 'tool-skill', 'plan-mode', 'compaction-basic', 'tool-subagent', 'tool-workflow', 'tool-web', 'present']) {
+      expect(findEntry(entries, id), id).toBeDefined()
+    }
+  })
+
+  it('marks cordis as opted out of the picker while the roster still lists it', async () => {
+    const ctx = await roster({ includeUserRoot: false })
+
+    const listed = await ctx.agentPresets.list()
+    expect(listed.find(preset => preset.id === 'cordis')?.picker).toBe(false)
+    expect(listed.find(preset => preset.id === 'standard')?.picker).toBeUndefined()
+
+    const exported = await ctx.agentPresets.remoteExportList()
+    expect(exported.presets.find(preset => preset.id === 'cordis')?.picker).toBe(false)
+    expect(exported.presets.find(preset => preset.id === 'standard')?.picker).toBeUndefined()
+  })
+
   it('disables the ralph tool in every shipped preset that carries it', async () => {
-    for (const id of ['cordis', 'ptc', 'standard']) {
+    for (const id of ['cordis', 'engineering', 'standard']) {
       expect(findEntry(await shippedEntries(id), 'tool-ralph')?.disabled, id).toBe(true)
     }
-    expect(findEntry(await shippedEntries('minimal'), 'tool-ralph')).toBeUndefined()
+    expect(findEntry(await shippedEntries('drawing-split'), 'tool-ralph')).toBeUndefined()
   })
 })

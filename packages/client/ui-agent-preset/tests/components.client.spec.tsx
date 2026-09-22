@@ -151,6 +151,24 @@ describe('the new-session chip', () => {
     expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe('false')
   })
 
+  it('keeps a picker-hidden preset off the menu but on the label', () => {
+    renderSeat({
+      current: 'cordis',
+      options: [
+        { id: 'standard', trust: 'system', name: '标准模式', description: '完整的编码 agent。' },
+        { id: 'cordis', trust: 'system', name: '创造模式', description: '创作预设。', picker: false },
+      ],
+    })
+
+    // A session already running one still names it on the chip.
+    expect(screen.getByRole('button').textContent).toContain(en.presetCordisName)
+    fireEvent.click(screen.getByRole('button'))
+    // The opt-out lands on the menu only: the settings page still lists the
+    // preset, and so does the chip's label above.
+    expect(screen.queryByText(en.presetCordisDescription)).toBeNull()
+    expect(screen.getByText(en.presetStandardDescription)).toBeTruthy()
+  })
+
   it('disables the trigger while a switch is in flight', () => {
     renderSeat({ busy: true })
 

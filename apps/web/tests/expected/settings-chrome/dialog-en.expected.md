@@ -43,10 +43,16 @@
     - img
   - button "Decrease font size":
     - img
-  - text: px Conversation display Controls process content in completed turns
+  - text: "px Output denoise Beta Experimental: folds explanatory model output by default, keeping conclusions and results"
+  - switch "Toggle output denoise"
+  - text: Conversation display Controls process content in completed turns
   - button "Compact":
     - text: Compact
     - img
+  - text: Interface mode Affects presentation only — never changes features or permissions; approvals and confirmations stay visible in every mode
+  - group "Interface mode":
+    - button "Business" [pressed]
+    - button "Expert"
   - text: Send behavior while busy What Enter and the Send button do while the agent is running; Cmd/Ctrl+Enter uses the other behavior
   - button "Queue":
     - text: Queue
