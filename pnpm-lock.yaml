@@ -3783,6 +3783,9 @@ importers:
       '@deepseek-ai/dsh-api-job-controller':
         specifier: workspace:^
         version: link:../../api/job-controller
+      '@deepseek-ai/dsh-api-session-controller':
+        specifier: workspace:^
+        version: link:../../api/session-controller
       '@deepseek-ai/dsh-client-locale':
         specifier: workspace:^
         version: link:../locale
@@ -3804,12 +3807,21 @@ importers:
       '@deepseek-ai/dsh-client-ui-slots':
         specifier: workspace:^
         version: link:../ui-slots
+      '@deepseek-ai/dsh-goal':
+        specifier: workspace:^
+        version: link:../../goal/goal
       '@deepseek-ai/dsh-jobs':
         specifier: workspace:^
         version: link:../../jobs/jobs
+      '@deepseek-ai/dsh-plan-mode':
+        specifier: workspace:^
+        version: link:../../plan/plan-mode
       '@deepseek-ai/dsh-session':
         specifier: workspace:^
         version: link:../../core/session
+      '@deepseek-ai/dsh-subagent':
+        specifier: workspace:^
+        version: link:../../subagent/subagent
       '@types/react':
         specifier: ~18.3.1
         version: 18.3.31

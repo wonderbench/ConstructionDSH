@@ -61,6 +61,9 @@ async function bench(): Promise<{ ctx: Context; fiber: ReturnType<Context['plugi
   // and the forwarded-event port.
   ctx.provide('connection', { api: { settings: {} }, isLoopback: false } as never)
   ctx.provide('remote', { $on: () => () => {} } as never)
+  // The header action injects the sessions service for the per-session goal
+  // face; no binding exists in this bench, so the face stays undefined.
+  ctx.provide('sessions', { binding: () => undefined } as never)
   ctx.provide('configForms', { developerTools: { enabled: createSnapshotStore(true) }, get: () => stubConfigForm().scope } as never)
   await ctx.plugin({ inject: localeInject, apply: applyLocale }).await()
   // These specs assert the shipped Chinese copy. There is no jsdom `window` in
@@ -74,7 +77,7 @@ async function bench(): Promise<{ ctx: Context; fiber: ReturnType<Context['plugi
 
 describe('ui-jobs browser half', () => {
   it('declares the services it binds', () => {
-    expect(inject).toEqual(['jobs', 'slots', 'locale'])
+    expect(inject).toEqual(['sessions', 'jobs', 'slots', 'locale'])
   })
 
   it('exposes the jobs source and the roster, observation, and kill controls through the inject face', async () => {

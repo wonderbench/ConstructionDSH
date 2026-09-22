@@ -12,11 +12,11 @@ Pending confirmations, the session goal, plan state, subagent rows, and backgrou
 
 The aggregation extends the existing `ui-jobs` popover rather than adding a new surface: the popover already carries the batch-1 goal slice, and all four real sources are reachable from its props shares with zero new registrations.
 
-Sections render top to bottom, each hidden when its source is absent: pending confirmation first (highest-precedence `PendingInteraction` from the standard session-status seat, keeping confirmations prominent), then the current goal (existing slice), then plan mode (active/pending from the standard `plan` projection, folded exactly like the composer plan chip so the two never disagree), then subagent rows from the catalog mirror (mode chip, label with durable-id fallback mirroring the header lineage, activity word; diagnostic rows render localized reason words through a closed union with `assertNever`), then the existing ordered background-job rows.
+Sections render top to bottom, each hidden when its source is absent: pending confirmation first (highest-precedence `PendingInteraction` from the standard session-status seat, keeping confirmations prominent), then the current goal (existing slice), then plan mode (active/pending from the standard `plan` projection, folded exactly like the composer plan chip so the two never disagree), then subagent rows from the `subagentCatalog` session projection through `projectionsBySession` (mode chip, label with durable-id fallback mirroring the header lineage, activity folded from session status and Host summaries; the projection materializes complete children only — an undetermined mode rows as the unknown chip, while corrupt or unreadable descriptors surface through the list-agents tool and the `subagent/catalog-diagnostic` remote error rather than this panel), then the existing ordered background-job rows.
 
 Two plan fields stay omitted for lack of a real source: workflow state has no session-addressed projection (only chat-event folding inside `ui-workflow-run`), and a deliverables count has no projection (`ui-deliverables` derives per-turn data from conversation nodes). The README records exactly where they slot in; no projection was invented.
 
-Subagent rows activate only after another consumer loads the catalog (the ui-jobs package issues no RPC by contract); eager population is a catalog-load decision for the subagent packages, not a ui-jobs change.
+Subagent rows activate only after another consumer loads the catalog projection (the ui-jobs package issues no RPC by contract); eager projection reads stay a subagent-package decision, not a ui-jobs change.
 
 ## Alternatives considered
 
@@ -28,4 +28,4 @@ Subagent rows activate only after another consumer loads the catalog (the ui-job
 
 ## Consequences
 
-The popover chrome changed from a list to a menu wrapper (the jobs list keeps its list label); 16 locale keys were added; the ui-jobs README documents the section-by-section sources and the two deferred fields. No percentages, no stop buttons, and no fake zero states appear anywhere in the panel.
+The popover chrome changed from a list to a menu wrapper (the jobs list keeps its list label); 14 locale keys were added; the ui-jobs README documents the section-by-section sources and the two deferred fields. No percentages, no stop buttons, and no fake zero states appear anywhere in the panel.

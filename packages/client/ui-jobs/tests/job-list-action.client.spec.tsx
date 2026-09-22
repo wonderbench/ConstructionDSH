@@ -3,7 +3,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import type { JobsSnapshot, JobView, ObservedJob } from '@deepseek-ai/dsh-api-job-controller/client'
+import type { SessionListState, SessionProjectionMap, SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { SessionStatusSnapshot } from '@deepseek-ai/dsh-client-ui-session/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import { GoalId } from '@deepseek-ai/dsh-goal'
+import type { GoalProjection } from '@deepseek-ai/dsh-goal/client'
+import type { PlanProjection } from '@deepseek-ai/dsh-plan-mode/client'
+import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
 import { JobListAction, type JobListActionProps } from '../src/client/JobListAction.tsx'
 import { zh } from '../src/client/locales.ts'
 
@@ -34,18 +40,110 @@ function outputJob(over: Partial<JobView> = {}): JobView {
   return job({ output: { total: 12, earliest: 0 }, ...over })
 }
 
+/** A live goal projection; a complete phase renders no section. */
+function goalProjection(over: Partial<GoalProjection['goal']> = {}): GoalProjection {
+  return {
+    goal: {
+      id: GoalId('goal-1'),
+      revision: 1,
+      objective: '拆解这批图纸',
+      phase: 'active',
+      maxGoalRounds: 3,
+      ...over,
+    },
+    roundsStarted: 0,
+    createdAt: 1_700_000_000_000,
+    updatedAt: 1_700_000_000_000,
+  }
+}
+
+/** A goal face whose snapshot the test may swap and re-broadcast. */
+function goalFace(projection: GoalProjection | null): HostObservable<GoalProjection | null> {
+  return {
+    getSnapshot: () => projection,
+    subscribe: () => () => {},
+  }
+}
+
+/** One direct-child catalog row a test seeds, with its running flag folded into summaries. */
+function childRow(over: Partial<{
+  readonly id: SessionId
+  readonly mode: 'one-shot' | 'continuable' | 'unknown'
+  readonly label: string
+  readonly running: boolean
+}> = {}): { id: SessionId; createdAt: number; mode: 'one-shot' | 'continuable' | 'unknown'; label?: string; running: boolean } {
+  return {
+    id: 'child-1' as SessionId,
+    createdAt: 1_700_000_000_000,
+    mode: 'one-shot',
+    running: false,
+    ...over,
+  }
+}
+
+/** Optional aggregation sources beyond jobs: goal face value, plan, pending, children. */
+interface StatusOptions {
+  /** Value behind the injected goal face; `null` seeds a present-but-empty face. */
+  goal?: GoalProjection | null
+  /** Value returned by the `plan` projection seat; absent when undefined. */
+  plan?: PlanProjection
+  /** Whether the session has a pending interaction awaiting its user. */
+  pending?: boolean
+  /** Direct-child catalog projection rows for this session. */
+  children?: readonly ReturnType<typeof childRow>[]
+}
+
 function props(
   jobs: readonly JobView[],
   observe: JobListActionProps['observe'] = () => () => {},
   observed: Readonly<Record<string, ObservedJob>> = {},
   killJob: JobListActionProps['killJob'] = async () => true,
   watchRows: JobListActionProps['watchRows'] = () => () => {},
+  status: StatusOptions = {},
 ): JobListActionProps {
   const jobsState: JobsSnapshot = { rows: jobs.length > 0 ? { [SESSION]: jobs } : {}, observed }
   function useJobs<T>(select: (value: JobsSnapshot) => T): T {
     return select(jobsState)
   }
-  return { sessionId: SESSION, useJobs, watchRows, observe, killJob, t } as JobListActionProps
+  const children = status.children ?? []
+  const listState: SessionListState = {
+    ids: [SESSION],
+    byId: Object.fromEntries(
+      children.filter(child => child.running).map(child => [child.id, { running: true } satisfies Partial<SessionSummary>]),
+    ) as Record<SessionId, SessionSummary>,
+    phase: 'ready',
+    projectionsBySession: children.length === 0 ? {} : {
+      [SESSION]: {
+        state: 'idle',
+        error: null,
+        values: {
+          subagentCatalog: children.map(({ running: _running, ...entry }) => entry as SessionProjectionMap['subagentCatalog'][number]),
+        },
+      },
+    },
+  }
+  function useSessions<T>(select: (value: SessionListState) => T): T {
+    return select(listState)
+  }
+  const statuses: SessionStatusSnapshot = status.pending === true
+    ? new Map([[SESSION, {
+      running: true,
+      pendingInteraction: { key: 'approval:1', kind: 'approval', sessionId: SESSION },
+      completionUnread: false,
+    }]])
+    : new Map()
+  function useSessionStatus<T>(select: (value: SessionStatusSnapshot) => T): T {
+    return select(statuses)
+  }
+  function useProjection(key: 'plan' | 'goal'): PlanProjection | undefined {
+    return key === 'plan' ? status.plan : undefined
+  }
+  return {
+    sessionId: SESSION,
+    useJobs, useSessions, useSessionStatus, useProjection,
+    watchRows, observe, killJob, t,
+    goalFace: status.goal === undefined ? undefined : goalFace(status.goal),
+  } as JobListActionProps
 }
 
 function openList(): void {
@@ -290,14 +388,14 @@ describe('JobListAction observation', () => {
     try {
       render(<JobListAction {...props([outputJob()])} />)
       openList()
-      const menu = screen.getByRole('list', { name: zh['list.aria'] })
+      const menu = screen.getByRole('list', { name: zh['list.aria'] }).parentElement
       // 700 - 12 - 440 - 344 = -96: the popover moves left to keep the margin.
-      expect(menu.style.left).toBe('-96px')
+      expect(menu?.style.left).toBe('-96px')
 
       window.innerWidth = 900
       fireEvent(window, new Event('resize'))
       // 900 - 12 - 440 - 344 = 104 > 0: the anchored position fits again.
-      expect(menu.style.left).toBe('0px')
+      expect(menu?.style.left).toBe('0px')
     } finally {
       Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true, writable: true })
     }
@@ -311,9 +409,9 @@ describe('JobListAction observation', () => {
     try {
       render(<JobListAction {...props([outputJob()])} />)
       openList()
-      const menu = screen.getByRole('list', { name: zh['list.aria'] })
+      const menu = screen.getByRole('list', { name: zh['list.aria'] }).parentElement
       // max(12 - 4, min(0, 700 - 12 - 800 - 4)) = 8: clamped at the left margin.
-      expect(menu.style.left).toBe('8px')
+      expect(menu?.style.left).toBe('8px')
     } finally {
       Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true, writable: true })
     }
@@ -514,5 +612,156 @@ describe('JobListAction human kill', () => {
     // The stopping row offers no kill control any more, and the stale phase is gone.
     expect(screen.queryByTitle(stopTitle('pnpm run build'))).toBeNull()
     expect(document.querySelector('[data-kill-state]')).toBeNull()
+  })
+})
+
+describe('JobListAction goal summary', () => {
+  it('shows the objective and phase above the rows while the list is open', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { goal: goalProjection() })} />)
+    openList()
+    const section = screen.getByRole('note', { name: '当前目标' })
+    expect(section.textContent).toContain('拆解这批图纸')
+    expect(section.textContent).toContain('进行中')
+    expect(screen.getByRole('list', { name: zh['list.aria'] })).toBeDefined()
+  })
+
+  it('renders no goal section without a projection, with none set, or when complete', () => {
+    render(<JobListAction {...props([job()])} />)
+    openList()
+    expect(screen.queryByRole('note')).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { goal: null })} />)
+    openList()
+    expect(screen.queryByRole('note')).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { goal: goalProjection({ phase: 'complete' }) })} />)
+    openList()
+    expect(screen.queryByRole('note')).toBeNull()
+  })
+
+  it('follows a goal change while the popover stays open', () => {
+    let projection: GoalProjection | null = goalProjection()
+    const listeners = new Set<() => void>()
+    const face: HostObservable<GoalProjection | null> = {
+      getSnapshot: () => projection,
+      subscribe: (fn) => {
+        listeners.add(fn)
+        return () => { listeners.delete(fn) }
+      },
+    }
+    const base = props([job()])
+    render(<JobListAction {...{ ...base, goalFace: face }} />)
+    openList()
+    expect(screen.getByRole('note', { name: '当前目标' }).textContent).toContain('进行中')
+    projection = goalProjection({ phase: 'blocked' })
+    act(() => { for (const listener of listeners) listener() })
+    expect(screen.getByRole('note', { name: '当前目标' }).textContent).toContain('已阻塞')
+  })
+})
+
+describe('JobListAction pending confirmation', () => {
+  it('shows the notice first when an interaction awaits the user', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { pending: true })} />)
+    openList()
+    const section = screen.getByRole('note', { name: zh['pending.section'] })
+    expect(section.textContent).toContain('需要你确认')
+  })
+
+  it('renders no notice when nothing is pending', () => {
+    render(<JobListAction {...props([job()])} />)
+    openList()
+    expect(screen.queryByRole('note', { name: zh['pending.section'] })).toBeNull()
+  })
+
+  it('orders the pending notice ahead of the goal section', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { pending: true, goal: goalProjection() })} />)
+    openList()
+    const names = screen.getAllByRole('note').map(note => note.getAttribute('aria-label'))
+    expect(names).toEqual([zh['pending.section'], zh['goal.section']])
+  })
+})
+
+describe('JobListAction plan state', () => {
+  it('shows plan mode while the effective target is plan mode', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { plan: { active: true, pending: false } })} />)
+    openList()
+    expect(screen.getByRole('note', { name: zh['plan.section'] }).textContent).toContain('计划模式')
+  })
+
+  it('shows plan mode while a selection is turning it on', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { plan: { active: false, pending: true } })} />)
+    openList()
+    expect(screen.getByRole('note', { name: zh['plan.section'] }).textContent).toContain('计划模式')
+  })
+
+  it('renders no plan row without the capability, while off, or while turning off', () => {
+    render(<JobListAction {...props([job()])} />)
+    openList()
+    expect(screen.queryByRole('note', { name: zh['plan.section'] })).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { plan: { active: false, pending: false } })} />)
+    openList()
+    expect(screen.queryByRole('note', { name: zh['plan.section'] })).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { plan: { active: true, pending: true } })} />)
+    openList()
+    expect(screen.queryByRole('note', { name: zh['plan.section'] })).toBeNull()
+  })
+})
+
+describe('JobListAction subagent catalog', () => {
+  /** Mode chip, label, and activity cells of one catalog row. */
+  function subagentRows(): string[][] {
+    return within(screen.getByRole('list', { name: zh['subagent.section'] }))
+      .getAllByRole('listitem')
+      .map(row => [...row.children]
+        .map(cell => cell.textContent ?? '')
+        .filter(text => text !== ''))
+  }
+
+  it('renders no subagent section without a loaded catalog or with an empty one', () => {
+    render(<JobListAction {...props([job()])} />)
+    openList()
+    expect(screen.queryByRole('list', { name: zh['subagent.section'] })).toBeNull()
+    cleanup()
+
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, { children: [] })} />)
+    openList()
+    expect(screen.queryByRole('list', { name: zh['subagent.section'] })).toBeNull()
+  })
+
+  it('renders child rows with mode chip, label, and activity word', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, {
+      children: [
+        childRow({ id: 'child-1' as SessionId, label: '图纸拆解', running: true }),
+        childRow({ id: 'child-2' as SessionId, mode: 'continuable', label: '资料整理' }),
+      ],
+    })} />)
+    openList()
+    expect(subagentRows()).toEqual([
+      ['一次性', '图纸拆解', '运行中'],
+      ['可继续', '资料整理', '未运行'],
+    ])
+  })
+
+  it('falls back to the durable id when a one-shot child has no label', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, {
+      children: [childRow({ id: 'child-9' as SessionId })],
+    })} />)
+    openList()
+    const row = within(screen.getByRole('list', { name: zh['subagent.section'] })).getByRole('listitem')
+    expect(row.textContent).toContain('child-9')
+  })
+
+  it('renders an undetermined-mode child through the unknown chip', () => {
+    render(<JobListAction {...props([job()], undefined, {}, undefined, undefined, {
+      children: [childRow({ id: 'child-x' as SessionId, mode: 'unknown' })],
+    })} />)
+    openList()
+    expect(subagentRows()).toEqual([['模式未知', 'child-x', '未运行']])
   })
 })

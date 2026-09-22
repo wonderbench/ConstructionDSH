@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-21-unified-status-aggregation.md
-2026-09-21-unified-status-aggregation.md: 171534e326df1c779aae42c4143b291c4e43a28c
-2026-09-21-unified-status-aggregation.zh.md: c79c2578f0765ec9b9257afed27103a7b78813be
+2026-09-21-unified-status-aggregation.md: 0a6d18c4b84d3641c431baf7c647b949852d8df4
+2026-09-21-unified-status-aggregation.zh.md: 44dd8ef0482f466c4d2003ae04f3dbb1145fd575

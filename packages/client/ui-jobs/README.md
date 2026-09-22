@@ -1,5 +1,5 @@
 ---
-description: "The session-header background-job list: expandable streaming output panels, running/finished sections, and static rows for settled jobs without retained output."
+description: "The session-header background-job list with expandable streaming output panels and the read-only session status aggregation above the running and finished job sections."
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-client-ui-jobs` shows the session's background jobs in one header control, with lifecycle, elapsed time, progress, and terminal detail. Live jobs and settled jobs with retained output offer expandable output panels; collapsing stops the stream. Live rows lead with a ticking duration, followed by kind and status. Settled rows fold under a section heading; those without retained output, including subagents whose answers went to the model, stay static.
+`dsh-client-ui-jobs` shows the session's background jobs in one header control, with lifecycle, elapsed time, progress, and terminal detail. Live jobs and settled jobs with retained output offer expandable output panels; collapsing stops the stream. Live rows lead with a ticking duration, followed by kind and status. Settled rows fold under a section heading; those without retained output, including subagents whose answers went to the model, stay static. The open popover also aggregates read-only session status — pending confirmation, goal, plan mode, and subagent rows — each section hidden when its source is absent, with no stop buttons.
 
 ## Table of Contents
 
@@ -25,7 +25,14 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Load the plugin through the web-app manifest; it renders nothing until the session can see at least one job, so an ordinary conversation never grows a control for a capability it is not using.
+Load the plugin through the web-app manifest; it renders nothing until the session can see at least one job, so an ordinary conversation never grows a control for a capability it is not using. The open popover carries the read-only status aggregation above the job rows, top to bottom:
+
+- **Pending confirmation** — the session's highest-precedence pending interaction (approval, question), rendered first and in the attention color so it stays prominent inside the aggregation.
+- **Current goal** — the goal projection's phase label and objective, shown only while the goal is live.
+- **Plan mode** — shown while the `plan` projection's effective target is plan mode, folding the pending selection exactly like the composer plan chip.
+- **Subagents** — the direct-child `subagentCatalog` projection: each child's mode chip, label with durable-id fallback, and live activity.
+
+Every section hides when its source is absent rather than showing an empty or zeroed state. A tool call finishing is not presented as the business task succeeding; nothing here stops a job or answers an interaction — cancelling owes the `job_kill` runtime contract a separate program.
 
 ### One row per job
 
@@ -45,7 +52,7 @@ Expanding an observable row opens that job's output observation stream from `ctx
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-One slot entry in the header actions band (after the preset label, before the subagent catalog) renders the trigger and popover; the popover fits itself to the viewport by measuring its anchor. All data arrives through `ctx.jobs` — the component holds no transport state. The roster follows the mount: one `useEffect` keeps the session's `job.list` stream open while the control lives. Observation follows visibility: another `useEffect` opens the stream for the expanded row's job and closes it on collapse, unmount, or popover close.
+One slot entry in the header actions band (after the preset label, before the subagent catalog) renders the trigger and popover; the popover fits itself to the viewport by measuring its anchor. Job rows, observation, and kill arrive through `ctx.jobs`; the aggregation reads only standard session seats and the injected per-session goal projection face — pending confirmation from `useSessionStatus`, plan mode from `useProjection('plan')` folded exactly like the composer plan chip, the goal line subscribed only while the popover is open, and subagent rows from the `subagentCatalog` projection through `projectionsBySession` with activity folded from session status and Host summaries. The component holds no transport state and issues no RPC. The roster follows the mount: one `useEffect` keeps the session's `job.list` stream open while the control lives. Observation follows visibility: another `useEffect` opens the stream for the expanded row's job and closes it on collapse, unmount, or popover close.
 
 | File | Role |
 |---|---|

@@ -1,14 +1,21 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { JobsSnapshot, JobView, ObservedJob } from '@deepseek-ai/dsh-api-job-controller/client'
+import type { SessionProjectionMap } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { GoalPhase, GoalProjection } from '@deepseek-ai/dsh-goal/client'
+// Type-only: pulls the `plan` SessionProjectionMap merge for useProjection('plan').
+import type { PlanProjection } from '@deepseek-ai/dsh-plan-mode/client'
 import {
   IconChevronDownOutlineRegular, IconStopFillRegular, StateDot, TerminalBlock, useDismissOnOutsidePointer,
   type StateDotState, type TerminalBlockLabels,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { InjectFace, PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import { NS } from './locales.ts'
+import type { HostObservable, InjectFace, PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import { NS, type JobKey } from './locales.ts'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import css from './JobListAction.module.css'
+
+/** The session's projected goal, injected per session by the plugin body. */
+type GoalFace = HostObservable<GoalProjection | null | undefined>
 
 /** Registration-side business face for the job list. */
 export interface JobListInjected {
@@ -35,6 +42,8 @@ export interface JobListInjected {
    * state itself converges through the jobs control frames.
    */
   killJob: (sessionId: SessionId, jobId: string) => Promise<boolean>
+  /** Goal projection of this session; undefined when the binding is unavailable. */
+  goalFace: GoalFace | undefined
 }
 
 /** Full props for the session-header job-list action. */
@@ -45,6 +54,9 @@ export type JobListActionProps =
 
 /** Stable empty list so a session with no jobs keeps one array identity. */
 const NO_JOBS: readonly JobView[] = []
+
+/** One direct-child subagent catalog row with its derived live activity. */
+type CatalogEntry = SessionProjectionMap['subagentCatalog'][number] & { activity: 'running' | 'inactive' }
 
 /** Minimum gap kept between the popover and the viewport edges (the Menu primitive's portal margin). */
 const VIEWPORT_MARGIN = 12
@@ -163,6 +175,62 @@ function ordered(jobs: readonly JobView[]): JobView[] {
     const finished = (right.finishedAt ?? right.startedAt) - (left.finishedAt ?? left.startedAt)
     return finished !== 0 ? finished : left.startedAt - right.startedAt
   })
+}
+
+/** Locale keys for the live goal phases; a complete goal renders nothing. */
+const GOAL_PHASE_KEYS = {
+  active: 'goal.phase.active',
+  paused: 'goal.phase.paused',
+  blocked: 'goal.phase.blocked',
+} as const satisfies Record<Exclude<GoalPhase, 'complete'>, JobKey>
+
+type GoalPhaseKey = (typeof GOAL_PHASE_KEYS)[keyof typeof GOAL_PHASE_KEYS]
+
+/** The locale key for a live goal phase; a complete goal renders nothing. */
+function goalPhaseKey(phase: GoalPhase): GoalPhaseKey | undefined {
+  if (!(phase in GOAL_PHASE_KEYS)) return undefined
+  return GOAL_PHASE_KEYS[phase as keyof typeof GOAL_PHASE_KEYS]
+}
+
+/**
+ * Goal projection read while the popover is open. Subscribing only while
+ * open keeps a closed popover from holding a projection listener; the
+ * snapshot read on open avoids one frame of stale "not loaded" state.
+ */
+function useGoalProjection(face: GoalFace | undefined, open: boolean): GoalProjection | null | undefined {
+  const [projection, setProjection] = useState<GoalProjection | null | undefined>(undefined)
+  useEffect(() => {
+    if (!open || face === undefined) return
+    setProjection(face.getSnapshot())
+    return face.subscribe(() => { setProjection(face.getSnapshot()) })
+  }, [face, open])
+  return projection
+}
+
+/**
+ * Whether plan mode is effectively in force, folding the pending selection
+ * the same way the composer plan chip does (`pending ? !active : active`),
+ * so the summary never disagrees with the chip.
+ */
+function planModeOn(plan: PlanProjection | undefined): boolean {
+  return plan !== undefined && (plan.pending ? !plan.active : plan.active)
+}
+
+/** Status marker for one catalog row: live children tick, stopped ones read done. */
+function subagentDot(entry: CatalogEntry): StateDotState {
+  return entry.activity === 'running' ? 'ongoing' : 'done'
+}
+
+/** Locale keys for the catalog's closed mode set. */
+const SUBAGENT_MODE_KEYS = {
+  'one-shot': 'subagent.mode.one-shot',
+  continuable: 'subagent.mode.continuable',
+  unknown: 'subagent.mode.unknown',
+} as const satisfies Record<CatalogEntry['mode'], JobKey>
+
+/** Locale-owned mode chip for a catalog row. */
+function subagentModeKey(mode: CatalogEntry['mode']): JobKey {
+  return SUBAGENT_MODE_KEYS[mode]
 }
 
 /**
@@ -318,13 +386,27 @@ function JobItem({ job, view, expanded, now, onToggle, kill, t }: {
  * collapsing (or closing the popover) stops it — output only flows while
  * someone is watching. A running row carries a two-press stop button that
  * requests a human kill through the job controller.
+ *
+ * The open popover is also the session's read-only status aggregation: the
+ * pending-confirmation notice first, then the live goal, plan mode, the
+ * direct-child subagent catalog projection, and finally the job rows. Every
+ * section hides when its source is absent rather than faking an empty one.
  * @param props - runtime slot currency, the jobs snapshot hook, the roster,
- *   observation, and kill controls, and the namespace translator.
+ *   observation, and kill controls, the standard session seats and injected
+ *   goal face behind the aggregation, and the namespace translator.
  * @returns the trigger and its popover list, or null when there is nothing to show.
  */
-export function JobListAction({ sessionId, useJobs, watchRows, observe, killJob, t }: JobListActionProps) {
+export function JobListAction({
+  sessionId, useJobs, useSessions, useSessionStatus, useProjection,
+  watchRows, observe, killJob, goalFace, t,
+}: JobListActionProps) {
   const jobs = useJobs(state => state.rows[sessionId]) ?? NO_JOBS
   const observedViews = useJobs(state => state.observed)
+  const catalogSnapshot = useSessions(state => state.projectionsBySession[sessionId])
+  const summaries = useSessions(state => state.byId)
+  const statuses = useSessionStatus(value => value)
+  const plan = useProjection('plan')
+  const pending = statuses.get(sessionId)?.pendingInteraction
   const [open, setOpen] = useState(false)
   const [expandedKey, setExpandedKey] = useState<string | undefined>(undefined)
   const [now, setNow] = useState(() => Date.now())
@@ -338,7 +420,8 @@ export function JobListAction({ sessionId, useJobs, watchRows, observe, killJob,
   const [killPhase, setKillPhase] = useState<{ key: string; state: Exclude<KillState, 'idle'> } | undefined>(undefined)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLUListElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const goal = useGoalProjection(goalFace, open)
   // Horizontal shift applied to the trigger-anchored popover so it stays
   // inside the viewport (the stylesheet alone cannot see the anchor offset).
   const [menuShift, setMenuShift] = useState(0)
@@ -351,6 +434,19 @@ export function JobListAction({ sessionId, useJobs, watchRows, observe, killJob,
   )
   const settledExpanded = settledOpen ?? liveRows.length === 0
   const visibleCount = liveRows.length + settledRows.length
+  // Child rows come from the subagent catalog projection; activity folds from
+  // the session status map with the Host summaries as fallback, the same
+  // derivation the header lineage uses. This package issues no RPC.
+  const catalogEntries = useMemo<CatalogEntry[]>(() => {
+    const values = catalogSnapshot?.values.subagentCatalog
+    if (values === undefined) return []
+    return values.map(entry => ({
+      ...entry,
+      activity: (statuses.get(entry.id)?.running ?? summaries[entry.id]?.running) === true
+        ? 'running' as const
+        : 'inactive' as const,
+    }))
+  }, [catalogSnapshot, statuses, summaries])
 
   useDismissOnOutsidePointer(rootRef, open, setOpen)
 
@@ -482,6 +578,58 @@ export function JobListAction({ sessionId, useJobs, watchRows, observe, killJob,
     triggerRef.current?.focus()
   }
 
+  // Live goal phases only; a complete goal renders nothing, mirroring GoalBar.
+  let goalSection: ReactNode = null
+  if (goal != null) {
+    const phaseKey = goalPhaseKey(goal.goal.phase)
+    if (phaseKey !== undefined) {
+      goalSection = (
+        <div className={css.goal} role="note" aria-label={t('goal.section')}>
+          <span className={css.goalPhase}>{t(phaseKey)}</span>
+          <span className={css.goalObjective} title={goal.goal.objective}>{goal.goal.objective}</span>
+        </div>
+      )
+    }
+  }
+
+  // The highest-precedence pending interaction awaiting this session's user.
+  const pendingSection: ReactNode = pending !== undefined
+    ? (
+      <div className={css.pending} role="note" aria-label={t('pending.section')}>
+        <StateDot state="warning" className={css.rowDot} />
+        <span className={css.pendingLabel}>{t('pending.label')}</span>
+      </div>
+    )
+    : null
+
+  const planSection: ReactNode = planModeOn(plan)
+    ? (
+      <div className={css.plan} role="note" aria-label={t('plan.section')}>
+        <span className={css.planChip}>{t('plan.modeOn')}</span>
+      </div>
+    )
+    : null
+
+  // The projection view materializes complete children (an undetermined mode
+  // rows as `unknown`); this section appears once that read lands and never
+  // issues an RPC of its own.
+  const subagentSection: ReactNode = catalogEntries.length > 0
+    ? (
+      <ul className={css.subagents} aria-label={t('subagent.section')}>
+        {catalogEntries.map(entry => (
+          <li key={entry.id} className={css.row}>
+            <StateDot state={subagentDot(entry)} className={css.rowDot} />
+            <span className={css.kind}>{t(subagentModeKey(entry.mode))}</span>
+            <span className={css.subagentLabel} title={entry.label ?? entry.id}>{entry.label ?? entry.id}</span>
+            <span className={css.status}>
+              {t(entry.activity === 'running' ? 'subagent.activity.running' : 'subagent.activity.inactive')}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )
+    : null
+
   const item = (job: JobView) => (
     <JobItem
       key={String(job.id)}
@@ -527,31 +675,37 @@ export function JobListAction({ sessionId, useJobs, watchRows, observe, killJob,
       </button>
       {open
         ? (
-          <ul ref={menuRef} className={css.menu} style={{ left: menuShift }} aria-label={t('list.aria')}>
-            {liveRows.length > 0
-              ? <li className={css.sectionHeader} aria-hidden="true">{t('section.live')}</li>
-              : null}
-            {liveRows.map(item)}
-            {settledRows.length > 0
-              ? (
-                <li className={css.sectionHeader}>
-                  <button
-                    type="button"
-                    className={css.sectionToggle}
-                    aria-expanded={settledExpanded}
-                    onClick={() => { setSettledOpen(!settledExpanded) }}
-                  >
-                    <IconChevronDownOutlineRegular size={12} className={settledExpanded ? `${css.sectionChevron} ${css.sectionChevronOpen}` : css.sectionChevron} />
-                    {t('section.settledCount', { count: settledRows.length })}
-                  </button>
-                  <button type="button" className={css.sectionClear} onClick={clearSettled}>
-                    {t('section.clear')}
-                  </button>
-                </li>
-              )
-              : null}
-            {settledExpanded ? settledRows.map(item) : null}
-          </ul>
+          <div ref={menuRef} className={css.menu} style={{ left: menuShift }}>
+            {pendingSection}
+            {goalSection}
+            {planSection}
+            {subagentSection}
+            <ul className={css.menuList} aria-label={t('list.aria')}>
+              {liveRows.length > 0
+                ? <li className={css.sectionHeader} aria-hidden="true">{t('section.live')}</li>
+                : null}
+              {liveRows.map(item)}
+              {settledRows.length > 0
+                ? (
+                  <li className={css.sectionHeader}>
+                    <button
+                      type="button"
+                      className={css.sectionToggle}
+                      aria-expanded={settledExpanded}
+                      onClick={() => { setSettledOpen(!settledExpanded) }}
+                    >
+                      <IconChevronDownOutlineRegular size={12} className={settledExpanded ? `${css.sectionChevron} ${css.sectionChevronOpen}` : css.sectionChevron} />
+                      {t('section.settledCount', { count: settledRows.length })}
+                    </button>
+                    <button type="button" className={css.sectionClear} onClick={clearSettled}>
+                      {t('section.clear')}
+                    </button>
+                  </li>
+                )
+                : null}
+              {settledExpanded ? settledRows.map(item) : null}
+            </ul>
+          </div>
         )
         : null}
     </div>
