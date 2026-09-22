@@ -83,8 +83,8 @@
 
 .title {
   flex: none;
-  font-size: var(--dsh-content-font-size-secondary, 13px);
-  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-secondary);
 }
 
@@ -103,8 +103,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--dsh-content-font-size-secondary, 13px);
-  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -137,9 +137,9 @@
   padding: 8px 12px;
   border-bottom: 0.5px solid var(--dsw-alias-border-l2);
   background: var(--dsw-alias-markdown-code-block-banner);
-  font-size: 11px;
+  font-size: var(--dsw-ui-font-caption);
   font-weight: 500;
-  line-height: 16px;
+  line-height: var(--dsw-ui-line-caption);
   color: var(--dsw-alias-label-caption);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -182,8 +182,8 @@
   corner-shape: round;
   background: var(--dsw-alias-bg-base);
   color: var(--dsw-alias-label-secondary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
   cursor: pointer;
   opacity: 0;
   transition: opacity 100ms ease;

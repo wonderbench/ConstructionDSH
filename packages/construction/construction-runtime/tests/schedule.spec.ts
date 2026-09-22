@@ -388,7 +388,7 @@ describe('schedule tools through the executor', () => {
       const text = calculated.content.map(block => (block.type === 'text' ? block.text ?? '' : '')).join('\n')
       const marker = text.indexOf('Frozen result JSON — ')
       expect(marker).toBeGreaterThan(-1)
-      const frozen = JSON.parse(text.slice(text.indexOf('\n', marker) + 1))
+      const frozen: unknown = JSON.parse(text.slice(text.indexOf('\n', marker) + 1))
 
       const presented = await callTool(ctx, dir, 'construction_schedule_present', { result: frozen })
       expect(presented.isError).toBe(false)

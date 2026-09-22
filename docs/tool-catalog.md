@@ -655,7 +655,7 @@ Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/
 
 ### `construction_report_export`
 
-Export a markdown report from one frozen result (cost, schedule, or document summary) plus its unresolved items. Sections are filtered by the active business task type. A document result carries a DocumentSummaryResult: { schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }. Writes the report under the construction artifacts directory and returns its path. Requires any active business task.
+Export a markdown report from one frozen result (cost, schedule, or document summary) plus its unresolved items. Sections are filtered by the active business task type. A document result carries a DocumentSummaryResult: `{ schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }`. Writes the report under the construction artifacts directory and returns its path. Requires any active business task.
 
 ```json
 {

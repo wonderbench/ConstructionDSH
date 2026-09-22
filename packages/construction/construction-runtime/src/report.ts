@@ -85,7 +85,7 @@ function parseDocumentSummary(raw: unknown): DocumentSummaryResult {
 export function applyReportTool(ctx: Context, settings: ReportToolSettings, bindings: TaskBindings): void {
   ctx.tools.register(defineTool({
     name: 'construction_report_export',
-    description: 'Export a markdown report from one frozen result (cost, schedule, or document summary) plus its unresolved items. Sections are filtered by the active business task type. A document result carries a DocumentSummaryResult: { schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }. Writes the report under the construction artifacts directory and returns its path. Requires any active business task.',
+    description: 'Export a markdown report from one frozen result (cost, schedule, or document summary) plus its unresolved items. Sections are filtered by the active business task type. A document result carries a DocumentSummaryResult: `{ schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }`. Writes the report under the construction artifacts directory and returns its path. Requires any active business task.',
     parameters: {
       result: {
         type: 'object',

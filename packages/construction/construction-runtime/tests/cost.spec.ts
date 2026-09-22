@@ -547,7 +547,7 @@ describe('cost tools through the executor', () => {
       expect(calculated.isError).toBe(false)
       // The model sees only the rendered text: recover the frozen result from
       // that text, never from an in-test object.
-      const frozen = frozenJsonOf(textOf(calculated as never))
+      const frozen = frozenJsonOf(textOf(calculated))
 
       const exported = await callTool(ctx, dir, 'construction_cost_export', { result: frozen })
       expect(exported.isError).toBe(false)

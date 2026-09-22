@@ -1,9 +1,9 @@
 version: 1
 scenario: present
 profile: web
-composition: web-ptc
+composition: web-default
 recording: live
 header:
-  class: web-ptc
+  class: web-default
 workspace:
   final: true

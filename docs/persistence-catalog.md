@@ -335,7 +335,7 @@ Source: [`packages/core/session/src/types.ts:341`](../packages/core/session/src/
 }
 ```
 
-Source: [`packages/interaction/commands/src/types.ts:112`](../packages/interaction/commands/src/types.ts)
+Source: [`packages/interaction/commands/src/types.ts:121`](../packages/interaction/commands/src/types.ts)
 
 <a id="commandrun--log-only"></a>
 
@@ -355,7 +355,7 @@ Source: [`packages/interaction/commands/src/types.ts:112`](../packages/interacti
 'command/run': { commandId: CommandId; name: string; args?: string; source: CommandSource }
 ```
 
-Source: [`packages/interaction/commands/src/types.ts:105`](../packages/interaction/commands/src/types.ts)
+Source: [`packages/interaction/commands/src/types.ts:114`](../packages/interaction/commands/src/types.ts)
 
 ### `compaction/*`
 
@@ -3103,7 +3103,7 @@ Sources: [`packages/schedule/schedule/src/types.ts:29`](../packages/schedule/sch
 
 SHA-256: `ada310bf0bdb8fed51f3b56ea63f6ea6b18bbd587f04fccb63a14ab0b2a24e05`
 
-Sources: [`packages/core/session/src/types.ts:190`](../packages/core/session/src/types.ts) · [`packages/interaction/commands/src/types.ts:75`](../packages/interaction/commands/src/types.ts) · [`packages/interaction/commands/src/types.ts:79`](../packages/interaction/commands/src/types.ts) · [`packages/llm/llm/src/message.ts:111`](../packages/llm/llm/src/message.ts) · [`packages/session/session-title/src/types.ts:35`](../packages/session/session-title/src/types.ts)
+Sources: [`packages/core/session/src/types.ts:190`](../packages/core/session/src/types.ts) · [`packages/interaction/commands/src/types.ts:84`](../packages/interaction/commands/src/types.ts) · [`packages/interaction/commands/src/types.ts:88`](../packages/interaction/commands/src/types.ts) · [`packages/llm/llm/src/message.ts:111`](../packages/llm/llm/src/message.ts) · [`packages/session/session-title/src/types.ts:35`](../packages/session/session-title/src/types.ts)
 
 | Property | Presence | Type |
 |---|---|---|
@@ -4929,7 +4929,7 @@ Sources: [`packages/llm/llm/src/types.ts:127`](../packages/llm/llm/src/types.ts)
 
 SHA-256: `3cfc3a56502da1f8c6153c2c56657bab4b749056968634dd0991d325ec1c919f`
 
-Sources: [`packages/core/tools/src/index.ts:689`](../packages/core/tools/src/index.ts)
+Sources: [`packages/core/tools/src/index.ts:693`](../packages/core/tools/src/index.ts)
 
 | Property | Presence | Type |
 |---|---|---|
@@ -5525,7 +5525,7 @@ Sources: [`packages/subagent/tool-subagent/src/model-selection-state.ts:17`](../
 
 SHA-256: `a853902cfab417b8f08aa51ad6855fea46f34ed4588a74e47403035111d0fb86`
 
-Sources: [`packages/interaction/commands/src/types.ts:105`](../packages/interaction/commands/src/types.ts)
+Sources: [`packages/interaction/commands/src/types.ts:114`](../packages/interaction/commands/src/types.ts)
 
 | Property | Presence | Type |
 |---|---|---|
@@ -5699,7 +5699,7 @@ Sources: [`packages/core/session/src/types.ts:383`](../packages/core/session/src
 
 SHA-256: `5b6fb1f226ff56402db08a6aae82af76100b14056271875f69ec526a1ae05d51`
 
-Sources: [`packages/interaction/commands/src/types.ts:112`](../packages/interaction/commands/src/types.ts)
+Sources: [`packages/interaction/commands/src/types.ts:121`](../packages/interaction/commands/src/types.ts)
 
 | Property | Presence | Type |
 |---|---|---|

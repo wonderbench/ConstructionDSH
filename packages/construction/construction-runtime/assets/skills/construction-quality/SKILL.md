@@ -36,10 +36,10 @@ assumption), or `proposed` (your recommendation).
    reading. Treat `partial`, `needs_review`, and `needs_visual_read` coverage
    as evidence gaps: record them as unresolved items, never as fully-read evidence.
 2. Identify the inspection object, the units of measurement, and the
-   acceptance requirement for each checked property. Record the requirement's
-   provenance (design document, standard, contract, or supervision rule, with
-   version). When no basis is found, the property is `unverifiable`; never
-   set your own threshold.
+   acceptance requirement for each checked property. Record where the
+   requirement comes from (design document, standard, contract, or supervision
+   rule, with version). When no basis is found, the property is `unverifiable`;
+   never set your own threshold.
 3. Read the supplied files with `construction_files_read` or
    `construction_files_search`. A PDF above the size limit must first be
    split with `construction_pdf_split` (`range`, `per_page`, or `bookmark`);

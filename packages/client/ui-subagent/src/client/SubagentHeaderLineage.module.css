@@ -21,8 +21,8 @@
   border-radius: 6px;
   background: transparent;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   cursor: pointer;
 }
 
@@ -53,6 +53,12 @@
 
 .switcherTrigger svg {
   flex: none;
+}
+
+.separator {
+  color: var(--dsw-alias-label-caption);
+  font-size: var(--dsw-ui-font-strong);
+  line-height: var(--dsw-ui-line-base);
 }
 
 .activitySlot {
@@ -129,8 +135,8 @@
   border-radius: 7px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
-  font-size: 12px;
-  line-height: 17px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-base);
   text-align: left;
   cursor: pointer;
   outline: none;
@@ -221,8 +227,8 @@
 .summary,
 .metrics {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
-  line-height: 15px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .metrics {
@@ -313,8 +319,8 @@
 .error {
   padding: 8px 10px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }
 
 .error {

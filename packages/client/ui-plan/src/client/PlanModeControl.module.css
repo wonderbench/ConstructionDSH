@@ -19,12 +19,13 @@
   min-width: 34px;
   padding: 0 8px;
   border: none;
-  border-radius: 14px;
-  background: var(--dsw-alias-state-business-tertiary);
-  color: var(--dsw-alias-state-business-primary);
-  font-size: 13px;
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-alias-state-warn-tertiary);
+  color: var(--dsw-alias-state-warn-label);
+  font-size: var(--dsw-ui-font-base);
   font-weight: 500;
-  line-height: 20px;
+  line-height: var(--dsw-ui-line-base);
   cursor: pointer;
 }
 
@@ -70,6 +71,6 @@
 
 .error {
   color: var(--dsw-alias-state-error-primary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
 }

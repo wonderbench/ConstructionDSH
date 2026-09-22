@@ -30,6 +30,26 @@
 
 .path {
   margin-right: 12px;
+  overflow: hidden;
+  font-size: var(--dsw-ui-font-secondary);
+  white-space: nowrap;
+}
+
+.path[data-textpreview-path-clipped] {
+  mask-image: linear-gradient(to right, transparent, black 28px);
+}
+
+.pathText {
+  flex: none;
+  margin-right: auto;
+}
+
+.pathDirectory {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.pathName {
+  color: var(--dsw-alias-label-primary);
 }
 
 /* Announced, not applied: the reader keeps the text they are looking at. */
@@ -41,7 +61,7 @@
   margin: 0;
   padding: 6px 10px;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   background: var(--dsw-alias-bg-layer-2);
   border-bottom: 0.5px solid var(--dsw-alias-border-l1);
 }
@@ -234,7 +254,7 @@
   margin: 8px 10px;
   padding: 4px 10px;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   font-family: var(--dsw-font, inherit);
   white-space: normal;
   background: var(--dsw-alias-bg-layer-2);
@@ -293,7 +313,7 @@
   padding: 0 6px;
   overflow: hidden;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   white-space: nowrap;
   text-overflow: ellipsis;
 }

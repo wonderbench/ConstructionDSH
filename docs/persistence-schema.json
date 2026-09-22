@@ -36275,7 +36275,7 @@
         "packages/core/tools/src/index.ts#ToolRestriction"
       ],
       "sources": [
-        "packages/core/tools/src/index.ts:689"
+        "packages/core/tools/src/index.ts:693"
       ]
     },
     {
@@ -50745,7 +50745,7 @@
       },
       "names": [],
       "sources": [
-        "packages/interaction/commands/src/types.ts:112"
+        "packages/interaction/commands/src/types.ts:121"
       ]
     },
     {
@@ -69509,7 +69509,7 @@
       },
       "names": [],
       "sources": [
-        "packages/interaction/commands/src/types.ts:105"
+        "packages/interaction/commands/src/types.ts:114"
       ]
     },
     {
@@ -70646,8 +70646,8 @@
       ],
       "sources": [
         "packages/core/session/src/types.ts:190",
-        "packages/interaction/commands/src/types.ts:75",
-        "packages/interaction/commands/src/types.ts:79",
+        "packages/interaction/commands/src/types.ts:84",
+        "packages/interaction/commands/src/types.ts:88",
         "packages/llm/llm/src/message.ts:111",
         "packages/session/session-title/src/types.ts:35"
       ]

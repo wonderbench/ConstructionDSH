@@ -3,12 +3,77 @@
   flex: none;
 }
 
-.anchor .warning, .anchor .warning:hover {
+.space[data-dismissed='true'] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 40px;
+  margin: 12px 12px 0;
+  padding: 0 8px 0 12px;
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-state-warn-tertiary);
+  border: 0.5px solid var(--dsw-alias-state-warn-secondary);
+  border-radius: 10px;
+  box-shadow: var(--dsw-elevation-panel);
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: 1.5;
+}
+
+.warning, .anchor {
+  flex: none;
+}
+
+.warning {
   color: var(--dsw-alias-state-warn-label);
 }
 
-.anchor .warning:hover, .anchor .warning[aria-expanded='true'] {
-  background: var(--dsw-alias-state-warn-tertiary);
+.message {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.message > span {
+  display: block;
+  overflow: hidden;
+}
+
+.message[data-clipped='true'] > span {
+  mask-image: linear-gradient(to right, black calc(100% - 44px), transparent calc(100% - 12px));
+}
+
+.message[data-clipped='true']::after {
+  position: absolute;
+  right: 0;
+  top: 0;
+  content: '...';
+}
+
+.notice .more, .notice .close {
+  flex: none;
+  padding: 0 4px;
+  color: inherit;
+  background: transparent;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: 1.5;
+}
+
+.notice .more:hover, .notice .close:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
 }
 
 .panel {
@@ -26,7 +91,7 @@
   border: 0;
   border-radius: 12px;
   box-shadow: var(--dsw-elevation-prominent);
-  font-size: 13px;
+  font-size: var(--dsw-ui-font-base);
   line-height: 1.6;
 }
 
@@ -39,7 +104,7 @@
 
 .panelHeader h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--dsw-ui-font-strong);
   font-weight: 600;
 }
 
@@ -50,7 +115,7 @@
 
 .count {
   margin: 0 0 6px;
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
   color: var(--dsw-alias-label-tertiary);
 }
 

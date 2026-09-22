@@ -659,7 +659,7 @@ Source: [`packages/construction/construction-runtime/src/index.ts`](../packages/
 
 ### `construction_report_export`
 
-从一个冻结结果（cost、schedule 或 document 摘要）及其未解决项导出 Markdown 报告。章节按当前业务任务类型过滤。document 结果携带 DocumentSummaryResult：{ schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }。报告写入 construction 产物目录并返回其路径。需要任意一个活动的业务任务。
+从一个冻结结果（cost、schedule 或 document 摘要）及其未解决项导出 Markdown 报告。章节按当前业务任务类型过滤。document 结果携带 DocumentSummaryResult：`{ schema_version: 1, summary: <review summary text>, sections: { <section name>: [<bullet text>] } }`。报告写入 construction 产物目录并返回其路径。需要任意一个活动的业务任务。
 
 ```json
 {

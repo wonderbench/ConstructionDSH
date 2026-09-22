@@ -30,6 +30,26 @@
 /* The margin plus the header's gap keeps the path 16px clear of reload. */
 .path {
   margin-right: 12px;
+  overflow: hidden;
+  font-size: var(--dsw-ui-font-secondary);
+  white-space: nowrap;
+}
+
+.path[data-files-path-clipped] {
+  mask-image: linear-gradient(to right, transparent, black 28px);
+}
+
+.pathText {
+  flex: none;
+  margin-right: auto;
+}
+
+.pathDirectory {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.pathName {
+  color: var(--dsw-alias-label-primary);
 }
 
 .body {
@@ -122,7 +142,7 @@
   margin: 0;
   padding: 3px 10px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: var(--dsw-ui-font-secondary);
 }
 
 .status {

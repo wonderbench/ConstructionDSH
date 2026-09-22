@@ -632,6 +632,44 @@ export interface ToolResultPruneConfig {
 
 Source: [`packages/compaction/compaction-tool-result-pruner/src/types.ts:5`](../packages/compaction/compaction-tool-result-pruner/src/types.ts)
 
+<a id="deepseek-aidsh-construction-runtime"></a>
+
+## `@deepseek-ai/dsh-construction-runtime`
+
+Requires: `tools` · `fs` · `systemPrompt`
+
+```ts config-catalog
+/** Plugin configuration; every tunable lives here. */
+export interface Config {
+  /** Absolute assets directory containing scripts/ and skills/; defaults to the packaged assets. */
+  assetRoot?: string
+  /** Python interpreter or launcher; defaults to `py` on Windows and `python3` elsewhere. */
+  pythonPath?: string
+  /** Worker timeout in milliseconds before the child is killed. */
+  scriptTimeoutMs?: number
+  /** Maximum accepted input file size in bytes. */
+  maxFileBytes?: number
+  /** Maximum worker stdout characters accepted. */
+  maxOutputChars?: number
+  /** Declared cost output precision in decimal places. */
+  costPrecision?: number
+  /** Artifacts directory, relative to the session workspace. */
+  artifactsDir?: string
+  /** Default weekly rest days (0 Sunday to 6 Saturday) for schedule calculations. */
+  weeklyRestDays?: number[]
+  /** Default holiday ISO dates for schedule calculations. */
+  holidays?: string[]
+  /** Name of the bundled read-only skills provider. */
+  skillsProviderName?: string
+  /** Enable the drawing surface: the read-only file tools and `construction_pdf_split`. Defaults to true. */
+  drawing?: boolean
+  /** Enable the business surface: bundled skills provider, composer commands, task tools, and task-binding guidance. Defaults to true. */
+  business?: boolean
+}
+```
+
+Source: [`packages/construction/construction-runtime/src/index.ts:51`](../packages/construction/construction-runtime/src/index.ts)
+
 <a id="deepseek-aidsh-cordis-host-runner"></a>
 
 ## `@deepseek-ai/dsh-cordis-host-runner`
@@ -3808,7 +3846,7 @@ export interface Config {
 export type ToolPresentationMode = 'native' | 'ptc' | 'both'
 ```
 
-Source: [`packages/core/tools/src/index.ts:663`](../packages/core/tools/src/index.ts)
+Source: [`packages/core/tools/src/index.ts:667`](../packages/core/tools/src/index.ts)
 
 <a id="deepseek-aidsh-typert-loader"></a>
 
@@ -4100,6 +4138,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-client-ui-brand-official` ([`packages/client/ui-brand-official/src/index.ts`](../packages/client/ui-brand-official/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-chat` ([`packages/client/ui-chat/src/index.ts`](../packages/client/ui-chat/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-commands` ([`packages/client/ui-commands/src/index.ts`](../packages/client/ui-commands/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-construction-gantt` ([`packages/client/ui-construction-gantt/src/index.ts`](../packages/client/ui-construction-gantt/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-conversation` ([`packages/client/ui-conversation/src/index.ts`](../packages/client/ui-conversation/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-cordis` ([`packages/extensions/ui-cordis/src/index.ts`](../packages/extensions/ui-cordis/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-deliverables` — requires `systemPrompt` · `connection` · `sessionQuery` · `sessionController` · `workspaceFiles` · `fs` · `sandboxPolicy` · `workspaceChanges` ([`packages/client/ui-deliverables/src/index.ts`](../packages/client/ui-deliverables/src/index.ts))
@@ -4221,6 +4260,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 - `@deepseek-ai/dsh-client-ui-slots` ([`packages/client/ui-slots/src/index.ts`](../packages/client/ui-slots/src/index.ts))
 - `@deepseek-ai/dsh-client-web` ([`packages/client/web/src/index.ts`](../packages/client/web/src/index.ts))
 - `@deepseek-ai/dsh-cmdline` ([`packages/boot/cmdline/src/index.ts`](../packages/boot/cmdline/src/index.ts))
+- `@deepseek-ai/dsh-construction` ([`packages/bundle/construction/src/index.ts`](../packages/bundle/construction/src/index.ts))
 - `@deepseek-ai/dsh-deque` ([`packages/util/deque/src/index.ts`](../packages/util/deque/src/index.ts))
 - `@deepseek-ai/dsh-experimental-agent-team-profile` ([`packages/experimental/agent-team-profile/src/index.ts`](../packages/experimental/agent-team-profile/src/index.ts))
 - `@deepseek-ai/dsh-experimental-browser-use-runtime` ([`packages/experimental/browser-use-runtime/src/index.ts`](../packages/experimental/browser-use-runtime/src/index.ts))

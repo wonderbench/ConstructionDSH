@@ -75,6 +75,7 @@ import WorkflowEngine from '@deepseek-ai/dsh-workflow'
 import type { WorkflowRun, WorkflowStartRequest } from '@deepseek-ai/dsh-workflow'
 import * as ToolRalph from '@deepseek-ai/dsh-tool-ralph'
 import * as ToolWorkflow from '@deepseek-ai/dsh-tool-workflow'
+import * as ConstructionRuntime from '@deepseek-ai/dsh-construction-runtime'
 import * as ToolWorkspaceDependencies from '@deepseek-ai/dsh-tool-workspace-dependencies'
 import { githubSlug } from './verify-md-links.ts'
 
@@ -203,6 +204,21 @@ export interface ToolPackage {
  * guard proves it is exhaustive against the on-disk glob.
  */
 const TOOL_PACKAGES: ToolPackage[] = [
+  {
+    pkg: '@deepseek-ai/dsh-construction-runtime',
+    dir: 'construction-runtime',
+    source: 'packages/construction/construction-runtime/src/index.ts',
+    requires: ['ctx.tools', 'ctx.fs', 'ctx.systemPrompt', 'ctx.skills (optional; binds business tasks when present)'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      // Tool registration reads only the bundled assets; every `ctx.fs` use is
+      // at call time, so the bare local filesystem provider suffices.
+      await ctx.plugin(LocalFileSystem)
+      await ctx.plugin(ConstructionRuntime)
+    },
+    note:
+      'The three file tools always run; the business tools (cost, schedule, report) deny calls until a matching business skill is loaded, and loading one mints a task binding that supersedes the previous task. Structured drawing decomposition returns an explicit unsupported status; the optional `ctx.skills` registry is read through `ctx.get`, so the suite mounts and its file tools register without it.',
+  },
   {
     pkg: '@deepseek-ai/dsh-plugin-manager',
     dir: 'plugin-manager',

@@ -12,8 +12,8 @@
   border-radius: 6px;
   background: transparent;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--dsw-ui-font-secondary);
+  line-height: var(--dsw-ui-line-secondary);
   cursor: pointer;
 }
 
@@ -84,8 +84,17 @@
   align-items: center;
   gap: 4px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
-  line-height: 15px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dsw-alias-state-business-primary);
 }
 
 .rowOverdue .status {
@@ -93,8 +102,8 @@
 }
 
 .prompt {
-  font-size: 12px;
-  line-height: 17px;
+  font-size: var(--dsw-ui-font-base);
+  line-height: var(--dsw-ui-line-secondary);
   overflow-wrap: anywhere;
   white-space: normal;
 }
@@ -106,8 +115,8 @@
   gap: 4px;
   min-width: 0;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 10px;
-  line-height: 15px;
+  font-size: var(--dsw-ui-font-caption);
+  line-height: var(--dsw-ui-line-caption);
 }
 
 .relativeOverdue {

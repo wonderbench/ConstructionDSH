@@ -13,11 +13,11 @@ function declarations(selector: string): string[] {
 }
 
 describe('SkillRow.module.css summary line', () => {
-  it('uses the shared ToolCall secondary font-size axis', () => {
+  it('uses the interface typography roles for title and summary', () => {
     for (const selector of ['.title', '.summary']) {
       expect(declarations(selector)).toEqual(expect.arrayContaining([
-        'font-size: var(--dsh-content-font-size-secondary, 13px)',
-        'line-height: calc(24px + var(--dsh-content-font-delta, 0px))',
+        'font-size: var(--dsw-ui-font-strong)',
+        'line-height: var(--dsw-ui-line-base)',
       ]))
     }
   })
