@@ -19,6 +19,7 @@ import yaml from 'js-yaml'
 import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
 import { evaluate } from '@deepseek-ai/cordis-plugin-loader'
 import { bundlePatchPaths, composeEntries, initProfile, loadProfile, PROFILES_DIR } from '@deepseek-ai/dsh-app-boot'
+import { minimalDefinition } from '../../web/tests/fixtures/presets/definitions.ts'
 
 /**
  * The effective disabled state of one row on one platform: a `!!js` expression
@@ -108,7 +109,7 @@ describe('shipped agent presets gate both shell tools by platform', () => {
 
   const definitions = presetRows.filter(row => row.name === '@deepseek-ai/dsh-agent-preset').map(row => row.config as import('@deepseek-ai/dsh-agent-preset-registry').PresetDefinition)
 
-  it.each(['standard', 'ptc', 'cordis'])('preset %s gates its shell tool rows by platform', (preset) => {
+  it.each(['standard', 'engineering', 'cordis'])('preset %s gates its shell tool rows by platform', (preset) => {
     const entries: unknown = definitions.find(row => row.id === preset)!.plugins
     if (!Array.isArray(entries)) throw new TypeError(`preset ${preset} must parse to an entry array`)
     for (const [id, win32] of [['tool-bash', true], ['tool-pwsh', false]] as const) {
@@ -124,8 +125,20 @@ describe('shipped agent presets gate both shell tools by platform', () => {
     }
   })
 
+  it('drawing-split mounts no shell tool row', () => {
+    const entries: unknown = definitions.find(row => row.id === 'drawing-split')!.plugins
+    if (!Array.isArray(entries)) throw new TypeError('drawing-split preset must parse to an entry array')
+    for (const id of ['tool-bash', 'tool-pwsh']) {
+      expect(entries.some(entry => (
+        typeof entry === 'object' && entry !== null && (entry as Record<string, unknown>).id === id
+      )), `${id} must be absent from drawing-split`).toBe(false)
+    }
+  })
+
   it('minimal mounts no shell tool row and gates its persistent shell stack by platform', () => {
-    const entries: unknown = definitions.find(row => row.id === 'minimal')!.plugins
+    // The shipped roster dropped minimal; the lane fixture keeps its
+    // composition (and its platform gates) under test.
+    const entries: unknown = minimalDefinition.plugins
     if (!Array.isArray(entries)) throw new TypeError('minimal preset must parse to an entry array')
     for (const id of ['tool-bash', 'tool-pwsh']) {
       expect(entries.some(entry => (
