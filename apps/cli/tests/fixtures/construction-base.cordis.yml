@@ -1,0 +1,18 @@
+# Minimal keyless composition for loading the construction example overlay in
+# construction-config.spec.ts. Source builtins keep this unit test independent
+# of prebuilt workspace artifacts; the skill-filesystem row exists so the
+# overlay's isolation restate has a target.
+- id: system-prompt
+  name: cordis:construction-test-system-prompt
+
+- id: tools
+  name: cordis:construction-test-tools
+
+- id: fs
+  name: cordis:construction-test-fs
+
+- id: skills
+  name: cordis:construction-test-skills
+
+- id: skill-filesystem
+  name: cordis:construction-test-skill-filesystem

@@ -1,0 +1,26 @@
+{
+  "description": "Exceptional de-identified case: a required test cell is blank in the supplied workbook and the pour card contradicts the pour date.",
+  "inputs": {
+    "inspection_object": "column line C/3–C/9",
+    "files": ["cube-test-record.xlsx", "pour-card.docx"],
+    "properties": ["28-day compressive strength"]
+  },
+  "expected_output": {
+    "shape": "quality review table with unverifiable result",
+    "checked_properties": [
+      {
+        "property": "28-day compressive strength",
+        "requirement": "not less than 35 MPa (design C35)",
+        "measured": null,
+        "source_ref": "cube-test-record.xlsx blank cell",
+        "result": "unverifiable"
+      }
+    ],
+    "nonconformities": [],
+    "unresolved": [
+      "strength cell blank; a blank is not a zero and not a failing grade",
+      "pour-card date contradicts the test-record pour date; confirm which pour the cubes represent"
+    ],
+    "prohibited": "do not report a passing or failing grade while the measurement is blank"
+  }
+}

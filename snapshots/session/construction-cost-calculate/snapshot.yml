@@ -1,0 +1,8 @@
+version: 1
+scenario: construction-cost-calculate
+profile: headless
+composition: construction
+recording: authored
+header:
+  class: construction
+  pin: true

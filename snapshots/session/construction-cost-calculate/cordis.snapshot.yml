@@ -1,0 +1,37 @@
+# Keyless replay patch for the construction composition: keep the construction
+# runtime mounted and replace only the model adapter, mirroring the base
+# headless replay patch. See cordis.yml for the composition rationale.
+- id: llm-deepseek
+  name: '@deepseek-ai/dsh-llm-deepseek'
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
+  disabled: true
+
+- insert:
+    - id: construction-runtime
+      name: '@deepseek-ai/dsh-construction-runtime'
+    - id: llm-replay
+      name: '@deepseek-ai/dsh-llm-replay'
+      config:
+        providers:
+          - id: deepseek-official
+            name: DeepSeek
+            models:
+              - id: deepseek-v4-flash
+              - id: deepseek-v4-pro
+
+- id: tool-bash
+  disabled: true
+
+- id: tool-pwsh
+  disabled: true
+
+- id: tool-workflow
+  disabled: true
+
+- id: workflow-ptc
+  disabled: true
+
+- id: ptc-runtime
+  disabled: true

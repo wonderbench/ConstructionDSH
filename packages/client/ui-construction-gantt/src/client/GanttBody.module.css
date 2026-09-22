@@ -1,0 +1,143 @@
+/* Gantt tab body: toolbar, state banners, partial-notice list, and the
+ * chart section that can overlay the tab body while expanded. */
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  padding: 8px;
+  gap: 8px;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  color: var(--dsw-alias-label-tertiary);
+  text-align: center;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.state[data-state='failure'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scenarioField {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.scenarioLabel {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.scenarioSelect {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 220px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0.5px solid var(--dsw-alias-border-l);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 12px;
+}
+
+.scenarioSelect:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--dsw-alias-brand-primary);
+}
+
+.scaleGroup {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.banner {
+  flex: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--dsw-alias-state-warn-tertiary);
+  color: var(--dsw-alias-state-warn-label);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.banner[role='alert'] {
+  background: var(--dsw-alias-state-error-secondary);
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.partial {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.partialList {
+  margin: 0;
+  padding: 4px 10px 8px 28px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.chartSection {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.chartExpanded {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  padding: 8px;
+  box-sizing: border-box;
+  background: var(--dsw-alias-bg-base);
+  box-shadow: var(--dsw-elevation-panel);
+}
+
+.exitExpand {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 11;
+}
+
+.hint {
+  flex: none;
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+}

@@ -1,0 +1,7 @@
+version: 1
+scenario: construction-schedule-present
+profile: headless
+composition: construction
+recording: authored
+header:
+  class: construction

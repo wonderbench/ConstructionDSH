@@ -1,0 +1,7 @@
+version: 1
+scenario: construction-task-denial
+profile: headless
+composition: construction
+recording: authored
+header:
+  class: construction

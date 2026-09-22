@@ -1,0 +1,17 @@
+{
+  "description": "Exceptional de-identified case: the only evidence file is a scanned PDF page with no extractable text and no visual read available.",
+  "inputs": {
+    "activity": "work at height",
+    "location": "roof level, block C",
+    "files": ["scanned-checklist.pdf"],
+    "requested_coverage": "fall protection"
+  },
+  "expected_output": {
+    "shape": "issue list with coverage state needs_review",
+    "issues": [],
+    "unresolved": [
+      "scanned-checklist.pdf page 1 has no extractable text (needs_visual_read); no fall-protection evidence could be verified"
+    ],
+    "prohibited": "do not rate fall-protection adequacy without measurements or readable records"
+  }
+}

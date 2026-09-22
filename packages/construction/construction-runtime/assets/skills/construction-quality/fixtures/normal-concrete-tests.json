@@ -1,0 +1,22 @@
+{
+  "description": "Normal de-identified case: concrete compressive strength for one pour checked against the test record.",
+  "inputs": {
+    "inspection_object": "podium slab pour P-07",
+    "files": ["cube-test-record.xlsx", "pour-card.docx"],
+    "properties": ["28-day compressive strength"]
+  },
+  "expected_output": {
+    "shape": "quality review table",
+    "checked_properties": [
+      {
+        "property": "28-day compressive strength",
+        "requirement": "not less than 30 MPa (design C30)",
+        "measured": "31.2, 30.8, 31.5 MPa",
+        "source_ref": "cube-test-record.xlsx sheet 'tests' cell range",
+        "result": "conforms"
+      }
+    ],
+    "nonconformities": [],
+    "unresolved": ["curing log for cubes not supplied"]
+  }
+}

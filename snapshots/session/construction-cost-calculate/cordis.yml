@@ -1,0 +1,31 @@
+# Live-recording patch for the construction composition: the construction
+# runtime mounts over the ordinary headless profile, mirroring the shipped
+# dsh-construction bundle. Arbitrary shell, pwsh, workflow, and PTC execution
+# stay disabled, exactly like the shipped profile.
+#
+# Two deliberate deltas from packages/bundle/construction/cordis.patch.yml:
+# - No skill-filesystem isolation: includeDefaultRoots false would also drop
+#   the project/user skill roots, forcing the bundled construction-cost skill
+#   to load through the skill tool with a provider-absolute resource base that
+#   no cwd normalization can tokenize. The scenario seeds an identical copy
+#   under the workspace .dsh skills root so the load stays {{cwd}}-rooted.
+# - No standards-rag MCP row and no Gantt client row: the placeholder RAG
+#   executable is env-dependent and irrelevant to the deterministic cost lane.
+- insert:
+    - id: construction-runtime
+      name: '@deepseek-ai/dsh-construction-runtime'
+
+- id: tool-bash
+  disabled: true
+
+- id: tool-pwsh
+  disabled: true
+
+- id: tool-workflow
+  disabled: true
+
+- id: workflow-ptc
+  disabled: true
+
+- id: ptc-runtime
+  disabled: true

@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "calculator_version": "construction-schedule/1.0.0",
+  "scenario_id": "S1-地下室结构-基准版",
+  "calendar": {
+    "weekly_rest_days": [
+      0,
+      6
+    ],
+    "holidays": [
+      "2026-09-25",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "A",
+      "name": "场地平整及临建",
+      "duration": 4,
+      "start": "2026-09-21",
+      "finish": "2026-09-24",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": true
+    },
+    {
+      "id": "H",
+      "name": "外墙防水及土方回填",
+      "duration": 3,
+      "start": "2026-09-21",
+      "finish": "2026-09-23",
+      "total_float": 32,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "I",
+      "name": "首层结构施工",
+      "duration": 8,
+      "start": "2026-09-21",
+      "finish": "2026-10-08",
+      "total_float": 27,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "B",
+      "name": "土方开挖",
+      "duration": 5,
+      "start": "2026-09-28",
+      "finish": "2026-10-09",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "C",
+      "name": "混凝土垫层",
+      "duration": 2,
+      "start": "2026-10-13",
+      "finish": "2026-10-14",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "D",
+      "name": "基础防水及保护层",
+      "duration": 3,
+      "start": "2026-10-15",
+      "finish": "2026-10-19",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "E",
+      "name": "基础钢筋混凝土",
+      "duration": 5,
+      "start": "2026-10-20",
+      "finish": "2026-10-26",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "F",
+      "name": "地下室外墙及柱",
+      "duration": 6,
+      "start": "2026-10-27",
+      "finish": "2026-11-03",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "G",
+      "name": "顶板模板及钢筋混凝土",
+      "duration": 7,
+      "start": "2026-11-04",
+      "finish": "2026-11-12",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": false,
+      "locked": false
+    },
+    {
+      "id": "J",
+      "name": "地下室移交验收",
+      "duration": 0,
+      "start": "2026-11-17",
+      "finish": "2026-11-17",
+      "total_float": 0,
+      "is_critical": false,
+      "is_milestone": true,
+      "locked": false
+    }
+  ],
+  "links": [
+    {
+      "from": "A",
+      "to": "B",
+      "lag": 0,
+      "supported": true
+    },
+    {
+      "from": "B",
+      "to": "C",
+      "lag": 1,
+      "supported": true
+    },
+    {
+      "from": "C",
+      "to": "D",
+      "lag": 0,
+      "supported": true
+    },
+    {
+      "from": "D",
+      "to": "E",
+      "lag": 0,
+      "supported": true
+    },
+    {
+      "from": "E",
+      "to": "F",
+      "lag": 0,
+      "supported": true
+    },
+    {
+      "from": "F",
+      "to": "G",
+      "lag": 0,
+      "supported": true
+    },
+    {
+      "from": "G",
+      "to": "H",
+      "lag": 2,
+      "supported": false
+    },
+    {
+      "from": "G",
+      "to": "J",
+      "lag": 2,
+      "supported": true
+    }
+  ],
+  "critical_path": null,
+  "assumptions": [
+    "SS link G -> H is unsupported and was not rewritten as finish-to-start",
+    "the logic is incomplete (unsupported relations or tasks without links or start constraints); no critical path is claimed"
+  ],
+  "unresolved": [
+    "SS link G -> H is unsupported and was not rewritten as finish-to-start"
+  ],
+  "warnings": []
+}

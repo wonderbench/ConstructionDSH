@@ -1,0 +1,38 @@
+# Opt-in construction patch: mounts the construction runtime, isolates the
+# skill catalog from the default filesystem roots, and attaches the standards
+# RAG MCP server with an env-driven command that never blocks the rest of the
+# profile when unreachable. Layer it over a base-backed profile, for example:
+#   dsh --profile web --patch apps/cli/config/examples/construction/cordis.yml
+
+- insert:
+    - id: construction-runtime
+      name: '@deepseek-ai/dsh-construction-runtime'
+
+    - id: standards-rag
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: standards
+        transport: stdio
+        # Placeholder executable; point DSH_STANDARDS_RAG_COMMAND at the real
+        # server (and DSH_STANDARDS_RAG_ARGS at its space-separated arguments).
+        command: !!js process.env.DSH_STANDARDS_RAG_COMMAND || 'standards-rag-mcp-server'
+        args: !!js (process.env.DSH_STANDARDS_RAG_ARGS ?? '').split(' ').filter(Boolean)
+        failOnStartupError: false
+        reconnect:
+          enabled: false
+
+# Skill isolation: the four business Skills come from the construction
+# runtime's own bundled provider, so the filesystem provider drops the default
+# project and user roots. The config replaces wholesale; every other field is
+# restated at the plugin schema default.
+- id: skill-filesystem
+  config:
+    providerName: filesystem
+    includeDefaultRoots: false
+    customSkillDirs: []
+    watch: true
+    watchUsePolling: false
+    watchStabilityThresholdMs: 200
+    watchPollIntervalMs: 100
+    watchMaxProjects: 128
+    watchFollowSymlinks: true

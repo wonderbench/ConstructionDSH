@@ -1,0 +1,77 @@
+# The dsh-construction bundle patch: the construction engineering composition,
+# applied over the dsh-base bundle. Upstream default Profiles stay unchanged;
+# this bundle is opt-in through the construction profile or a `--patch` overlay.
+#
+# A patch replaces the targeted row's whole `config` rather than merging into it.
+#
+# The composition mounts the construction runtime (read-only file tools,
+# deterministic costing, CPM scheduling, report export, and the four bundled
+# business Skills), isolates the skill catalog from the default filesystem
+# roots so only the bundled business Skills surface, attaches the standards
+# RAG server over MCP without letting it block anything else, and adds the
+# sidebar Gantt client row. Model-facing arbitrary shell and code execution
+# stay disabled; web_search and web_fetch remain available.
+
+- insert:
+    # All Config values keep the plugin defaults; the packaged assets resolve
+    # relative to the plugin itself.
+    - id: construction-runtime
+      name: '@deepseek-ai/dsh-construction-runtime'
+
+    # Browser roster row, exactly like the web-app client rows: the package's
+    # dsh.client manifest marks it; without a Web surface mounted the node
+    # half is an empty apply.
+    - id: ui-construction-gantt
+      name: '@deepseek-ai/dsh-client-ui-construction-gantt'
+
+    # Standards RAG over MCP. The command is env-driven with a documented
+    # placeholder default; an unreachable server must never block file, cost,
+    # or schedule work (failOnStartupError stays false and reconnect is off,
+    # so a dead server fails once and stays silent).
+    - id: standards-rag
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: standards
+        transport: stdio
+        # Placeholder executable; point DSH_STANDARDS_RAG_COMMAND at the real
+        # server (and DSH_STANDARDS_RAG_ARGS at its space-separated arguments).
+        command: !!js process.env.DSH_STANDARDS_RAG_COMMAND || 'standards-rag-mcp-server'
+        args: !!js (process.env.DSH_STANDARDS_RAG_ARGS ?? '').split(' ').filter(Boolean)
+        failOnStartupError: false
+        reconnect:
+          enabled: false
+
+# Skill isolation: the four business Skills come from the construction
+# runtime's own bundled provider, so the filesystem provider drops the default
+# project and user roots. The config replaces wholesale; every field the
+# plugin schema would otherwise default is restated (dshHome, agentsHome, and
+# bundledSkillDir stay unset and resolve at runtime).
+- id: skill-filesystem
+  config:
+    providerName: filesystem
+    includeDefaultRoots: false
+    customSkillDirs: []
+    watch: true
+    watchUsePolling: false
+    watchStabilityThresholdMs: 200
+    watchPollIntervalMs: 100
+    watchMaxProjects: 128
+    watchFollowSymlinks: true
+
+# Model-facing arbitrary shell and code execution stay off in this profile;
+# the construction tools are the only execution surface. The web rows above
+# keep web_search and web_fetch available.
+- id: tool-bash
+  disabled: true
+
+- id: tool-pwsh
+  disabled: true
+
+- id: tool-workflow
+  disabled: true
+
+- id: workflow-ptc
+  disabled: true
+
+- id: ptc-runtime
+  disabled: true

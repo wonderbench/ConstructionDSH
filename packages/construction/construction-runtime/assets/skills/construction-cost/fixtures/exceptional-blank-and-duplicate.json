@@ -1,0 +1,47 @@
+{
+  "description": "Exceptional de-identified case: one item has a blank unit price and another appears twice under one code with different descriptions; blanks must not become zero and duplicates must be flagged.",
+  "inputs": {
+    "variant": "tender",
+    "currency": "CNY",
+    "items": [
+      {
+        "code": "0202",
+        "description": "C30 concrete, pumped",
+        "unit": "m3",
+        "quantity": "300",
+        "resources": [
+          { "kind": "material", "name": "ready-mix C30", "consumption": "1.02", "unit_price": "415" }
+        ],
+        "fees": []
+      },
+      {
+        "code": "0203",
+        "description": "rebar supply and fix, grade B",
+        "unit": "t",
+        "quantity": "40",
+        "resources": [
+          { "kind": "material", "name": "rebar", "consumption": "1.05", "unit_price": "" }
+        ],
+        "fees": []
+      },
+      {
+        "code": "0202",
+        "description": "C30 concrete, pumped (podium)",
+        "unit": "m3",
+        "quantity": "120",
+        "resources": [
+          { "kind": "material", "name": "ready-mix C30", "consumption": "1.02", "unit_price": "418" }
+        ],
+        "fees": []
+      }
+    ]
+  },
+  "expected_output": {
+    "shape": "CostResult with unresolved items",
+    "unresolved": [
+      "0203: resource \"rebar\" has a blank consumption or unit price; a blank is not zero, so the line is excluded",
+      "0202: appears 2 times under one code; confirm the entries are intended or they will double-count"
+    ],
+    "prohibited": "do not total 0203 as zero and do not merge the two 0202 entries without confirmation"
+  }
+}

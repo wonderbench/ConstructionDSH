@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>地下室结构进度计划（CPM 计算版，含对比版）</title>
+<style>
+  body { font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; margin: 28px; color: #1f2328; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  h2 { font-size: 17px; margin: 26px 0 4px; }
+  .sid { color: #6b7280; font-weight: 400; font-size: 13px; }
+  .meta { color: #57606a; font-size: 12.5px; margin: 0 0 12px; }
+  .banner { background: #fff8e5; border: 1px solid #f0d9a0; padding: 10px 14px; border-radius: 6px; font-size: 12.5px; color: #6b4e00; }
+  .chart { position: relative; padding: 22px 0 6px 0; overflow-x: auto; }
+  .months { position: relative; height: 18px; }
+  .month { position: absolute; font-size: 12px; color: #57606a; border-left: 1px solid #d0d7de; padding-left: 4px; }
+  .grid { position: relative; height: 6px; margin-bottom: 4px; }
+  .day { position: absolute; top: 0; height: 340px; border-right: 1px solid #eef1f4; }
+  .day.off { background: #f4f6f8; border-right-color: #e3e7ea; }
+  .day.holiday { background: #fdecec; }
+  .row { display: flex; align-items: center; height: 30px; position: relative; z-index: 2; }
+  .name { width: 250px; flex: none; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .code { display: inline-block; width: 16px; color: #0969da; font-weight: 600; }
+  .track { position: relative; flex: 1; height: 22px; }
+  .bar { position: absolute; top: 2px; height: 18px; background: #4c8dd8; color: #fff; font-size: 11px; line-height: 18px; padding: 0 4px; border-radius: 3px; white-space: nowrap; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .bar.locked { background: #2f7d4f; }
+  .bar.unlinked { background: #b4453f; }
+  .barlabel { position: absolute; top: 4px; font-size: 11px; color: #1f2328; white-space: nowrap; }
+  .float { position: absolute; top: 8px; height: 6px; background: repeating-linear-gradient(45deg,#c9d3dd,#c9d3dd 3px,#e6ebf0 3px,#e6ebf0 6px); border-radius: 3px; }
+  .legend { font-size: 12px; color: #57606a; margin: 10px 0 0; display: flex; gap: 18px; flex-wrap: wrap; }
+  .swatch { display: inline-block; width: 18px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  table { border-collapse: collapse; margin-top: 14px; font-size: 12.5px; width: 100%; max-width: 900px; }
+  th, td { border: 1px solid #d8dee4; padding: 4px 8px; text-align: left; }
+  th { background: #f6f8fa; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.locked td { color: #2f7d4f; }
+  .notes { font-size: 12.5px; color: #57606a; max-width: 900px; }
+  .notes li { margin: 3px 0; }
+  footer { margin-top: 26px; font-size: 12px; color: #6b7280; border-top: 1px solid #d8dee4; padding-top: 10px; }
+</style></head>
+<body>
+<h1>地下室结构进度计划　CPM（关键线路法）计算结果</h1>
+<p class="meta">数据来源：<code>进度计划任务表.xlsx</code>（任务表 + 项目日历）　|　工期单位：工作日　|　日历日区间 2026-09-21 至 2026-11-20</p>
+<p class="banner">本图由冻结的 <code>ScheduleResult</code> JSON 机械绘制（开始/完成/总时差逐项取自计算结果，未手工改数）。项目逻辑不完整：H 的 SS+2 搭接不受支持、I 的紧前关系未定，因此<strong>不判定关键线路</strong>，全部日期仅供参考，不构成工期承诺。</p>
+<section>
+  <h2>基准版（G = 7 个工作日）　<span class="sid">S1-地下室结构-基准版</span></h2>
+  <p class="meta">日历：休息日 日、六；节假日 2026-09-25、2026-10-01、2026-10-02、2026-10-03、2026-10-04、2026-10-05、2026-10-06、2026-10-07　|　
+  关键线路（critical path）：<strong>未判定（逻辑不完整）</strong>　|　
+  任务数：10</p>
+  <div class="chart">
+    <div class="months"><div class="month" style="left:0px;width:130px">2026年9月</div><div class="month" style="left:130px;width:403px">2026年10月</div><div class="month" style="left:533px;width:260px">2026年11月</div></div>
+    <div class="grid"><div class="day" style="left:0px;width:13px"></div><div class="day" style="left:13px;width:13px"></div><div class="day" style="left:26px;width:13px"></div><div class="day" style="left:39px;width:13px"></div><div class="day off holiday" style="left:52px;width:13px"></div><div class="day off" style="left:65px;width:13px"></div><div class="day off" style="left:78px;width:13px"></div><div class="day" style="left:91px;width:13px"></div><div class="day" style="left:104px;width:13px"></div><div class="day" style="left:117px;width:13px"></div><div class="day off holiday" style="left:130px;width:13px"></div><div class="day off holiday" style="left:143px;width:13px"></div><div class="day off holiday" style="left:156px;width:13px"></div><div class="day off holiday" style="left:169px;width:13px"></div><div class="day off holiday" style="left:182px;width:13px"></div><div class="day off holiday" style="left:195px;width:13px"></div><div class="day off holiday" style="left:208px;width:13px"></div><div class="day" style="left:221px;width:13px"></div><div class="day" style="left:234px;width:13px"></div><div class="day off" style="left:247px;width:13px"></div><div class="day off" style="left:260px;width:13px"></div><div class="day" style="left:273px;width:13px"></div><div class="day" style="left:286px;width:13px"></div><div class="day" style="left:299px;width:13px"></div><div class="day" style="left:312px;width:13px"></div><div class="day" style="left:325px;width:13px"></div><div class="day off" style="left:338px;width:13px"></div><div class="day off" style="left:351px;width:13px"></div><div class="day" style="left:364px;width:13px"></div><div class="day" style="left:377px;width:13px"></div><div class="day" style="left:390px;width:13px"></div><div class="day" style="left:403px;width:13px"></div><div class="day" style="left:416px;width:13px"></div><div class="day off" style="left:429px;width:13px"></div><div class="day off" style="left:442px;width:13px"></div><div class="day" style="left:455px;width:13px"></div><div class="day" style="left:468px;width:13px"></div><div class="day" style="left:481px;width:13px"></div><div class="day" style="left:494px;width:13px"></div><div class="day" style="left:507px;width:13px"></div><div class="day off" style="left:520px;width:13px"></div><div class="day off" style="left:533px;width:13px"></div><div class="day" style="left:546px;width:13px"></div><div class="day" style="left:559px;width:13px"></div><div class="day" style="left:572px;width:13px"></div><div class="day" style="left:585px;width:13px"></div><div class="day" style="left:598px;width:13px"></div><div class="day off" style="left:611px;width:13px"></div><div class="day off" style="left:624px;width:13px"></div><div class="day" style="left:637px;width:13px"></div><div class="day" style="left:650px;width:13px"></div><div class="day" style="left:663px;width:13px"></div><div class="day" style="left:676px;width:13px"></div><div class="day" style="left:689px;width:13px"></div><div class="day off" style="left:702px;width:13px"></div><div class="day off" style="left:715px;width:13px"></div><div class="day" style="left:728px;width:13px"></div><div class="day" style="left:741px;width:13px"></div><div class="day" style="left:754px;width:13px"></div><div class="day" style="left:767px;width:13px"></div><div class="day" style="left:780px;width:13px"></div></div>
+    <div class="row">
+      <div class="name" title="场地平整及临建"><span class="code">A</span> 场地平整及临建</div>
+      <div class="track">
+        <div class="bar locked slim" style="left:0px;width:52px"></div><div class="barlabel" style="left:58px">09-21 – 09-24</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="外墙防水及土方回填"><span class="code">H</span> 外墙防水及土方回填</div>
+      <div class="track">
+        <div class="float" style="left:39px;width:702px"></div>
+        <div class="bar unlinked slim" style="left:0px;width:39px"></div><div class="barlabel" style="left:45px">09-21 – 09-23</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="首层结构施工"><span class="code">I</span> 首层结构施工</div>
+      <div class="track">
+        <div class="float" style="left:234px;width:507px"></div>
+        <div class="bar unlinked" style="left:0px;width:234px">09-21 – 10-08</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="土方开挖"><span class="code">B</span> 土方开挖</div>
+      <div class="track">
+        <div class="bar" style="left:91px;width:156px">09-28 – 10-09</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="混凝土垫层"><span class="code">C</span> 混凝土垫层</div>
+      <div class="track">
+        <div class="bar slim" style="left:286px;width:26px"></div><div class="barlabel" style="left:318px">10-13 – 10-14</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="基础防水及保护层"><span class="code">D</span> 基础防水及保护层</div>
+      <div class="track">
+        <div class="bar slim" style="left:312px;width:65px"></div><div class="barlabel" style="left:383px">10-15 – 10-19</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="基础钢筋混凝土"><span class="code">E</span> 基础钢筋混凝土</div>
+      <div class="track">
+        <div class="bar slim" style="left:377px;width:91px"></div><div class="barlabel" style="left:474px">10-20 – 10-26</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="地下室外墙及柱"><span class="code">F</span> 地下室外墙及柱</div>
+      <div class="track">
+        <div class="bar" style="left:468px;width:104px">10-27 – 11-03</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="顶板模板及钢筋混凝土"><span class="code">G</span> 顶板模板及钢筋混凝土</div>
+      <div class="track">
+        <div class="bar" style="left:572px;width:117px">11-04 – 11-12</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="地下室移交验收"><span class="code">J</span> 地下室移交验收</div>
+      <div class="track">
+        <div class="bar slim" style="left:741px;width:13px"></div><div class="barlabel" style="left:760px">11-17 – 11-17</div>
+      </div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>ID</th><th>任务</th><th>工期(工作日)</th><th>开始</th><th>完成</th><th>总时差</th><th>状态</th></tr></thead>
+    <tbody><tr class="locked">
+      <td>A</td><td>场地平整及临建</td><td class="num">4</td>
+      <td>2026-09-21</td><td>2026-09-24</td><td class="num">0</td>
+      <td>已锁定</td></tr>
+<tr class="">
+      <td>H</td><td>外墙防水及土方回填</td><td class="num">3</td>
+      <td>2026-09-21</td><td>2026-09-23</td><td class="num">32</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>I</td><td>首层结构施工</td><td class="num">8</td>
+      <td>2026-09-21</td><td>2026-10-08</td><td class="num">27</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>B</td><td>土方开挖</td><td class="num">5</td>
+      <td>2026-09-28</td><td>2026-10-09</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>C</td><td>混凝土垫层</td><td class="num">2</td>
+      <td>2026-10-13</td><td>2026-10-14</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>D</td><td>基础防水及保护层</td><td class="num">3</td>
+      <td>2026-10-15</td><td>2026-10-19</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>E</td><td>基础钢筋混凝土</td><td class="num">5</td>
+      <td>2026-10-20</td><td>2026-10-26</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>F</td><td>地下室外墙及柱</td><td class="num">6</td>
+      <td>2026-10-27</td><td>2026-11-03</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>G</td><td>顶板模板及钢筋混凝土</td><td class="num">7</td>
+      <td>2026-11-04</td><td>2026-11-12</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>J</td><td>地下室移交验收</td><td class="num">0</td>
+      <td>2026-11-17</td><td>2026-11-17</td><td class="num">0</td>
+      <td>里程碑</td></tr></tbody>
+  </table>
+  <ul class="notes">
+    <li>假设：SS link G -&gt; H is unsupported and was not rewritten as finish-to-start</li>
+    <li>假设：the logic is incomplete (unsupported relations or tasks without links or start constraints); no critical path is claimed</li>
+    <li>未决：SS link G -&gt; H is unsupported and was not rewritten as finish-to-start</li>
+    <li>H（外墙防水及土方回填）与 I（首层结构施工）没有受支持的紧前关系：H 的 SS+2 搭接不受支持、I 的紧前未定，两者的开始日期由锚定日期机械推出，<strong>不是可执行计划</strong>。</li>
+  </ul>
+</section>
+<section>
+  <h2>对比版（G = 10 个工作日）　<span class="sid">S2-地下室结构-顶板10天</span></h2>
+  <p class="meta">日历：休息日 日、六；节假日 2026-09-25、2026-10-01、2026-10-02、2026-10-03、2026-10-04、2026-10-05、2026-10-06、2026-10-07　|　
+  关键线路（critical path）：<strong>未判定（逻辑不完整）</strong>　|　
+  任务数：10</p>
+  <div class="chart">
+    <div class="months"><div class="month" style="left:0px;width:130px">2026年9月</div><div class="month" style="left:130px;width:403px">2026年10月</div><div class="month" style="left:533px;width:260px">2026年11月</div></div>
+    <div class="grid"><div class="day" style="left:0px;width:13px"></div><div class="day" style="left:13px;width:13px"></div><div class="day" style="left:26px;width:13px"></div><div class="day" style="left:39px;width:13px"></div><div class="day off holiday" style="left:52px;width:13px"></div><div class="day off" style="left:65px;width:13px"></div><div class="day off" style="left:78px;width:13px"></div><div class="day" style="left:91px;width:13px"></div><div class="day" style="left:104px;width:13px"></div><div class="day" style="left:117px;width:13px"></div><div class="day off holiday" style="left:130px;width:13px"></div><div class="day off holiday" style="left:143px;width:13px"></div><div class="day off holiday" style="left:156px;width:13px"></div><div class="day off holiday" style="left:169px;width:13px"></div><div class="day off holiday" style="left:182px;width:13px"></div><div class="day off holiday" style="left:195px;width:13px"></div><div class="day off holiday" style="left:208px;width:13px"></div><div class="day" style="left:221px;width:13px"></div><div class="day" style="left:234px;width:13px"></div><div class="day off" style="left:247px;width:13px"></div><div class="day off" style="left:260px;width:13px"></div><div class="day" style="left:273px;width:13px"></div><div class="day" style="left:286px;width:13px"></div><div class="day" style="left:299px;width:13px"></div><div class="day" style="left:312px;width:13px"></div><div class="day" style="left:325px;width:13px"></div><div class="day off" style="left:338px;width:13px"></div><div class="day off" style="left:351px;width:13px"></div><div class="day" style="left:364px;width:13px"></div><div class="day" style="left:377px;width:13px"></div><div class="day" style="left:390px;width:13px"></div><div class="day" style="left:403px;width:13px"></div><div class="day" style="left:416px;width:13px"></div><div class="day off" style="left:429px;width:13px"></div><div class="day off" style="left:442px;width:13px"></div><div class="day" style="left:455px;width:13px"></div><div class="day" style="left:468px;width:13px"></div><div class="day" style="left:481px;width:13px"></div><div class="day" style="left:494px;width:13px"></div><div class="day" style="left:507px;width:13px"></div><div class="day off" style="left:520px;width:13px"></div><div class="day off" style="left:533px;width:13px"></div><div class="day" style="left:546px;width:13px"></div><div class="day" style="left:559px;width:13px"></div><div class="day" style="left:572px;width:13px"></div><div class="day" style="left:585px;width:13px"></div><div class="day" style="left:598px;width:13px"></div><div class="day off" style="left:611px;width:13px"></div><div class="day off" style="left:624px;width:13px"></div><div class="day" style="left:637px;width:13px"></div><div class="day" style="left:650px;width:13px"></div><div class="day" style="left:663px;width:13px"></div><div class="day" style="left:676px;width:13px"></div><div class="day" style="left:689px;width:13px"></div><div class="day off" style="left:702px;width:13px"></div><div class="day off" style="left:715px;width:13px"></div><div class="day" style="left:728px;width:13px"></div><div class="day" style="left:741px;width:13px"></div><div class="day" style="left:754px;width:13px"></div><div class="day" style="left:767px;width:13px"></div><div class="day" style="left:780px;width:13px"></div></div>
+    <div class="row">
+      <div class="name" title="场地平整及临建"><span class="code">A</span> 场地平整及临建</div>
+      <div class="track">
+        <div class="bar locked slim" style="left:0px;width:52px"></div><div class="barlabel" style="left:58px">09-21 – 09-24</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="外墙防水及土方回填"><span class="code">H</span> 外墙防水及土方回填</div>
+      <div class="track">
+        <div class="float" style="left:39px;width:741px"></div>
+        <div class="bar unlinked slim" style="left:0px;width:39px"></div><div class="barlabel" style="left:45px">09-21 – 09-23</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="首层结构施工"><span class="code">I</span> 首层结构施工</div>
+      <div class="track">
+        <div class="float" style="left:234px;width:546px"></div>
+        <div class="bar unlinked" style="left:0px;width:234px">09-21 – 10-08</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="土方开挖"><span class="code">B</span> 土方开挖</div>
+      <div class="track">
+        <div class="bar" style="left:91px;width:156px">09-28 – 10-09</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="混凝土垫层"><span class="code">C</span> 混凝土垫层</div>
+      <div class="track">
+        <div class="bar slim" style="left:286px;width:26px"></div><div class="barlabel" style="left:318px">10-13 – 10-14</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="基础防水及保护层"><span class="code">D</span> 基础防水及保护层</div>
+      <div class="track">
+        <div class="bar slim" style="left:312px;width:65px"></div><div class="barlabel" style="left:383px">10-15 – 10-19</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="基础钢筋混凝土"><span class="code">E</span> 基础钢筋混凝土</div>
+      <div class="track">
+        <div class="bar slim" style="left:377px;width:91px"></div><div class="barlabel" style="left:474px">10-20 – 10-26</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="地下室外墙及柱"><span class="code">F</span> 地下室外墙及柱</div>
+      <div class="track">
+        <div class="bar" style="left:468px;width:104px">10-27 – 11-03</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="顶板模板及钢筋混凝土"><span class="code">G</span> 顶板模板及钢筋混凝土</div>
+      <div class="track">
+        <div class="bar" style="left:572px;width:182px">11-04 – 11-17</div>
+      </div>
+    </div>
+<div class="row">
+      <div class="name" title="地下室移交验收"><span class="code">J</span> 地下室移交验收</div>
+      <div class="track">
+        <div class="bar slim" style="left:780px;width:13px"></div><div class="barlabel" style="left:799px">11-20 – 11-20</div>
+      </div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>ID</th><th>任务</th><th>工期(工作日)</th><th>开始</th><th>完成</th><th>总时差</th><th>状态</th></tr></thead>
+    <tbody><tr class="locked">
+      <td>A</td><td>场地平整及临建</td><td class="num">4</td>
+      <td>2026-09-21</td><td>2026-09-24</td><td class="num">0</td>
+      <td>已锁定</td></tr>
+<tr class="">
+      <td>H</td><td>外墙防水及土方回填</td><td class="num">3</td>
+      <td>2026-09-21</td><td>2026-09-23</td><td class="num">35</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>I</td><td>首层结构施工</td><td class="num">8</td>
+      <td>2026-09-21</td><td>2026-10-08</td><td class="num">30</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>B</td><td>土方开挖</td><td class="num">5</td>
+      <td>2026-09-28</td><td>2026-10-09</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>C</td><td>混凝土垫层</td><td class="num">2</td>
+      <td>2026-10-13</td><td>2026-10-14</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>D</td><td>基础防水及保护层</td><td class="num">3</td>
+      <td>2026-10-15</td><td>2026-10-19</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>E</td><td>基础钢筋混凝土</td><td class="num">5</td>
+      <td>2026-10-20</td><td>2026-10-26</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>F</td><td>地下室外墙及柱</td><td class="num">6</td>
+      <td>2026-10-27</td><td>2026-11-03</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>G</td><td>顶板模板及钢筋混凝土</td><td class="num">10</td>
+      <td>2026-11-04</td><td>2026-11-17</td><td class="num">0</td>
+      <td>—</td></tr>
+<tr class="">
+      <td>J</td><td>地下室移交验收</td><td class="num">0</td>
+      <td>2026-11-20</td><td>2026-11-20</td><td class="num">0</td>
+      <td>里程碑</td></tr></tbody>
+  </table>
+  <ul class="notes">
+    <li>假设：SS link G -&gt; H is unsupported and was not rewritten as finish-to-start</li>
+    <li>假设：the logic is incomplete (unsupported relations or tasks without links or start constraints); no critical path is claimed</li>
+    <li>未决：SS link G -&gt; H is unsupported and was not rewritten as finish-to-start</li>
+    <li>H（外墙防水及土方回填）与 I（首层结构施工）没有受支持的紧前关系：H 的 SS+2 搭接不受支持、I 的紧前未定，两者的开始日期由锚定日期机械推出，<strong>不是可执行计划</strong>。</li>
+  </ul>
+</section>
+<p class="legend">
+  <span><i class="swatch" style="background:#4c8dd8"></i>计划作业</span>
+  <span><i class="swatch" style="background:#2f7d4f"></i>已锁定（实际日期）</span>
+  <span><i class="swatch" style="background:#b4453f"></i>关系缺失，日期仅供参考</span>
+  <span><i class="swatch" style="background:repeating-linear-gradient(45deg,#c9d3dd,#c9d3dd 3px,#e6ebf0 3px,#e6ebf0 6px)"></i>总时差（工作日）</span>
+  <span><i class="swatch" style="background:#f4f6f8;border:1px solid #d8dee4"></i>周六、周日</span>
+  <span><i class="swatch" style="background:#fdecec;border:1px solid #f0c0c0"></i>法定节假日</span>
+</p>
+<footer>采用首开/首完工作日边界（inclusive start / exclusive finish），显示完成日期为完成边界前的最后一个工作日。总时差以工作日计；本版本不计算自由时差（free float）。</footer>
+</body></html>

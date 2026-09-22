@@ -1,0 +1,24 @@
+{
+  "description": "Exceptional de-identified case: two tasks depend on each other, forming a cycle, and one link declares an unsupported relation; the calculation must reject and name the cycle instead of producing dates, and report the unsupported relation without rewriting it.",
+  "inputs": {
+    "scenario_id": "draft-02",
+    "project_start": "2026-03-02",
+    "weekly_rest_days": [6, 0],
+    "holidays": [],
+    "tasks": [
+      { "id": "E", "name": "steel fixing", "duration": 4 },
+      { "id": "F", "name": "formwork close", "duration": 3 }
+    ],
+    "links": [
+      { "from": "E", "to": "F", "lag": 0 },
+      { "from": "F", "to": "E", "lag": 0 },
+      { "from": "E", "to": "F", "relation": "SS", "lag": 0 }
+    ]
+  },
+  "expected_output": {
+    "shape": "rejection",
+    "rejection": "cycle detected: E -> F -> E",
+    "unsupported": "the SS relation E -> F is reported as unsupported and is never rewritten as finish-to-start",
+    "prohibited": "do not calculate dates or claim a critical path for this logic"
+  }
+}

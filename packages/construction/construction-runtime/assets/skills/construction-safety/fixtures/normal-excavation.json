@@ -1,0 +1,21 @@
+{
+  "description": "Normal de-identified case: excavation next to a live roadway with a provided inspection record.",
+  "inputs": {
+    "activity": "trench excavation",
+    "location": "station 12+300 to 12+450",
+    "files": ["inspection-record.docx"],
+    "requested_coverage": "excavation support and traffic protection"
+  },
+  "expected_output": {
+    "shape": "issue list",
+    "issues": [
+      {
+        "severity": "high",
+        "issue": "trench deeper than 1.5 m with timber shoring recorded only for the first 20 m",
+        "evidence": "inspection-record.docx paragraph stating support extent",
+        "proposed_control": "extend shoring or bench the remaining trench length before further excavation"
+      }
+    ],
+    "unresolved": ["whether the utility survey covers the last 50 m"]
+  }
+}

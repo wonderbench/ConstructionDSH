@@ -213,6 +213,9 @@ importers:
       '@deepseek-ai/dsh-compaction-tool-result-pruner':
         specifier: workspace:^
         version: link:../../packages/compaction/compaction-tool-result-pruner
+      '@deepseek-ai/dsh-construction':
+        specifier: workspace:^
+        version: link:../../packages/bundle/construction
       '@deepseek-ai/dsh-cordis-client-runner':
         specifier: workspace:^
         version: link:../../packages/extensions/cordis-client-runner
@@ -415,6 +418,9 @@ importers:
       '@deepseek-ai/dsh-bash-local':
         specifier: workspace:^
         version: link:../../packages/shell/bash-local
+      '@deepseek-ai/dsh-construction-runtime':
+        specifier: workspace:^
+        version: link:../../packages/construction/construction-runtime
       '@deepseek-ai/dsh-credentials-local':
         specifier: workspace:^
         version: link:../../packages/credentials/credentials-local
@@ -1885,6 +1891,28 @@ importers:
         specifier: workspace:^
         version: link:../../../vendor/cordis
 
+  packages/bundle/construction:
+    dependencies:
+      '@deepseek-ai/dsh-client-ui-construction-gantt':
+        specifier: workspace:^
+        version: link:../../client/ui-construction-gantt
+      '@deepseek-ai/dsh-construction-runtime':
+        specifier: workspace:^
+        version: link:../../construction/construction-runtime
+      '@deepseek-ai/dsh-mcp-client':
+        specifier: workspace:^
+        version: link:../../mcp/mcp-client
+      '@deepseek-ai/dsh-skill-filesystem':
+        specifier: workspace:^
+        version: link:../../skill/skill-filesystem
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-base':
+        specifier: workspace:^
+        version: link:../base
+
   packages/bundle/headless:
     dependencies:
       '@deepseek-ai/dsh-brand':
@@ -2893,6 +2921,69 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1
 
+  packages/client/ui-construction-gantt:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-api-session-controller':
+        specifier: workspace:^
+        version: link:../../api/session-controller
+      '@deepseek-ai/dsh-client-locale':
+        specifier: workspace:^
+        version: link:../locale
+      '@deepseek-ai/dsh-client-store':
+        specifier: workspace:^
+        version: link:../store
+      '@deepseek-ai/dsh-client-test-runtime':
+        specifier: workspace:^
+        version: link:../../test-support/client-runtime
+      '@deepseek-ai/dsh-client-ui-conversation':
+        specifier: workspace:^
+        version: link:../ui-conversation
+      '@deepseek-ai/dsh-client-ui-primitives':
+        specifier: workspace:^
+        version: link:../ui-primitives
+      '@deepseek-ai/dsh-client-ui-renderer':
+        specifier: workspace:^
+        version: link:../ui-renderer
+      '@deepseek-ai/dsh-client-ui-session':
+        specifier: workspace:^
+        version: link:../ui-session
+      '@deepseek-ai/dsh-client-ui-sidebar-right':
+        specifier: workspace:^
+        version: link:../ui-sidebar-right
+      '@deepseek-ai/dsh-client-ui-slots':
+        specifier: workspace:^
+        version: link:../ui-slots
+      '@deepseek-ai/dsh-client-ui-theme':
+        specifier: workspace:^
+        version: link:../ui-theme
+      '@deepseek-ai/dsh-session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/react':
+        specifier: ~18.3.1
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ~18.3.0
+        version: 18.3.7(@types/react@18.3.31)
+      clsx:
+        specifier: ^2.0.0
+        version: 2.1.1
+      frappe-gantt:
+        specifier: ^1.2.2
+        version: 1.2.2
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+
   packages/client/ui-conversation:
     dependencies:
       '@deepseek-ai/schemastery':
@@ -3362,6 +3453,12 @@ importers:
       '@deepseek-ai/dsh-client-ui-slots':
         specifier: workspace:^
         version: link:../ui-slots
+      '@deepseek-ai/dsh-goal':
+        specifier: workspace:^
+        version: link:../../goal/goal
+      '@deepseek-ai/dsh-plan-mode':
+        specifier: workspace:^
+        version: link:../../plan/plan-mode
       '@types/react':
         specifier: ~18.3.1
         version: 18.3.31
@@ -4326,6 +4423,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-slots':
         specifier: workspace:^
         version: link:../ui-slots
+      '@deepseek-ai/dsh-client-ui-theme':
+        specifier: workspace:^
+        version: link:../ui-theme
       '@deepseek-ai/dsh-client-ui-workspace':
         specifier: workspace:^
         version: link:../ui-workspace
@@ -5465,6 +5565,46 @@ importers:
       '@deepseek-ai/dsh-brand':
         specifier: workspace:^
         version: link:../../util/brand
+
+  packages/construction/construction-runtime:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      decimal.js:
+        specifier: ^10.6.0
+        version: 10.6.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-agent':
+        specifier: workspace:^
+        version: link:../../core/agent
+      '@deepseek-ai/dsh-agent-loop-testkit':
+        specifier: workspace:^
+        version: link:../../test-support/agent-loop-testkit
+      '@deepseek-ai/dsh-commands':
+        specifier: workspace:^
+        version: link:../../interaction/commands
+      '@deepseek-ai/dsh-fs':
+        specifier: workspace:^
+        version: link:../../fs/fs
+      '@deepseek-ai/dsh-llm':
+        specifier: workspace:^
+        version: link:../../llm/llm
+      '@deepseek-ai/dsh-session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@deepseek-ai/dsh-skill':
+        specifier: workspace:^
+        version: link:../../skill/skill
+      '@deepseek-ai/dsh-tool-skill':
+        specifier: workspace:^
+        version: link:../../skill/tool-skill
+      '@deepseek-ai/dsh-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
 
   packages/context/agent-instructions:
     dependencies:
@@ -8709,6 +8849,9 @@ importers:
       '@deepseek-ai/dsh-atomic-write':
         specifier: workspace:^
         version: link:../../util/atomic-write
+      '@deepseek-ai/dsh-commands':
+        specifier: workspace:^
+        version: link:../../interaction/commands
       '@deepseek-ai/dsh-home-paths':
         specifier: workspace:^
         version: link:../../util/home-paths
@@ -17358,6 +17501,9 @@ packages:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
 
+  frappe-gantt@1.2.2:
+    resolution: {integrity: sha512-1+uPNRa92LBIeKiZCVhJMiGIifJk5ONaoerXI8eBREXWRZGGoTJR5ATpMpsnAQcyBA6Gnq5wIht4eL+e4eHMBA==}
+
   fresh@2.0.0:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
@@ -24439,6 +24585,8 @@ snapshots:
       fetch-blob: 3.2.0
 
   forwarded@0.2.0: {}
+
+  frappe-gantt@1.2.2: {}
 
   fresh@2.0.0: {}
 

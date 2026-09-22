@@ -7,6 +7,36 @@
       "source": "packages/compaction/compaction-image-offload/src/projection.ts"
     },
     {
+      "doc": "docs/subsystems/construction.md",
+      "symbol": "DocumentResult",
+      "source": "packages/construction/construction-runtime/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/construction.md",
+      "symbol": "SplitResult",
+      "source": "packages/construction/construction-runtime/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/construction.md",
+      "symbol": "CostResult",
+      "source": "packages/construction/construction-runtime/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/construction.md",
+      "symbol": "ScheduleResult",
+      "source": "packages/construction/construction-runtime/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/construction.md",
+      "symbol": "DocumentSummaryResult",
+      "source": "packages/construction/construction-runtime/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/construction.md",
+      "symbol": "TaskBinding",
+      "source": "packages/construction/construction-runtime/src/types.ts"
+    },
+    {
       "doc": "docs/subsystems/core.md",
       "symbol": "Branded",
       "source": "packages/util/brand/src/index.ts"

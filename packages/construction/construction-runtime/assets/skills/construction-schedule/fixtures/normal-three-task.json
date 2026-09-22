@@ -1,0 +1,24 @@
+{
+  "description": "Normal de-identified case: three tasks, one milestone, weekend rest days, one FS link with a lag.",
+  "inputs": {
+    "scenario_id": "baseline-01",
+    "project_start": "2026-03-02",
+    "weekly_rest_days": [6, 0],
+    "holidays": [],
+    "tasks": [
+      { "id": "A", "name": "mobilize", "duration": 2 },
+      { "id": "B", "name": "excavate", "duration": 5 },
+      { "id": "C", "name": "inspect formation", "duration": 0 },
+      { "id": "D", "name": "blinding concrete", "duration": 1 }
+    ],
+    "links": [
+      { "from": "A", "to": "B", "lag": 0 },
+      { "from": "B", "to": "C", "lag": 0 },
+      { "from": "C", "to": "D", "lag": 1 }
+    ]
+  },
+  "expected_output": {
+    "shape": "ScheduleResult with critical path A-B-C-D",
+    "notes": "starting Monday 2026-03-02, C lands on Wednesday 2026-03-11 and D displays Thursday 2026-03-12 after the one-working-day lag"
+  }
+}
