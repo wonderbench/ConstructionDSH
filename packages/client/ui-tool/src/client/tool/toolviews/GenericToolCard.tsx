@@ -3,7 +3,9 @@ import {
   IconApiOutlineRegular, IconBrowseOutlineRegular, IconCodeOutlineRegular, IconEditOutlineRegular, IconSearchOutlineRegular,
   IconSparkleRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallOwnerProps, ToolTreeProps } from '../../contract/slots.ts'
+import { readToolPresentation } from '../denoise-presentation.ts'
 import { readCardModel } from '../models/read-card-model.ts'
 import { diffCardModel } from '../models/diff-card-model.ts'
 import { searchCardModel } from '../models/search-card-model.ts'
@@ -27,9 +29,11 @@ const VARIANT_ICONS: Record<ToolRowVariant, ReactNode> = {
 /** Card props: the owner payload plus the render site's locale seat (plain prop). */
 export interface GenericToolCardProps extends ToolCallOwnerProps {
   t: ToolTreeProps['t']
+  /** Translator for the Tool-owned denoise-layer dictionary; absent leaves the layer off. */
+  tTool?: TranslateNS<'tool'> | undefined
 }
 
-export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, useDisclosure, t }: GenericToolCardProps) {
+export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect, useDisclosure, t, tTool }: GenericToolCardProps) {
   const model = toolRowModel(toolName, block, cwd, home)
   const autoReview = model.autoReviewDenial === null
     ? null
@@ -45,6 +49,13 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
     ? 'error'
     : model.state
   const singleFile = model.filePath !== undefined
+  // Denoise layering: while the flag is on, the generic row's raw argument
+  // JSON and flattened output move under the technical-details disclosure
+  // (expanded by default in expert mode); the flag off never passes `technical`.
+  const presentation = readToolPresentation()
+  const technical = presentation.denoise && tTool !== undefined && (model.bodyRaw !== null || model.output !== null)
+    ? { t: tTool, defaultOpen: presentation.expert }
+    : undefined
   return (
     <ToolRow
       useDisclosure={useDisclosure}
@@ -69,6 +80,7 @@ export function GenericToolCard({ toolName, block, cwd, home, openFile, inspect,
       filePath={model.filePath}
       onOpenFile={singleFile ? openFile : undefined}
       inspect={inspect}
+      technical={technical}
     />
   )
 }

@@ -1,5 +1,5 @@
 import { memo, useState } from 'react'
-import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { AssistantMarkdownProps } from './AssistantMarkdown.tsx'
 import { AssistantMarkdown } from './AssistantMarkdown.tsx'
 import { nonProseBlocks, proseFold } from './assistant-denoise.ts'
@@ -28,7 +28,7 @@ export const AssistantDenoise = memo(function AssistantDenoise(props: AssistantM
         aria-expanded={expanded}
         onClick={toggle}
       >
-        <IconChevronDownOutline14
+        <IconChevronDownOutlineMedium
           size={12}
           className={expanded ? `${css.chevron} ${css.chevronOpen}` : css.chevron}
         />

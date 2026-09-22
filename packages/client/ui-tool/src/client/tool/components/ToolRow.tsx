@@ -24,6 +24,7 @@ import {
 } from '../models/tool-call-model.ts'
 import type { WebCardModelProps } from '../models/web-card-model.ts'
 import { AskQuestionCard } from './AskQuestionCard.tsx'
+import { TechnicalDetails } from './TechnicalDetails.tsx'
 import { ToolDetails, type ToolDetailsModel } from './ToolDetails.tsx'
 import css from './ToolRow.module.css'
 
@@ -91,6 +92,13 @@ export interface ToolRowProps {
    * over the expanded body. Absent = no affordance.
    */
   inspect?: (() => void) | undefined
+  /**
+   * Denoise field layer: when set, the raw IN/OUT card renders inside a
+   * collapsible technical-details section instead of directly. Callers pass
+   * it only while the output-denoise flag is on and raw input or output
+   * exists; expert mode passes `defaultOpen: true`.
+   */
+  technical?: { t: TranslateNS<'tool'>; defaultOpen: boolean } | undefined
 }
 
 /** Visually hidden run-state label for color-only running and settlement cues. */
@@ -134,6 +142,7 @@ export const ToolRow = memo(function ToolRow({
   filePathLine,
   onOpenFile,
   inspect,
+  technical,
   useDisclosure,
 }: ToolRowProps) {
   const { expanded, toggle: toggleExpand } = useDisclosure()
@@ -198,6 +207,32 @@ export const ToolRow = memo(function ToolRow({
   // The code variant's program renders through CodeBlock (shiki), so only its
   // output joins the IN/OUT card; every other variant's input does too.
   const cardBody = variant === 'code' ? null : bodyText
+  // Raw input/output card, shared by the direct and the denoise-layered
+  // placements: one markup home, so the technical-details layer rewraps the
+  // identical card instead of restating it.
+  const ioCard = cardBody !== null || outputText !== null
+    ? (
+      <div className={css.ioCard}>
+        {cardBody !== null && (
+          <div className={css.ioSection}>
+            <span className={css.ioLabel}>{t('row.input')}</span>
+            <span className={css.ioText}>{cardBody}</span>
+          </div>
+        )}
+        {cardBody !== null && outputText !== null && (
+          <span className={css.ioDivider} aria-hidden />
+        )}
+        {outputText !== null && (
+          <div className={css.ioSection}>
+            <span className={css.ioLabel}>{t('row.output')}</span>
+            <span className={css.ioText} data-error={state === 'error' || undefined}>
+              {outputText}
+            </span>
+          </div>
+        )}
+      </div>
+    )
+    : null
   const collapsedContent = useMemo(() => summaryText !== '' && (
     /* An empty summary drops the separator with it (a row that is only
        its title shows no trailing dot). */
@@ -292,27 +327,13 @@ export const ToolRow = memo(function ToolRow({
                               <CodeBlock code={bodyText} lang="typescript" copyLabel={t('copy')} copiedLabel={t('copied')} className={css.codeBody} />
                             </div>
                           )}
-                          {(cardBody !== null || outputText !== null) && (
-                            <div className={css.ioCard}>
-                              {cardBody !== null && (
-                                <div className={css.ioSection}>
-                                  <span className={css.ioLabel}>{t('row.input')}</span>
-                                  <span className={css.ioText}>{cardBody}</span>
-                                </div>
-                              )}
-                              {cardBody !== null && outputText !== null && (
-                                <span className={css.ioDivider} aria-hidden />
-                              )}
-                              {outputText !== null && (
-                                <div className={css.ioSection}>
-                                  <span className={css.ioLabel}>{t('row.output')}</span>
-                                  <span className={css.ioText} data-error={state === 'error' || undefined}>
-                                    {outputText}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                          {ioCard !== null && (technical !== undefined
+                            ? (
+                              <TechnicalDetails t={technical.t} defaultOpen={technical.defaultOpen}>
+                                {ioCard}
+                              </TechnicalDetails>
+                            )
+                            : ioCard)}
                         </>
                       )}
       {inspect !== undefined && (
@@ -329,7 +350,7 @@ export const ToolRow = memo(function ToolRow({
   ) : undefined, [
     open, detailsBody, askQuestionBody, terminalBody, terminalLabels, diffBody, diffLabels, readBody, readLabels,
     imageBody, renderSlot, loadImage, searchBody, searchLabels, webBody, webLabels, inspect, t, onOpenFile,
-    variant, bodyText, cardBody, outputText, state,
+    variant, bodyText, cardBody, outputText, state, ioCard, technical,
   ])
   return (
     <div className={css.root} data-variant={variant} data-tool={toolName} data-state={state}>

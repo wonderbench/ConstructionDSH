@@ -62,6 +62,13 @@ export interface AgentPresetOption {
   name?: string
   /** One sentence on what the preset is for. */
   description?: string
+  /**
+   * Whether new-session pickers offer this preset; absent means visible. A
+   * false row stays selectable everywhere else — the settings page and the
+   * chip's label for a session already running it — and only the hero menu
+   * drops it.
+   */
+  picker?: boolean
 }
 
 /** One roster entry exactly as the host reports it. */
@@ -127,12 +134,13 @@ export async function beginRosterRead<S extends { status: string; error: string 
  * @returns one option per selectable preset, in roster order.
  */
 export function presetOptions(
-  presets: readonly { id: string; name?: string; description?: string; broken?: string }[],
+  presets: readonly { id: string; name?: string; description?: string; picker?: boolean; broken?: string }[],
 ): AgentPresetOption[] {
   return presets.filter(preset => preset.broken === undefined).map(preset => ({
     id: preset.id,
     ...preset.name === undefined ? {} : { name: preset.name },
     ...preset.description === undefined ? {} : { description: preset.description },
+    ...preset.picker === undefined ? {} : { picker: preset.picker },
   }))
 }
 

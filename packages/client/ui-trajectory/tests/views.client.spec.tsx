@@ -276,6 +276,7 @@ async function bench(snapshot = historySnapshot(NODES)) {
     chat: createSnapshotStore<ChatSnapshot | undefined>(undefined),
     trajectory: trajectoryStore,
     'tool-todo-history': createSnapshotStore<ConversationViewSnapshotMap['tool-todo-history'] | undefined>(undefined),
+    constructionGantt: createSnapshotStore<ConversationViewSnapshotMap['constructionGantt'] | undefined>(undefined),
   }
   const binding: ConversationBinding = {
     snapshot: conversationStore,

@@ -14,6 +14,10 @@ export type AgentPresetSettingsKey =
   | 'setDefault'
   | 'presetStandardName'
   | 'presetStandardDescription'
+  | 'presetDrawingSplitName'
+  | 'presetDrawingSplitDescription'
+  | 'presetEngineeringName'
+  | 'presetEngineeringDescription'
   | 'presetPtcName'
   | 'presetPtcDescription'
   | 'presetMinimalName'
@@ -48,6 +52,12 @@ export const en: Record<AgentPresetSettingsKey, string> = {
   presetStandardName: 'Standard mode',
   presetStandardDescription:
     'Work with code, files, and information. Suitable for most tasks, with search, editing, terminal commands, and other tools available as needed.',
+  presetDrawingSplitName: 'Drawing split mode',
+  presetDrawingSplitDescription:
+    'Mechanical splitting of long drawing PDFs: inspect each file, split by page range / per page / bookmark, deliver the output files and index, then stop; no structured decomposition (MinerU) and no follow-up business work.',
+  presetEngineeringName: 'Engineering mode',
+  presetEngineeringDescription:
+    'The full coding agent plus the construction runtime: engineering file reading, drawing-PDF splitting, costing, scheduling, and report tools, with the cost, quality, safety, and schedule business skills.',
   presetPtcName: 'PTC mode',
   presetPtcDescription:
     'Includes all Standard mode capabilities. Better suited to tasks that call tools in batches and then filter, organize, deduplicate, count, or summarize the results.',
@@ -92,6 +102,10 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
 
   presetStandardName: '标准模式',
   presetStandardDescription: '处理代码、文件和资料，适合大多数任务。Agent 会按需使用检索、编辑和终端等工具。',
+  presetDrawingSplitName: '图纸拆解模式',
+  presetDrawingSplitDescription: '多份长图纸 PDF 的机械拆分：逐份检查、按页范围/逐页/书签复制拆分、交付文件与索引后即停止；不做结构化拆解（MinerU），不自动跟进后续业务。',
+  presetEngineeringName: '工程专业模式',
+  presetEngineeringDescription: '完整编码 Agent 能力之外挂载工程运行时：工程文件读取、图纸 PDF 拆分、造价、进度与报告工具，并内置造价、质量、安全、进度四个行业 Skills。',
   presetPtcName: 'PTC 模式',
   presetPtcDescription: '包含标准模式的所有能力，更适合批量调用工具，并对结果进行筛选、整理、去重、统计或汇总的任务。',
   presetMinimalName: '极简模式',

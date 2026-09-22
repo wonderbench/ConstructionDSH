@@ -7,7 +7,8 @@
 import { describe, expect, it } from 'vitest'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-locale/client'
 import {
-  IconChecklistOutline14, IconClockOutline16, IconGaugeOutline16, IconGoalOutline16, IconShieldOutline16,
+  IconChecklistOutlineRegular, IconClockOutlineRegular, IconGaugeOutlineRegular, IconGoalOutlineRegular,
+  IconShieldOutlineRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { CommandDefinitionId } from '@deepseek-ai/dsh-commands/brand'
 import { en } from '../src/client/locales.ts'
@@ -23,10 +24,10 @@ function descriptor(name: string, over: Partial<CommandDescriptor> = {}): Comman
 describe('builtinRowFace', () => {
   it('the four construction skill rows carry a label and icon with no description', () => {
     const faces = {
-      'construction-safety': IconShieldOutline16,
-      'construction-quality': IconChecklistOutline14,
-      'construction-cost': IconGaugeOutline16,
-      'construction-schedule': IconClockOutline16,
+      'construction-safety': IconShieldOutlineRegular,
+      'construction-quality': IconChecklistOutlineRegular,
+      'construction-cost': IconGaugeOutlineRegular,
+      'construction-schedule': IconClockOutlineRegular,
     } as const
     for (const name of Object.keys(faces) as Array<keyof typeof faces>) {
       const face = builtinRowFace(descriptor(name, {
@@ -40,7 +41,7 @@ describe('builtinRowFace', () => {
     const goal = builtinRowFace(descriptor('goal', {
       definitionId: CommandDefinitionId('@deepseek-ai/dsh-command-goal'),
     }), t)
-    expect(goal).toEqual({ label: en['label.goal'], description: en['description.goal'], icon: IconGoalOutline16 })
+    expect(goal).toEqual({ label: en['label.goal'], description: en['description.goal'], icon: IconGoalOutlineRegular })
     expect(builtinRowFace(descriptor('deploy'), t)).toBeUndefined()
     // A same-name override without the matching definitionId keeps its own copy.
     expect(builtinRowFace(descriptor('construction-cost'), t)).toBeUndefined()

@@ -9,6 +9,9 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 // Type-only: pulls the Session root standard-props merge.
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
+// Type-only: pulls the theme service merge (ctx.theme) that publishes the
+// presentation mode on every snapshot.
+import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 import type { SidebarPanelMetadata, SidebarRootInjected } from './contract/slots.ts'
 import { HeaderLeadingControls } from './HeaderLeadingControls.tsx'
 import { SidebarRoot } from './SidebarRoot.tsx'
@@ -36,7 +39,7 @@ interface WorkspaceNavigation {
 }
 
 /** Services required by the sidebar plugin. */
-export const inject = ['slots', 'layout', 'uiWorkspace', 'locale']
+export const inject = ['slots', 'layout', 'uiWorkspace', 'locale', 'theme']
 
 /** Registers the sidebar shell and its service callbacks.
  * @param ctx - Client root context.
@@ -61,13 +64,25 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.slots.subscribe('sidebar.panellist', syncPanels), 'ui-sidebar: panel entries')
   ctx.effect(() => ctx.locale.subscribe(syncPanels), 'ui-sidebar: panel labels')
 
+  // Presentation mode: the theme snapshot is the single source (the Host boot
+  // script and ui-layout's presenter both publish it to the body attribute).
+  // Mirroring it here gives the shell a framework-bound hook without any
+  // component-level subscription machinery.
+  const uiMode = createSnapshotStore(ctx.theme.getTheme().uiMode)
+  const syncUiMode = (): void => {
+    const next = ctx.theme.getTheme().uiMode
+    if (uiMode.getSnapshot() === next) return
+    uiMode.set(next)
+  }
+  ctx.effect(() => ctx.on('theme/change', syncUiMode), 'ui-sidebar: ui-mode adoption')
+
   const injectProps = (): SidebarRootInjected => ({
     // The shell's New Session button rides the Workspace UI's shared action
     // (current Session Workspace, then recent Workspace).
     startSession: (workspaceId) => { workspaceNavigation.startSession(workspaceId) },
     toggleSidebar: () => { ctx.layout.toggleSidebar() },
     selectPanel: (id) => { ctx.layout.selectPanel(id) },
-    hooks: { panels },
+    hooks: { panels, uiMode },
   })
   ctx.slots.inject('sidebar', () => ctx.slots.register({
     name: 'sidebar',

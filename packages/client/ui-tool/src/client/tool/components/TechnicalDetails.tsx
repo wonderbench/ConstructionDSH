@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import clsx from 'clsx'
-import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import css from './TechnicalDetails.module.css'
 
@@ -33,7 +33,7 @@ export function TechnicalDetails({ t, defaultOpen, children }: TechnicalDetailsP
         aria-label={open ? t('technicalDetails.collapse') : t('technicalDetails.expand')}
         onClick={() => { setOpen(value => !value) }}
       >
-        <IconChevronDownOutline14 size={12} className={clsx(css.chevron, open && css.chevronOpen)} />
+        <IconChevronDownOutlineMedium size={12} className={clsx(css.chevron, open && css.chevronOpen)} />
         {t('technicalDetails.title')}
       </button>
       {open && <div className={css.content}>{children}</div>}

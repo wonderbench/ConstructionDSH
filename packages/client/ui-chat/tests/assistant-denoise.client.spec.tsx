@@ -9,6 +9,7 @@ import { AssistantNodeView } from '../src/client/chat/AssistantNodeView.tsx'
 import { nonProseBlocks, proseFold } from '../src/client/chat/assistant-denoise.ts'
 import { readDenoisePresentation } from '../src/client/chat/denoise-presentation.ts'
 import type { AssistantBlock } from '../src/client/contract/snapshot.ts'
+import { useDetailedPresentation } from './presentation-fixture.client.ts'
 
 const t = makeTranslate(zh, commonZh)
 
@@ -61,8 +62,9 @@ function makeProps(blocks: readonly AssistantBlock[], status: 'settled' | 'runni
     openFile: () => {},
     renderMessageImages: (() => null) as ChatNodeViewProps<'assistant-step'>['renderMessageImages'],
     fileMentions: () => undefined,
+    usePresentation: useDetailedPresentation,
     t,
-  } as unknown as ChatNodeViewProps<'assistant-step'>
+  } as unknown as Parameters<typeof AssistantNodeView>[0]
 }
 
 afterEach(() => {

@@ -170,8 +170,8 @@ describe('the new-session chip', () => {
     renderSeat({
       current: 'cordis',
       options: [
-        { id: 'standard', trust: 'system', name: '标准模式', description: '完整的编码 agent。' },
-        { id: 'cordis', trust: 'system', name: '创造模式', description: '创作预设。', picker: false },
+        { id: 'standard' },
+        { id: 'cordis', picker: false },
       ],
     })
 

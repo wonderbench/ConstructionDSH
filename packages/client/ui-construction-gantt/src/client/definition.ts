@@ -51,11 +51,10 @@ export interface ScheduleResultState {
 function outcomeFrom(match: ConversationMatch, state: ScheduleResultState): ScheduleResultState {
   const event = match.event
   if (event.type !== 'tool/result') return state
-  const block = event.data.message.content[0]
-  if (event.data.error !== undefined || block.isError === true) {
+  if (event.data.error !== undefined) {
     return { ...state, outcome: { kind: 'failure', reason: 'error' } }
   }
-  const parsed = parseScheduleResult(resultText(block.content) ?? '')
+  const parsed = parseScheduleResult(resultText(event.data.message.content) ?? '')
   return {
     ...state,
     outcome: parsed === undefined

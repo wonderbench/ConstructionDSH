@@ -7,8 +7,8 @@
 import { useState, type ReactNode } from 'react'
 import clsx from 'clsx'
 import {
-  Button, DisclosureRow, IconCompactOutline16, IconFullscreenOutline16, IconInfoOutline14,
-  IconQuestionOutline14, IconRefreshOutline16, IconWarningOutline16,
+  Button, DisclosureRow, IconCompactOutlineRegular, IconFullscreenOutlineRegular, IconInfoOutlineRegular,
+  IconQuestionOutlineRegular, IconRefreshOutlineRegular, IconWarningOutlineRegular,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ScheduleScenario } from './contract.ts'
@@ -61,15 +61,15 @@ export function GanttBody({ useTabInfo, useConstructionGantt, t }: GanttBodyProp
   const sections = [
     {
       key: 'assumptions', label: t('partial.assumptions'),
-      icon: <IconInfoOutline14 />, items: selected.assumptions,
+      icon: <IconInfoOutlineRegular />, items: selected.assumptions,
     },
     {
       key: 'unresolved', label: t('partial.unresolved'),
-      icon: <IconQuestionOutline14 />, items: selected.unresolved,
+      icon: <IconQuestionOutlineRegular />, items: selected.unresolved,
     },
     {
       key: 'warnings', label: t('partial.warnings'),
-      icon: <IconWarningOutline16 />, items: selected.warnings,
+      icon: <IconWarningOutlineRegular />, items: selected.warnings,
     },
   ] as const
   const partial = scenarioPartial(selected)
@@ -94,10 +94,10 @@ export function GanttBody({ useTabInfo, useConstructionGantt, t }: GanttBodyProp
             </Button>
           ))}
         </div>
-        <Button size="sm" variant="ghost" icon={<IconRefreshOutline16 />} aria-label={t('fit.aria')}
+        <Button size="sm" variant="ghost" icon={<IconRefreshOutlineRegular />} aria-label={t('fit.aria')}
           title={t('fit.label')} onClick={() => { setFitNonce(value => value + 1) }} />
         {!sidebar.fullscreen && (
-          <Button size="sm" variant="ghost" icon={<IconFullscreenOutline16 />} aria-label={t('expand.aria')}
+          <Button size="sm" variant="ghost" icon={<IconFullscreenOutlineRegular />} aria-label={t('expand.aria')}
             title={t('expand.enter')} onClick={() => { setExpanded(true) }} />
         )}
       </div>
@@ -126,7 +126,7 @@ export function GanttBody({ useTabInfo, useConstructionGantt, t }: GanttBodyProp
       )}
       <div className={clsx(css.chartSection, expanded && css.chartExpanded)}>
         {expanded && (
-          <Button className={css.exitExpand} size="sm" variant="outline" icon={<IconCompactOutline16 />}
+          <Button className={css.exitExpand} size="sm" variant="outline" icon={<IconCompactOutlineRegular />}
             aria-label={t('expand.aria')} title={t('expand.exit')}
             onClick={() => { setExpanded(false) }}>
             {t('expand.exit')}

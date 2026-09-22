@@ -5,8 +5,12 @@ import {
   IconApiOutlineRegular, IconChevronDownOutlineRegular, IconChevronUpOutlineRegular, IconInspectOutlineRegular,
   TerminalBlock, TextShimmer,
 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ToolCallViewProps } from '../../contract/slots.ts'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+// Type-only: pulls the locale plugin's Context merge (ctx.locale) for the denoise dictionary bind.
+import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type { ToolCallViewProps, ToolLocaleInjected } from '../../contract/slots.ts'
+import { readToolPresentation } from '../denoise-presentation.ts'
+import { TechnicalDetails } from '../components/TechnicalDetails.tsx'
 import {
   isSettledPersistentShellCall,
   isSpilledShellCall,
@@ -16,10 +20,12 @@ import {
   terminalFailed,
 } from '../models/terminal-card-model.ts'
 import { formatToolBody, toolRowModel, type ToolRowState } from '../models/tool-call-model.ts'
-import { CONVERSATION_NS as NS } from '../../locale.ts'
+import { CONVERSATION_NS as NS, TOOL_NS } from '../../locale.ts'
 import css from './bash-sample.module.css'
 
-type BashRowProps = ToolCallViewProps & PropsLocale<'conversation'>
+export type BashRowProps = ToolCallViewProps
+  & PropsLocale<'conversation'>
+  & InjectFace<ToolLocaleInjected>
 
 const BASH_ICON = <IconApiOutlineRegular size={14} />
 
@@ -38,7 +44,7 @@ function stateStatus(state: ToolRowState, t: BashRowProps['t']): string | null {
  * @param props - tool call, Session sources, locale, and inspection callback.
  * @returns the Bash output row.
  */
-export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSessions, inspect, useDisclosure, t }: BashRowProps) {
+export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSessions, inspect, useDisclosure, t, tTool }: BashRowProps) {
   const model = useMemo(() => toolRowModel(toolName, block), [toolName, block])
   // An omitted shell workdir is the session workspace; relative values resolve
   // against it before reaching the terminal primitive.
@@ -51,6 +57,9 @@ export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSe
   const state = model.state === 'ok' && terminalModel !== null && terminalFailed(terminalModel)
     ? 'error'
     : model.state
+  // Denoise layering: the terminal output moves under the technical-details
+  // disclosure while the flag is on (expanded by default in expert mode).
+  const presentation = readToolPresentation()
   const status = stateStatus(state, t)
   const { expanded, toggle: toggleExpand } = useDisclosure()
   // Failures, persistent-shell results, and spill previews use a generic body;
@@ -86,6 +95,14 @@ export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSe
         </>
       )
       : BASH_ICON
+  const terminalBody = terminal === null ? null : (
+    <TerminalBlock
+      {...terminal.card}
+      maxLines={Infinity}
+      labels={labels}
+      className={css.terminal}
+    />
+  )
   return (
     <div className={css.card}>
       <div
@@ -116,12 +133,13 @@ export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSe
         <div className={css.bodyWrap}>
           {terminal !== null
             ? (
-              <TerminalBlock
-                {...terminal.card}
-                maxLines={Infinity}
-                labels={labels}
-                className={css.terminal}
-              />
+              presentation.denoise
+                ? (
+                  <TechnicalDetails t={tTool} defaultOpen={presentation.expert}>
+                    {terminalBody}
+                  </TechnicalDetails>
+                )
+                : terminalBody
             )
             : (
               <div className={css.ioCard}>
@@ -159,9 +177,10 @@ export const BashRow = memo(function BashRow({ toolName, block, sessionId, useSe
 /** Registers the standalone Bash conversation-row sample. */
 export const bashToolviewSample = {
   name: 'bash-toolview-sample',
-  inject: ['slots'],
+  inject: ['slots', 'locale'],
   apply(ctx: Context): void {
+    const tTool = ctx.locale.bind(TOOL_NS)
     ctx.slots.inject('tool.call.toolview', () =>
-      ctx.slots.register({ name: 'tool.call.toolview', key: 'bash', locale: NS }, BashRow))
+      ctx.slots.register({ name: 'tool.call.toolview', key: 'bash', locale: NS, inject: () => ({ tTool }) }, BashRow))
   },
 }
