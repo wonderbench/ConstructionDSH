@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-construction",
   "description": "The construction engineering bundle: composes dsh-base with the construction runtime tools, the four business Skills, standards RAG over MCP, and the sidebar Gantt",
-  "version": "0.1.6-alpha.2",
+  "version": "0.1.7-alpha.1",
   "publishConfig": {
     "access": "public"
   },

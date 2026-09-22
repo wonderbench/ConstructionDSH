@@ -13627,6 +13627,9 @@ importers:
       '@deepseek-ai/dsh-config-editor':
         specifier: workspace:^
         version: link:../../packages/boot/config-editor
+      '@deepseek-ai/dsh-construction-runtime':
+        specifier: workspace:^
+        version: link:../../packages/construction/construction-runtime
       '@deepseek-ai/dsh-cordis-host-runner':
         specifier: workspace:^
         version: link:../../packages/extensions/cordis-host-runner

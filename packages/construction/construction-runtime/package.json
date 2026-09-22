@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-construction-runtime",
   "description": "Construction engineering Host tools: shared file reading, mechanical PDF splitting, deterministic costing, CPM scheduling, and the four business Skills as package assets",
-  "version": "0.1.6-alpha.2",
+  "version": "0.1.7-alpha.1",
   "publishConfig": {
     "access": "public"
   },

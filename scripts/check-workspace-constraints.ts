@@ -61,7 +61,9 @@ const standardReleaseMemberDirectory = /^(?:packages\/(?!experimental\/)[^/]+\/[
 const desktopApplicationDirectory = 'apps/desktop'
 const localArtifactDirs = new Set(['node_modules'])
 const appPackageFiles: Readonly<Record<string, readonly string[]>> = {
-  '@deepseek-ai/dsh': ['lib/*.js', 'lib/types/*.d.ts'],
+  // `source-plane.mjs` opts source-mode programs into tsx path mappings when
+  // the installed CLI launches from `lib/` (source-launch contract).
+  '@deepseek-ai/dsh': ['lib/*.js', 'lib/types/*.d.ts', 'source-plane.mjs'],
   '@deepseek-ai/dsh-desktop-host': [
     'lib/index.js',
   ],
