@@ -21,6 +21,7 @@
     "apps/web/tests/prefix-proxy.ts",
     "apps/web/tests/developer-tools-settings.e2e.ts",
     "apps/web/tests/auto-review-fixture.ts",
+    "apps/web/tests/fixtures/presets/definitions.ts",
     "apps/web/tests/auto-review-denial.e2e.ts",
     "apps/web/tests/scaffold-generation.spec.ts",
     "apps/web/tests/default-model.e2e.ts",

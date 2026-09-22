@@ -27,6 +27,7 @@ import {
 import { openSettings,
   connectFreshWorkspace, newEnglishPage, saveFailureShot, writeComposerDraft,
 } from './support.ts'
+import { minimalDefinition } from './fixtures/presets/definitions.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./expected/agent-preset-selection', import.meta.url))
 const HERO_EXPECTED = join(SNAPSHOT_DIR, 'hero.expected.md')
@@ -228,7 +229,10 @@ describe('web e2e: agent-preset selection', () => {
     fixtureRoot = await realpath(await mkdtemp(join(tmpdir(), 'dsh-web-e2e-refusing-')))
     await seedRefusingPreset(fixtureRoot)
     scaffold = await launchWebScaffold({
-      agentPresets: { default: 'standard', definitions: [{ id: REFUSING_ID, name: 'Refusing mode', description: 'Refuses to start.', plugins: [{ name: pathToFileURL(join(fixtureRoot, REFUSING_ID, 'refuses.mjs')).href }] }] },
+      agentPresets: { default: 'standard', definitions: [
+        minimalDefinition,
+        { id: REFUSING_ID, name: 'Refusing mode', description: 'Refuses to start.', plugins: [{ name: pathToFileURL(join(fixtureRoot, REFUSING_ID, 'refuses.mjs')).href }] },
+      ] },
     })
     // A resumed session runs what it was created with; seeding one that
     // records `minimal` is what makes the header label a claim about the

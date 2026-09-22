@@ -14,7 +14,7 @@ Status: implemented
 
 ### Roster
 
-首页选择器顺序为 `standard`（order 1）、`drawing-split`（order 2）、`engineering`（order 3）。`cordis` 保持完全可用——设置页 roster 卡片、只读组装查看器、复制以及创作者草稿流程仍全部可达——但其 `preset.yml` 带有 `picker: false`，这是一个可选的布尔元数据字段，只把 preset 从新建会话菜单中隐藏。hero chip 仅在渲染菜单时过滤 `picker: false` 行，其他地方不过滤：已在运行该 preset 的会话仍显示其标签，设置区块也从不过滤。字段缺省时保持可见，`~/.agent-presets`（`$DSH_HOME/.agent-presets`）下用户自建的 preset 因此不受影响；`picker` 存在却不是布尔值时，元数据解析会响亮报错，而不是默默选边。创作者草稿入口直接经 seat 控制器暂存 `cordis`，从不依赖被过滤的菜单名单。
+首页选择器顺序为 `standard`（order 1）、`drawing-split`（order 2）、`engineering`（order 3）。四条声明即 web-app bundle 的 `presets/<id>.patch.yml` 文件，由 `dsh.bundle.patch` 按序列出。`cordis` 保持完全可用——设置页 roster 卡片、只读组装查看器以及创作者草稿流程仍全部可达——但其声明携带 `config.picker: false`，一个可选布尔值，只把 preset 从新建会话菜单中隐藏。`AgentPresetSeat` 仅在渲染菜单时过滤 `picker: false` 行，其他地方不过滤：已在运行该 preset 的会话仍显示其标签，设置区块也从不过滤。字段缺省时保持可见；`picker` 存在却不是布尔值时，preset 行的配置校验会响亮报错，而不是默默选边。创作者草稿入口直接经 seat 控制器暂存 `cordis`，从不依赖被过滤的菜单名单。
 
 ### construction runtime 的归属
 
@@ -22,13 +22,13 @@ Status: implemented
 
 ### 测试里用什么替代被移除的 preset
 
-把随附 `ptc` 或 `minimal` preset 当作组装来挂载的 Web 与 CLI lane，现在从 `apps/web/tests/fixtures/presets/`（或内嵌的组装常量）以相同内容播种 lane 自有的 preset，让录制会话 fixture 的 `agentPreset` 头保持有效，而不把这两个 preset 复活为随附表面。引用被移除 preset 的录制 Web 场景 `ptc-round` 与 `minimal-preset` 连同其快照目录一并删除；PTC 升级与呈现场景则基于 lane 自有 preset 存活。
+把随附 `ptc` 或 `minimal` preset 当作组装来挂载的 Web 与 CLI lane，现在从 `apps/web/tests/fixtures/presets/definitions.ts` 播种 lane 自有的 `PresetDefinition` 常量，让录制会话 fixture 的 `agentPreset` 头保持有效，而不把这两个 preset 复活为随附表面。引用被移除 preset 的录制 Web 场景 `ptc-round` 与 `minimal-preset` 连同其快照目录一并删除；PTC 升级与呈现场景则基于 lane 自有 preset 存活。
 
 ## Alternatives considered
 
 **为非工程用户保留 `ptc` 与 `minimal`：否决。** 每个随附 preset 都是产品承诺——locale 文案、设置页位置与首页选择器空间——而本部署的产品是工程助手。想要窄模式或 PTC 呈现的用户，通过复制 `standard` 自建一份即可，这也是所有自定义组装的支持路径。
 
-**在客户端按 id 硬编码隐藏 `cordis`：否决。** 硬编码 id 名单会把 roster 知识劈成 Host 与浏览器两份，一旦部署方用别的 id 自配创作 preset 就会失效。`picker` 字段把决定留在 preset 自己的元数据里，部署方创作 preset 时可以直接读到并复制它。
+**在客户端按 id 硬编码隐藏 `cordis`：否决。** 硬编码 id 名单会把 roster 知识劈成 Host 与浏览器两份，一旦部署方用别的 id 自配创作 preset 就会失效。`picker` 字段把决定留在 preset 声明自己的 `config` 里，部署方创作 preset 时可以直接读到并复制它。
 
 **让设置页同样过滤 `picker: false`：否决。** 退出选择器的目的是避免新会话被误暂存进运行时编辑；而管理、查看、复制 preset 正是设置页的职责，把它也从设置页隐藏将让任何表面都够不到它。
 
@@ -36,8 +36,8 @@ Status: implemented
 
 ## Consequences
 
-`drawing-split` 挂载仅 drawing 面的 runtime，其 persona 可以执行它点名的工具与工作流；business 面——Skills、命令、任务工具——仍为 `engineering` 独有，随附 roster 的 spec 钉住两份组装（drawing-split 的行携带 `business: false`；engineering 的行不带配置），拆分不会悄悄漂移。以旧版 `code` preset id 录制的 V2 会话仍在会话格式层迁移为 `ptc`，但已无随附 preset 应答 `ptc`，因此这类会话会以 roster 的 not-found 原因在挂载时失败——迁移机制本身未变，仍由其单元测试覆盖。
+`drawing-split` 挂载仅 drawing 面的 runtime，其 persona 可以执行它点名的工具与工作流；business 面——Skills、命令、任务工具——仍为 `engineering` 独有，随附 roster 的 spec 钉住两份组装（drawing-split 的行携带 `business: false`；engineering 的行不带配置），拆分不会悄悄漂移。以旧版 `code` preset id 录制的 V2 会话仍在会话格式层迁移为 `ptc`，但已无随附 preset 应答 `ptc`：未自配 `ptc` 声明的部署会在挂载时以 roster 的 not-found 原因失败，session-format catalog 的迁移 spec 继续钉住 `code` → `ptc` 映射，而 Web 迁移快照改为在当前 roster 上记录选择序列。
 
 ## Verification
 
-`dsh-agent-presets` 测试套件（200 个测试）钉住发现、元数据解析（包括 `picker` 的响亮失败）、roster API 暴露该字段、随附组装，以及 preset 作用域内的命令列出（在一个 preset 的 standing 组装内注册的命令只列出给加入该 preset 的会话）；`ui-agent-preset` 客户端套件（165 个测试）钉住 locale 键、仅菜单过滤，以及正在运行的 picker 隐藏 preset 的 chip 标签。Web lane `agent-preset-selection`、`agent-preset-authoring` 与 `settings-chrome` 通过仓库的 refresh 模式再生其 golden，引用被移除 preset 的录制会话场景与其 fixture 一并删除。
+`agent-preset-registry` 测试套件钉住注册、roster 的 `picker` 映射、激活诊断，以及 preset 作用域内的命令列出（在一个 preset 的 standing 组装内注册的命令只列出给加入该 preset 的会话）；`ui-agent-preset` 客户端套件钉住 locale 键、仅菜单过滤，以及正在运行的 picker 隐藏 preset 的 chip 标签。`web-agent-presets` CLI e2e 以 lane 自有的 PTC 与 minimal 行启动随附 bundle 补丁并钉住两份组装。Web lane `agent-preset-selection`、`agent-preset-authoring` 与 `settings-chrome` 通过仓库的 refresh 模式再生其 golden，引用被移除 preset 的录制会话场景与其 fixture 一并删除。

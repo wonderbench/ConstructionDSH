@@ -1,18 +1,24 @@
-# Agent preset ptc: one `@deepseek-ai/dsh-agent-preset` declaration inserted
-# after the web patch. Edits saved from the Web editor override this row's
-# `config.plugins` by id from the profile patch.
+# Agent preset engineering: one `@deepseek-ai/dsh-agent-preset` declaration
+# inserted after the web patch. The composition is `standard`'s — every
+# model-facing row a coding agent gets, including local skill discovery and
+# the skill loader — plus the construction runtime (read-only file tools,
+# drawing-PDF splitting, costing, scheduling, report export, and the four
+# bundled business Skills) and a construction-industry persona. Edits saved
+# from the Web editor override this row's `config.plugins` by id from the
+# profile patch.
 - insert:
-    - id: preset-ptc
+    - id: preset-engineering
       name: '@deepseek-ai/dsh-agent-preset'
       config:
-        id: ptc
-        order: 2
+        id: engineering
+        order: 3
         plugins:
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
               suffix: Your working directory is {{cwd}}.
-              prefix: You are a coding agent powered by the {{model}} model.
+              prefix: >-
+                你是工程建设行业的专业助手，由 {{model}} 模型驱动。全程使用中文思考、推理与回答；结论先行、表达简洁；使用造价、质量、安全、进度等行业术语；避免软件工程口吻与冗余铺垫；涉及金额、工程量、日期时保留精确数值与单位；交付内容优先采用表格或清单。
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
             config:
@@ -29,6 +35,8 @@
             name: '@deepseek-ai/dsh-tool-fs-search'
             config:
               sampleOverCapGlobResults: false
+          - id: construction-runtime
+            name: '@deepseek-ai/dsh-construction-runtime'
           - id: tool-jobs
             name: '@deepseek-ai/dsh-tool-jobs'
           - id: skill-filesystem
@@ -118,12 +126,10 @@
                   maxDepth: provider-managed
               - id: workflow-ptc
                 name: '@deepseek-ai/dsh-workflow-ptc'
-                disabled: true
                 config:
                   provider: spawn
               - id: tool-workflow
                 name: '@deepseek-ai/dsh-tool-workflow'
-                disabled: true
               - id: tool-ralph
                 name: '@deepseek-ai/dsh-tool-ralph'
                 disabled: true
@@ -141,10 +147,6 @@
             config:
               fetch: true
               searchTimeoutMs: 60000
-          - id: tool-presentation
-            name: '@deepseek-ai/dsh-agent-tool-presentation'
-            config:
-              mode: ptc
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
           - id: tool-plugin-manager

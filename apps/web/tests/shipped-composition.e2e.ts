@@ -25,6 +25,7 @@ import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-terminal'
 import { launchWebScaffold, readPersistedEvents, type WebScaffold } from './scaffold.ts'
 import { AUTO_REVIEW_FIXTURE } from './auto-review-fixture.ts'
+import { minimalDefinition, ptcDefinition } from './fixtures/presets/definitions.ts'
 import { REPO_ROOT } from './support.ts'
 
 const FILE_REFERENCE_PROMPT = fileURLToPath(new URL(
@@ -650,7 +651,7 @@ it('assembles the shipped Web transport, catalog, guidance, and defaults', async
 }, 120_000)
 
 it('ships PTC with run_code but without the general workflow SDK binding', async () => {
-  scaffold = await launchWebScaffold({ deepSeekMissingCredential: true })
+  scaffold = await launchWebScaffold({ deepSeekMissingCredential: true, agentPresets: { default: 'standard', definitions: [ptcDefinition] } })
   const ctx = scaffold.ctx
   const handle = await ctx.agents.create({
     sessionId: SessionId('shipped-ptc-composition'),
@@ -1061,7 +1062,7 @@ it('rolls back a failed shipped Auto initialization before publishing or interce
 }, 120_000)
 
 it('withdraws Auto on shipped Loader unload and does not restore migrated live sessions', async () => {
-  scaffold = await launchWebScaffold(AUTO_REVIEW_FIXTURE)
+  scaffold = await launchWebScaffold({ ...AUTO_REVIEW_FIXTURE, agentPresets: { default: 'standard', definitions: [minimalDefinition] } })
   const ctx = scaffold.ctx
   const autoEntry = [...ctx.loader.entries()].find(entry => entry.options.id === 'auto-review')
   if (autoEntry === undefined) throw new Error('shipped Auto review Loader entry is missing')

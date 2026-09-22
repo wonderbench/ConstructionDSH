@@ -7,6 +7,9 @@
       config:
         id: cordis
         order: 4
+        # The self-authoring preset stays fully usable on the settings roster
+        # but never stages a new session into editing the runtime.
+        picker: false
         plugins:
           # Same persona as `standard`: tool descriptions and the skill catalog carry
           # the operating detail, and the skills own the preset-authoring rules.

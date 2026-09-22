@@ -7,6 +7,12 @@ export interface PresetDefinition {
   readonly name?: string
   readonly description?: string
   readonly order?: number
+  /**
+   * Whether new-session pickers offer this preset; absent means visible. The
+   * settings roster reports every preset regardless — the field narrows the
+   * homepage picker only.
+   */
+  readonly picker?: boolean
   readonly plugins: readonly (Omit<EntryOptions, 'id' | 'disabled'> & { id?: string; disabled?: EntryOptions['disabled'] | JsExpr })[]
 }
 

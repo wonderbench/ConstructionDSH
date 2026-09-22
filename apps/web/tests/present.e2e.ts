@@ -15,6 +15,7 @@ import {
   watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
 import { connectFreshWorkspace, expandTurnProcesses, newEnglishPage } from './support.ts'
+import { ptcDefinition } from './fixtures/presets/definitions.ts'
 
 const DIR = fileURLToPath(new URL('../../../snapshots/web/present', import.meta.url))
 const FIXTURE = join(DIR, 'session.v3.jsonl')
@@ -56,7 +57,7 @@ fs.appendFileSync(${JSON.stringify(openLog)}, JSON.stringify({ path, action, con
     scaffold = await launchWebScaffold({
       openInAppEnvironment: createLaunchEnvironmentSnapshot([{ source: 'process', values: { SSH_CONNECTION: '10.0.0.2 55000 10.0.0.9 22' } }]),
       extraOverlayPath: fileURLToPath(new URL('./present.overlay.yml', import.meta.url)),
-      agentPresets: { default: 'ptc' }, compareReplaySession: true,
+      agentPresets: { default: 'ptc', definitions: [ptcDefinition] }, compareReplaySession: true,
       ...(MODE === 'record' ? {} : { replayFixture: FIXTURE }),
     })
     // File associations belong to the desktop rather than the recorded Session.

@@ -27,6 +27,7 @@ const SETTINGS_NAMESPACE = 'agent-preset-registry'
 const SUBAGENT_MODEL_SELECTION_SETTINGS_NAMESPACE = 'subagent-model-selection-settings'
 import { applyChildComposition, childSessionMeta } from '@deepseek-ai/dsh-subagent'
 import { ToolCallId } from '@deepseek-ai/dsh-llm'
+import { minimalDefinition, ptcDefinition } from '../../web/tests/fixtures/presets/definitions.ts'
 import type {} from '@deepseek-ai/dsh-compaction-basic'
 import type {} from '@deepseek-ai/dsh-skill'
 import type {} from '@deepseek-ai/dsh-tools'
@@ -57,7 +58,8 @@ const MINIMAL_BASH_DESCRIPTION = `Run commands in a bash shell
 /**
  * Boot the shipped Web composition, minus the rows that would bind a port,
  * touch the network, or write outside the test. Everything that decides an
- * agent's capabilities is the real thing, including both shipped presets.
+ * agent's capabilities is the real thing: the shipped roster plus the
+ * lane-owned PTC and minimal compositions the scenarios below pin.
  */
 async function bootWeb(
   profileHome: string,
@@ -117,6 +119,13 @@ async function bootWeb(
       { id: 'ui-directory-picker-browse', name: '@deepseek-ai/dsh-client-ui-directory-picker-browse' },
     ] },
     { id: 'agent-preset-registry', config: { default: 'standard' } },
+    // The shipped roster no longer declares PTC or minimal; the scenarios in
+    // this file pin their composition, so the lane seeds the same rows a
+    // scenario-owned overlay would.
+    { insert: [
+      { id: 'preset-ptc', name: '@deepseek-ai/dsh-agent-preset', config: ptcDefinition },
+      { id: 'preset-minimal', name: '@deepseek-ai/dsh-agent-preset', config: minimalDefinition },
+    ] },
     ...extra,
   ]
   const home = profileHome
@@ -243,9 +252,14 @@ describe('the shipped Web composition', () => {
   })
 
   it('supplies both shipped presets, and only those, from the system root', async () => {
+    const declared = composeEntries([webPatches('test')])
+      .filter(row => row.name === '@deepseek-ai/dsh-agent-preset')
+      .map(row => row.id)
+      .sort()
+    expect(declared).toEqual(['preset-cordis', 'preset-drawing-split', 'preset-engineering', 'preset-standard'])
     const listed = await ctx.agentPresets.list()
-
-    expect(listed.map(preset => preset.id).sort()).toEqual(['cordis', 'minimal', 'ptc', 'standard'])
+    // The lane-seeded PTC and minimal rows join beside the shipped four in this boot.
+    expect(listed.map(preset => preset.id).sort()).toEqual(['cordis', 'drawing-split', 'engineering', 'minimal', 'ptc', 'standard'])
     expect(listed.every(preset => !('path' in preset))).toBe(true)
     expect(ctx.agentPresets.defaultId).toBe('standard')
   })

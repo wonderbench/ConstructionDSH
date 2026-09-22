@@ -12,6 +12,7 @@ import {
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
 import { connectFreshWorkspace, newEnglishPage, saveFailureShot } from './support.ts'
+import { ptcDefinition } from './fixtures/presets/definitions.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('../../../snapshots/web/ptc-escalation-approved', import.meta.url))
 const FIXTURE = join(SNAPSHOT_DIR, 'session.v3.jsonl')
@@ -32,7 +33,7 @@ describe('web e2e: PTC program sandbox escalation', () => {
 
   beforeAll(async () => {
     scaffold = await launchWebScaffold({
-      agentPresets: { default: 'ptc' },
+      agentPresets: { default: 'ptc', definitions: [ptcDefinition] },
       compareReplaySession: true,
       ...(MODE === 'record' ? {} : { replayFixture: FIXTURE, paceMs: 15 }),
     })
